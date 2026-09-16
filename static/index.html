@@ -1639,24 +1639,6 @@
 
     /* MOTOR DE CAMPANAS DE DIFUSION DUAL (Sinergix Negocio CRM) */
     const CAMPANAS_SINERGIX = {
-      nueva_era: {
-        nombre: "La Nueva Era (16 Sep)",
-        badge: "Transmisión Especial",
-        render: (nombre, sede, linkRef) => {
-          const primerNombre = (nombre || '').trim().split(' ')[0] || 'Líder';
-          const plaza = sede || 'Puebla (21 sep)';
-          return `*DESPLIEGUE NACIONAL: LA NUEVA ERA DE EQUIPO EN ACCIÓN*\n\n` +
-            `Hola, *${primerNombre}*. Este mensaje es directo: arrancamos la movilización en todo el país.\n\n` +
-            `*“No venimos solo a vender. Venimos a transformar la salud de quienes amamos.”*\n\n` +
-            `📌 *Banderazo virtual:* Miércoles 16 de septiembre (Enlace exclusivo)\n\n` +
-            `🏔️ *1ª Avanzada (21-24 sep):* Puebla, Izúcar, Tecamachalco y Huamantla.\n` +
-            `🗺️ *Ruta estratégica:* Bajío, Norte y Sureste.\n\n` +
-            `🏆 *Bolsa directa:* $10,000 MXN por plaza ($40,000 bloque inicial / +$210,000 en la gira).\n\n` +
-            `📍 *Tu plaza asignada:* *${plaza}*\n\n` +
-            `👉 *Responde SHERPA a este mensaje* para asegurar tu lugar en la cordada y recibir el acceso.\n\n` +
-            `Registro de perfil: ${linkRef}`;
-        }
-      },
       gira_terreno: {
         nombre: "Gira de Campo (21-24 Sep)",
         badge: "Despliegue Terreno",
