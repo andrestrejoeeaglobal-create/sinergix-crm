@@ -1792,8 +1792,20 @@
       }).catch(err => console.warn(err));
     }
 
-    function abrirModalAgregar() { document.getElementById('modal-agregar').classList.remove('hidden'); }
-    function cerrarModalAgregar() { document.getElementById('modal-agregar').classList.add('hidden'); }
+    function abrirModalAgregar() { 
+      const inpN = document.getElementById('input-nuevo-nombre');
+      const inpT = document.getElementById('input-nuevo-tel');
+      if (inpN) inpN.value = '';
+      if (inpT) inpT.value = '';
+      document.getElementById('modal-agregar').classList.remove('hidden'); 
+    }
+    function cerrarModalAgregar() { 
+      const inpN = document.getElementById('input-nuevo-nombre');
+      const inpT = document.getElementById('input-nuevo-tel');
+      if (inpN) inpN.value = '';
+      if (inpT) inpT.value = '';
+      document.getElementById('modal-agregar').classList.add('hidden'); 
+    }
 
     async function guardarContactoNuevo(e) {
       e.preventDefault();
