@@ -289,6 +289,45 @@
 
       <!-- Columna Principal: Grilla de Tarjetas de Prospectos (9 Cols) -->
       <div class="lg:col-span-9">
+        
+        <!-- BARRA DE CONTROL DE CAMPAÑA ACTIVA DE DIFUSIÓN -->
+        <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 mb-4 flex flex-col md:flex-row items-center justify-between gap-4 shadow-clinical-sm">
+          <div class="flex items-center gap-3 w-full md:w-auto">
+            <div class="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold shrink-0">
+              <i class="fa-solid fa-bullhorn text-lg"></i>
+            </div>
+            <div>
+              <h3 class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-400">Campaña Activa de Difusión</h3>
+              <p class="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-2" id="label-campana-activa">
+                La Nueva Era (16 Sep)
+              </p>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+            <!-- Selector de Mensaje -->
+            <select id="select-campana-global" onchange="actualizarCampanaActiva(this.value)" class="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:border-ea-blue">
+              <option value="nueva_era">1. Transmisión "La Nueva Era" (16 Sep)</option>
+              <option value="gira_terreno">2. Convocatoria Gira de Campo (21-24 Sep)</option>
+              <option value="diagnostico_metabolico">3. Diagnóstico Metabólico (Bio-Auditoría)</option>
+            </select>
+
+            <!-- Selector de Sede Predeterminada -->
+            <select id="select-sede-global" onchange="actualizarSedeGlobal(this.value)" class="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:border-ea-blue">
+              <option value="Puebla (Lun 21 sep)">Puebla (Lun 21 sep)</option>
+              <option value="Izúcar de Matamoros (Mar 22 sep)">Izúcar de Matamoros (Mar 22 sep)</option>
+              <option value="Tecamachalco (Mié 23 sep)">Tecamachalco (Mié 23 sep)</option>
+              <option value="Huamantla (Jue 24 sep)">Huamantla (Jue 24 sep)</option>
+            </select>
+
+            <!-- Botón para Previsualizar Plantilla -->
+            <button onclick="abrirModalPrevisualizacion()" class="touch-target bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-bold px-3 py-2 rounded-xl text-xs border border-slate-300 dark:border-slate-600 flex items-center gap-1.5 transition">
+              <i class="fa-solid fa-eye text-sm text-ea-blue"></i>
+              <span>Vista Previa</span>
+            </button>
+          </div>
+        </div>
+
         <section id="lista-contactos" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         </section>
       </div>
@@ -662,6 +701,33 @@
       <button onclick="cerrarAvisoModal()" class="touch-target w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-3.5 rounded-2xl shadow-clinical-md text-xs uppercase tracking-wider transition">
         ACEPTAR
       </button>
+    </div>
+  </div>
+
+  <!-- MODAL DE PREVISUALIZACIÓN DINÁMICA (WYSIWYG) -->
+  <div id="modal-preview-copy" class="hidden fixed inset-0 z-[110] modal-overlay flex items-center justify-center p-4 fade-in">
+    <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 max-w-lg w-full overflow-hidden shadow-2xl flex flex-col">
+      <div class="bg-slate-100 dark:bg-slate-800 px-5 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+        <h4 class="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+          <i class="fa-brands fa-whatsapp text-emerald-500 text-base"></i>
+          <span>Simulador de Mensaje WhatsApp</span>
+        </h4>
+        <button onclick="cerrarModalPrevisualizacion()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white touch-target">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+      
+      <div class="p-5 bg-slate-50 dark:bg-[#0b141a] max-h-96 overflow-y-auto">
+        <div id="preview-copy-text" class="text-xs sm:text-sm whitespace-pre-line text-slate-800 dark:text-slate-200 font-sans leading-relaxed"></div>
+      </div>
+
+      <div class="p-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
+        <span id="preview-char-count" class="text-[11px] font-mono font-bold text-slate-500 dark:text-slate-400">0 caracteres</span>
+        <button onclick="copiarMensajePrevisualizado()" class="bg-ea-blue hover:bg-blue-700 text-white font-extrabold px-4 py-2.5 rounded-xl text-xs flex items-center gap-1.5 shadow-clinical-sm transition">
+          <i class="fa-solid fa-copy"></i>
+          <span>Copiar Plantilla</span>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -1552,19 +1618,78 @@
       });
     }
 
-    /* MOTOR DE PLANTILLAS DE GUIONES SÍNCRONOS (LOS CUATRO CINCOS) */
-    const PLANTILLAS_GUIONES = {
-      confianza: (nombre, linkRef, nombreSherpa) => 
-        `Hola ${nombre} ¿Cómo estás?\nOye, estoy empezando un trabajo como ingreso extra con un amigo que se dedica a la salud y longevidad 🙌🏼\n¿Me podrías apoyar respondiendo esta encuesta? 😁 Son sólo 3 preguntas\nTe agradecería mucho! 🙏\n${linkRef}`,
-      capacidad: (nombre, linkRef, nombreSherpa) => 
-        `Hola ${nombre} ¿Cómo estás?\nTe escribo porque sé de tu capacidad profesional y me gustaría tu opinión experta 🙌🏼\n¿Me apoyas con 3 preguntas rápidas?\n${linkRef}`,
-      influencia: (nombre, linkRef, nombreSherpa) => 
-        `Hola ${nombre} ¿Cómo estás?\nSé la influencia que tienes y me interesa mucho tu diagnóstico 🙌🏼\nSon sólo 3 preguntas:\n${linkRef}`,
-      cliente_potencial: (nombre, linkRef, nombreSherpa) => 
-        `Hola ${nombre} ¿Cómo estás?\nEstamos realizando un diagnóstico de salud y rendimiento biológico 🧬\n¿Me podrías apoyar respondiendo 3 preguntas rápidas?\n${linkRef}`
+    /* MOTOR DE CAMPANAS DE DIFUSION DUAL (Sinergix Negocio CRM) */
+    const CAMPANAS_SINERGIX = {
+      nueva_era: {
+        nombre: "La Nueva Era (16 Sep)",
+        badge: "Transmisión Especial",
+        render: (nombre, sede, linkRef) => {
+          const primerNombre = (nombre || '').trim().split(' ')[0] || 'Líder';
+          const plaza = sede || 'Puebla (21 sep)';
+          return `*DESPLIEGUE NACIONAL: LA NUEVA ERA DE EQUIPO EN ACCIÓN*\n\n` +
+            `Hola, *${primerNombre}*. Este mensaje es directo: arrancamos la movilización en todo el país.\n\n` +
+            `*“No venimos solo a vender. Venimos a transformar la salud de quienes amamos.”*\n\n` +
+            `📌 *Banderazo virtual:* Miércoles 16 de septiembre (Enlace exclusivo)\n\n` +
+            `🏔️ *1ª Avanzada (21-24 sep):* Puebla, Izúcar, Tecamachalco y Huamantla.\n` +
+            `🗺️ *Ruta estratégica:* Bajío, Norte y Sureste.\n\n` +
+            `🏆 *Bolsa directa:* $10,000 MXN por plaza ($40,000 bloque inicial / +$210,000 en la gira).\n\n` +
+            `📍 *Tu plaza asignada:* *${plaza}*\n\n` +
+            `👉 *Responde SHERPA a este mensaje* para asegurar tu lugar en la cordada y recibir el acceso.\n\n` +
+            `Registro de perfil: ${linkRef}`;
+        }
+      },
+      gira_terreno: {
+        nombre: "Gira de Campo (21-24 Sep)",
+        badge: "Despliegue Terreno",
+        render: (nombre, sede, linkRef) => {
+          const primerNombre = (nombre || '').trim().split(' ')[0] || 'Líder';
+          const plaza = sede || 'Puebla (Lun 21 Sep)';
+          return `⚡ *GIRA DE PODER 2026: DESPLIEGUE PUEBLA & TLAXCALA* ⚡\n\n` +
+            `Hola, *${primerNombre}*. Has sido seleccionado por tu liderazgo para el despliegue en terreno:\n\n` +
+            `📅 *Del 21 al 24 de septiembre*\n` +
+            `🏆 *Bolsa:* $10,000 MXN en efectivo por ciudad al equipo campeón.\n\n` +
+            `📍 *Programa en oficina (${plaza}):*\n` +
+            `• 10:00 - 12:00: Taller Élite de Prospección y CRM.\n` +
+            `• 12:00 - 14:00: Aplicación Práctica en Terreno.\n` +
+            `• 14:00 - 15:00: Receso Estratégico.\n` +
+            `• 15:00 - 18:00: Citas y Cierres en Vivo.\n\n` +
+            `🎟️ *Entrada:* $500 MXN (reembolsable) o 5 cajas a tu nombre.\n\n` +
+            `👉 *Responde a este mensaje* para confirmar tu lugar antes del cierre de cupos.\n\n` +
+            `Detalles de la cordada: ${linkRef}`;
+        }
+      },
+      diagnostico_metabolico: {
+        nombre: "Diagnóstico Metabólico (Bio-Auditoría)",
+        badge: "Bio-Auditoría",
+        render: (nombre, sede, linkRef) => {
+          const primerNombre = (nombre || '').trim().split(' ')[0] || 'Hola';
+          return `Hola ${primerNombre} ¿Cómo estás?\n` +
+            `Estamos realizando un diagnóstico de salud y rendimiento biológico 🧬\n` +
+            `¿Me podrías apoyar respondiendo 3 preguntas rápidas?\n` +
+            `${linkRef}`;
+        }
+      }
     };
 
-    function obtenerGuionMensaje(lead, tipoGuion = 'encuesta') {
+    function actualizarCampanaActiva(val) {
+      localStorage.setItem('sinergix_campana_activa', val);
+      const label = document.getElementById('label-campana-activa');
+      if (label) {
+        label.textContent = CAMPANAS_SINERGIX[val]?.nombre || val;
+      }
+      const currentScrollY = window.scrollY;
+      if (typeof renderizarLista === 'function') renderizarLista();
+      requestAnimationFrame(() => window.scrollTo(0, currentScrollY));
+    }
+
+    function actualizarSedeGlobal(val) {
+      localStorage.setItem('sinergix_sede_activa', val);
+      const currentScrollY = window.scrollY;
+      if (typeof renderizarLista === 'function') renderizarLista();
+      requestAnimationFrame(() => window.scrollTo(0, currentScrollY));
+    }
+
+    function obtenerEnlaceWhatsAppLead(lead, tipoGuion = 'encuesta') {
       const primerNombre = (lead.nombre || '').trim().split(' ')[0] || 'Hola';
       const sherpaTel = localStorage.getItem('sherpa_celular') || lead.sherpa_tel || lead.sherpa_id || '';
       const sherpaNom = localStorage.getItem('sherpa_nombre') || (document.getElementById('nombreSherpa')?.innerText || '').replace(/^[^\w]+/, '').trim() || '';
@@ -1576,15 +1701,49 @@
       if (sherpaNom) params.push(`nom=${encodeURIComponent(sherpaNom)}`);
       if (params.length > 0) linkRef += '?' + params.join('&');
 
-      const nombreSherpa = sherpaNom || '';
-
       if (tipoGuion === 'recordatorio') {
         return `Hola ${primerNombre}\n¿Pudiste responder la encuesta? 😃\nTe agradecería mucho! 🙏\n${linkRef}`;
       }
 
-      const listaKey = (lead.clasificacion?.lista || lead.lista_estrategica || 'confianza').toLowerCase();
-      const fnGuion = PLANTILLAS_GUIONES[listaKey] || PLANTILLAS_GUIONES.confianza;
-      return fnGuion(primerNombre, linkRef, nombreSherpa);
+      const campanaKey = localStorage.getItem('sinergix_campana_activa') || 'nueva_era';
+      const sedeFinal = lead.sede || lead.ciudad || localStorage.getItem('sinergix_sede_activa') || 'Puebla (Lun 21 sep)';
+      const campana = CAMPANAS_SINERGIX[campanaKey] || CAMPANAS_SINERGIX.nueva_era;
+
+      return campana.render(lead.nombre, sedeFinal, linkRef);
+    }
+
+    function obtenerGuionMensaje(lead, tipoGuion = 'encuesta') {
+      return obtenerEnlaceWhatsAppLead(lead, tipoGuion);
+    }
+
+    function abrirModalPrevisualizacion(leadSample = null) {
+      const lead = leadSample || (todosLosLeads && todosLosLeads.length > 0 ? todosLosLeads[0] : { nombre: 'María Hernández', ciudad: '' });
+      const msg = obtenerEnlaceWhatsAppLead(lead, 'encuesta');
+      
+      const previewText = document.getElementById('preview-copy-text');
+      const charCount = document.getElementById('preview-char-count');
+      const modal = document.getElementById('modal-preview-copy');
+
+      if (previewText) previewText.textContent = msg;
+      if (charCount) charCount.textContent = `${msg.length} caracteres`;
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function cerrarModalPrevisualizacion() {
+      const modal = document.getElementById('modal-preview-copy');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    async function copiarMensajePrevisualizado() {
+      const previewText = document.getElementById('preview-copy-text');
+      if (previewText && previewText.textContent) {
+        try {
+          await navigator.clipboard.writeText(previewText.textContent);
+          showToast('Mensaje copiado al portapapeles exitosamente', 'success');
+        } catch (e) {
+          showToast('Mensaje copiado al portapapeles', 'info');
+        }
+      }
     }
 
     function registrarEnvioEnUnClic(leadId, tipoGuion = 'encuesta') {
@@ -1868,6 +2027,18 @@
           todosLosLeads = leadsLocales;
         }
         verificarURLOAuth();
+        
+        // Restaurar estado de campaña y sede seleccionadas
+        const campanaSaved = localStorage.getItem('sinergix_campana_activa') || 'nueva_era';
+        const sedeSaved = localStorage.getItem('sinergix_sede_activa') || 'Puebla (Lun 21 sep)';
+        const selectCamp = document.getElementById('select-campana-global');
+        const selectSede = document.getElementById('select-sede-global');
+        const labelCamp = document.getElementById('label-campana-activa');
+
+        if (selectCamp) selectCamp.value = campanaSaved;
+        if (selectSede) selectSede.value = sedeSaved;
+        if (labelCamp) labelCamp.textContent = CAMPANAS_SINERGIX[campanaSaved]?.nombre || campanaSaved;
+
         renderizarLista();
         actualizarMetricas();
       } catch (err) {
