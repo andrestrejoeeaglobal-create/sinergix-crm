@@ -155,19 +155,22 @@
   </footer>
 
   <script>
-    let sherpaInfo = { nombre: 'Tu Sherpa', telefono: '5215500000000' };
+    let sherpaInfo = { nombre: '', telefono: '' };
 
     document.addEventListener('DOMContentLoaded', () => {
       const urlParams = new URLSearchParams(window.location.search);
-      const telParam = urlParams.get('tel') || urlParams.get('ref') || '5215500000000';
-      const nomParam = urlParams.get('nom') || 'Tu Sherpa';
+      const telParam = urlParams.get('tel') || urlParams.get('ref') || localStorage.getItem('sherpa_celular') || '';
+      const nomParam = urlParams.get('nom') || localStorage.getItem('sherpa_nombre') || '';
 
       sherpaInfo = {
-        nombre: decodeURIComponent(nomParam),
-        telefono: telParam.replace(/\D/g, '')
+        nombre: nomParam ? decodeURIComponent(nomParam) : '',
+        telefono: telParam ? telParam.replace(/\D/g, '') : ''
       };
 
-      document.getElementById('txtSherpaNombre').innerText = sherpaInfo.nombre;
+      const txtSherpa = document.getElementById('txtSherpaNombre');
+      if (txtSherpa) {
+        txtSherpa.innerText = sherpaInfo.nombre || 'Equipo en Acción®';
+      }
     });
 
     function procesarDiagnostico(event) {
@@ -191,20 +194,24 @@
       document.getElementById('formCapture').classList.add('hidden');
       document.getElementById('thanksScreen').classList.remove('hidden');
 
-      const telLimpio = sherpaInfo.telefono.length === 10 ? `521${sherpaInfo.telefono}` : sherpaInfo.telefono;
-      
-      // Payload condensado sintético (< 500 caracteres)
-      const mensaje = `*NUEVA EVALUACIÓN REGISTRADA* 📋\n` +
-                      `• *Nombre:* ${nombreCliente}\n` +
-                      `• *Celular:* ${telCliente}\n` +
-                      `• *Objetivo:* ${objetivo}\n` +
-                      `• *Tiempo:* ${tiempo === 'si' ? 'Disponible (15m)' : 'Parcial'}\n` +
-                      `• *Fecha:* ${new Date().toLocaleDateString('es-MX')}`;
-
-      const waUrl = `https://wa.me/${telLimpio}?text=${encodeURIComponent(mensaje)}`;
-
       const btnReverse = document.getElementById('btnReverseTrigger');
-      btnReverse.href = waUrl;
+
+      if (sherpaInfo.telefono) {
+        const telLimpio = sherpaInfo.telefono.length === 10 ? `521${sherpaInfo.telefono}` : sherpaInfo.telefono;
+        
+        // Payload condensado sintético (< 500 caracteres)
+        const mensaje = `*NUEVA EVALUACIÓN REGISTRADA* 📋\n` +
+                        `• *Nombre:* ${nombreCliente}\n` +
+                        `• *Celular:* ${telCliente}\n` +
+                        `• *Objetivo:* ${objetivo}\n` +
+                        `• *Tiempo:* ${tiempo === 'si' ? 'Disponible (15m)' : 'Parcial'}\n` +
+                        `• *Fecha:* ${new Date().toLocaleDateString('es-MX')}`;
+
+        const waUrl = `https://wa.me/${telLimpio}?text=${encodeURIComponent(mensaje)}`;
+        btnReverse.href = waUrl;
+      } else {
+        btnReverse.style.display = 'none';
+      }
     }
   </script>
 </body>

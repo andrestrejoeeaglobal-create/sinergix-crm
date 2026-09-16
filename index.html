@@ -684,7 +684,7 @@
   <script>
     let todosLosLeads = [];
     let filtroEstadoActual = 'todos';
-    const API_TOKEN = 'token-default';
+    const API_TOKEN = localStorage.getItem('api_token') || '';
 
     // Variables del sistema de importación inteligente
     let importHeaders = [], importRows = [], selectedNameCols = [], selectedPhoneCols = [];
@@ -1548,9 +1548,17 @@
 
     function obtenerGuionMensaje(lead, tipoGuion = 'encuesta') {
       const primerNombre = (lead.nombre || '').trim().split(' ')[0] || 'Hola';
-      const sherpaId = lead.sherpa_id || 's1';
-      const linkRef = `${window.location.origin}/captura?ref=${sherpaId}`;
-      const nombreSherpa = (document.getElementById('nombreSherpa')?.innerText || '').replace(/^[^\w]+/, '').trim() || 'Sherpa Equipo en Acción';
+      const sherpaTel = localStorage.getItem('sherpa_celular') || lead.sherpa_tel || lead.sherpa_id || '';
+      const sherpaNom = localStorage.getItem('sherpa_nombre') || (document.getElementById('nombreSherpa')?.innerText || '').replace(/^[^\w]+/, '').trim() || '';
+
+      const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
+      let linkRef = `${baseUrl}/captura.html`;
+      const params = [];
+      if (sherpaTel) params.push(`tel=${encodeURIComponent(sherpaTel)}`);
+      if (sherpaNom) params.push(`nom=${encodeURIComponent(sherpaNom)}`);
+      if (params.length > 0) linkRef += '?' + params.join('&');
+
+      const nombreSherpa = sherpaNom || '';
 
       if (tipoGuion === 'recordatorio') {
         return `Hola ${primerNombre}\n¿Pudiste responder la encuesta? 😃\nTe agradecería mucho! 🙏\n${linkRef}`;
@@ -1612,11 +1620,15 @@
       e.preventDefault();
       const n = document.getElementById('input-nuevo-nombre').value;
       const t = document.getElementById('input-nuevo-tel').value;
+      const sherpaTel = localStorage.getItem('sherpa_celular') || '';
+      const sherpaNom = localStorage.getItem('sherpa_nombre') || '';
 
       const res = await apiFetch('/api/leads/capture', {
         method: 'POST',
         body: JSON.stringify({
-          sherpa_id: 's1',
+          sherpa_id: sherpaTel || sherpaNom || '',
+          sherpa_tel: sherpaTel,
+          sherpa_nom: sherpaNom,
           nombre: n,
           telefono: t.startsWith('+') ? t : ('+52' + t),
           consentimiento_whatsapp: true,
