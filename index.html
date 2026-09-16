@@ -702,12 +702,75 @@
     }
 
     async function apiFetch(url, options = {}) {
+      if (url.startsWith('/api/')) {
+        return mockStandAloneApiResponse(url, options);
+      }
       const headers = options.headers || {};
       headers['X-API-Token'] = API_TOKEN;
       if (options.body && typeof options.body === 'string' && !headers['Content-Type']) {
         headers['Content-Type'] = 'application/json';
       }
       return fetch(url, { ...options, headers });
+    }
+
+    async function mockStandAloneApiResponse(url, options) {
+      let bodyData = {};
+      if (options.body) {
+        try { bodyData = JSON.parse(options.body); } catch (e) {}
+      }
+
+      if (url.includes('/api/leads/batch-import') && bodyData.contactos) {
+        let imported = 0;
+        let duplicates = 0;
+        let currentLeads = await CortexStorageEngine.getAllLeads();
+        let existingPhones = new Set(currentLeads.map(l => (l.telefono || '').replace(/\D/g, '').slice(-10)));
+
+        for (const c of bodyData.contactos) {
+          const digits = (c.telefono || '').replace(/\D/g, '');
+          const last10 = digits.slice(-10);
+          if (!last10 || existingPhones.has(last10)) {
+            duplicates++;
+          } else {
+            const newLead = {
+              id: 'lead_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+              nombre: c.nombre,
+              telefono: c.telefono,
+              etapa_pipeline: 'Lead',
+              respondio: false,
+              creado_en: new Date().toISOString()
+            };
+            currentLeads.push(newLead);
+            existingPhones.add(last10);
+            imported++;
+          }
+        }
+        await CortexStorageEngine.saveAllLeads(currentLeads);
+        todosLosLeads = currentLeads;
+        return new Response(JSON.stringify({ ok: true, status: 'success', importados: imported, duplicados_omitidos: duplicates, mensaje: `¡Éxito! ${imported} contactos importados (${duplicates} duplicados omitidos).` }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
+
+      if (url.includes('/api/leads/capture') && bodyData.nombre) {
+        let currentLeads = await CortexStorageEngine.getAllLeads();
+        const newLead = {
+          id: 'lead_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+          nombre: bodyData.nombre,
+          telefono: bodyData.telefono,
+          etapa_pipeline: 'Lead',
+          respondio: false,
+          creado_en: new Date().toISOString()
+        };
+        currentLeads.push(newLead);
+        await CortexStorageEngine.saveAllLeads(currentLeads);
+        todosLosLeads = currentLeads;
+        return new Response(JSON.stringify({ ok: true, _id: newLead.id, lead: newLead }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
+
+      if (url === '/api/leads') {
+        const leads = await CortexStorageEngine.getAllLeads();
+        return new Response(JSON.stringify(leads), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
+
+      return new Response(JSON.stringify({ ok: true, status: 'success' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
     }
 
     function verificarURLOAuth() {
@@ -858,22 +921,22 @@
     async function syncAppsScriptWebapp() {
       const inputUrl = (document.getElementById('appsScriptUrlInput')?.value || '').trim();
       closeImportModal();
+      if (!inputUrl) {
+        showToast('Proporciona la URL de Google Apps Script o Google Drive', 'info');
+        return;
+      }
       showToast('Conectando a Google e importando contactos...', 'info');
       try {
-        const res = await apiFetch('/api/auth/google/sync-apps-script', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url: inputUrl })
-        });
-        const data = await res.json();
-        if (res.ok && data.status === 'success') {
-          showToast(data.mensaje || `¡Éxito! ${data.imported} contactos importados de tu cuenta de Google.`, 'success');
-          await cargarLeadsServidor();
+        const csvUrl = construirUrlGviz(inputUrl);
+        const res = await fetch(csvUrl);
+        const text = await res.text();
+        if (text && (text.includes(',') || text.includes('\n'))) {
+          parseCSV(text);
         } else {
-          showToast(data.detail || data.message || 'No se pudieron importar los contactos de Google.', 'info');
+          showToast('No se encontraron contactos en la URL proporcionada. Verifica los permisos de la hoja.', 'info');
         }
       } catch (e) {
-        showToast('Fallo de conexión al sincronizar con tu cuenta de Google: ' + (e.message || e), 'info');
+        showToast('Error al importar de Google: ' + (e.message || e), 'info');
       }
     }
 
@@ -884,21 +947,17 @@
         return;
       }
 
+      closeImportModal();
       showToast('Descargando e importando contactos desde Google Drive...', 'info');
 
       try {
-        const res = await apiFetch('/api/leads/import-google-drive', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url: input })
-        });
-        const data = await res.json();
-        if (res.ok && data.status === 'success') {
-          closeImportModal();
-          showToast(data.mensaje || `¡Éxito! ${data.imported} contactos importados de Google Drive.`, 'success');
-          await cargarLeadsServidor();
+        const csvUrl = construirUrlGviz(input);
+        const res = await fetch(csvUrl);
+        const text = await res.text();
+        if (text && (text.includes(',') || text.includes('\n'))) {
+          parseCSV(text);
         } else {
-          showToast(data.detail || data.mensaje || 'Asegúrate de que la hoja de Google Drive esté compartida como "Cualquier persona con el enlace puede ver".', 'info');
+          showToast('Asegúrate de que la hoja de Google Drive esté compartida como "Cualquiera con el enlace puede ver".', 'info');
         }
       } catch (e) {
         showToast('Error al conectar con Google Drive: ' + (e.message || e), 'info');
