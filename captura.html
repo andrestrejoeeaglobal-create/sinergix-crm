@@ -189,7 +189,7 @@
     }
 
     // SCRIPT DE EXTRACCIÓN Y PROCESAMIENTO DETERMINISTA
-    let sherpaTel = "5215512345678"; // Fallback general
+    let sherpaTel = ""; // Se asigna dinámicamente desde URL o Configuración del Sherpa
     let sherpaNom = "Equipo en Acción";
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -227,6 +227,11 @@
 
       if (telefono.length !== 10) {
         alert("Por favor ingresa un número celular de WhatsApp válido a 10 dígitos.");
+        return;
+      }
+
+      if (!sherpaTel) {
+        alert("Atención: Tu enlace no contiene el número celular del Sherpa asignado. Por favor pídele a tu Sherpa su enlace personalizado de WhatsApp.");
         return;
       }
 
