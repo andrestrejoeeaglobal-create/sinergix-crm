@@ -299,12 +299,18 @@
             <div>
               <h3 class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-400">Campaña Activa de Difusión</h3>
               <p class="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-2" id="label-campana-activa">
-                La Nueva Era (16 Sep)
+                Gira de Campo (21-24 Sep)
               </p>
             </div>
           </div>
 
           <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+            <!-- Configuración del Nombre de Batalla del Sherpa -->
+            <div class="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-2.5 py-1.5 shadow-clinical-sm">
+              <i class="fa-solid fa-user-ninja text-indigo-500 text-sm"></i>
+              <input type="text" id="input-sherpa-nombre" onchange="guardarNombreSherpa(this.value)" placeholder="Tu Nombre de Batalla..." class="bg-transparent border-none text-xs font-sans font-bold text-slate-800 dark:text-slate-200 focus:outline-none w-36" title="Ingresa tu Nombre de Batalla para personalizar las invitaciones" />
+            </div>
+
             <!-- Configuración del Teléfono Celular WhatsApp del Sherpa -->
             <div class="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-2.5 py-1.5 shadow-clinical-sm">
               <i class="fa-brands fa-whatsapp text-emerald-500 text-sm"></i>
@@ -1646,11 +1652,12 @@
       gira_terreno: {
         nombre: "Gira de Campo (21-24 Sep)",
         badge: "Despliegue Terreno",
-        render: (nombre, sede, linkRef) => {
+        render: (nombre, sede, linkRef, sherpaNom) => {
           const primerNombre = (nombre || '').trim().split(' ')[0] || 'Líder';
           const plaza = sede || 'Puebla';
           const plazaCorta = plaza.split(' ')[0].replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ]/g, '') || 'Puebla';
-          return `Hola, ${primerNombre}. Te escribo directo porque para este arranque en ${plazaCorta} necesito a la gente con la que sé que se puede construir en grande.\n` +
+          const soyTexto = sherpaNom ? ` Soy ${sherpaNom}.` : '';
+          return `Hola, ${primerNombre}.${soyTexto} Te escribo directo porque para este arranque en ${plazaCorta} necesito a la gente con la que sé que se puede construir en grande.\n` +
             `Vamos con todo en la Gira de Poder 2026 y quiero que estés al frente en nuestro equipo:\n\n` +
             `📅 Fechas de la gira: Del 21 al 24 de septiembre\n` +
             `📍 Nuestra cita (${plazaCorta}): ${plaza} en la oficina\n` +
@@ -1668,9 +1675,10 @@
       diagnostico_metabolico: {
         nombre: "Diagnóstico Metabólico (Bio-Auditoría)",
         badge: "Bio-Auditoría",
-        render: (nombre, sede, linkRef) => {
+        render: (nombre, sede, linkRef, sherpaNom) => {
           const primerNombre = (nombre || '').trim().split(' ')[0] || 'Hola';
-          return `Hola ${primerNombre} ¿Cómo estás?\n` +
+          const soyTexto = sherpaNom ? ` Soy ${sherpaNom}.` : '';
+          return `Hola ${primerNombre}.${soyTexto} ¿Cómo estás?\n` +
             `Estamos realizando un diagnóstico de salud y rendimiento biológico 🧬\n` +
             `¿Me podrías apoyar respondiendo 3 preguntas rápidas?\n` +
             `${linkRef}`;
@@ -1696,6 +1704,18 @@
       requestAnimationFrame(() => window.scrollTo(0, currentScrollY));
     }
 
+    function guardarNombreSherpa(val) {
+      const clean = String(val || '').trim();
+      if (clean) {
+        localStorage.setItem('sherpa_nombre', clean);
+        if (typeof showToast === 'function') showToast('Nombre de batalla guardado: ' + clean, 'success');
+      } else {
+        localStorage.removeItem('sherpa_nombre');
+        if (typeof showToast === 'function') showToast('Nombre de batalla removido de configuración', 'info');
+      }
+      if (typeof renderizarLista === 'function') renderizarLista();
+    }
+
     function guardarCelularSherpa(val) {
       const digits = String(val || '').replace(/\D/g, '');
       if (digits.length === 10) {
@@ -1715,7 +1735,7 @@
     function obtenerEnlaceWhatsAppLead(lead, tipoGuion = 'encuesta') {
       const primerNombre = (lead.nombre || '').trim().split(' ')[0] || 'Hola';
       const sherpaTel = localStorage.getItem('sherpa_celular') || lead.sherpa_tel || lead.sherpa_id || '';
-      const sherpaNom = localStorage.getItem('sherpa_nombre') || (document.getElementById('nombreSherpa')?.innerText || '').replace(/^[^\w]+/, '').trim() || '';
+      const sherpaNom = localStorage.getItem('sherpa_nombre') || (document.getElementById('input-sherpa-nombre')?.value || '').trim() || (document.getElementById('nombreSherpa')?.innerText || '').replace(/^[^\w]+/, '').trim() || '';
 
       const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
       let linkRef = `${baseUrl}/captura.html`;
@@ -1725,14 +1745,15 @@
       if (params.length > 0) linkRef += '?' + params.join('&');
 
       if (tipoGuion === 'recordatorio') {
-        return `Hola ${primerNombre}\n¿Pudiste responder la encuesta? 😃\nTe agradecería mucho! 🙏\n${linkRef}`;
+        const soyTexto = sherpaNom ? ` Soy ${sherpaNom}.` : '';
+        return `Hola ${primerNombre}.${soyTexto}\n¿Pudiste responder la encuesta? 😃\nTe agradecería mucho! 🙏\n${linkRef}`;
       }
 
       const campanaKey = localStorage.getItem('sinergix_campana_activa') || 'gira_terreno';
       const sedeFinal = lead.sede || lead.ciudad || localStorage.getItem('sinergix_sede_activa') || 'Puebla (Lun 21 sep)';
       const campana = CAMPANAS_SINERGIX[campanaKey] || CAMPANAS_SINERGIX.gira_terreno;
 
-      return campana.render(lead.nombre, sedeFinal, linkRef);
+      return campana.render(lead.nombre, sedeFinal, linkRef, sherpaNom);
     }
 
     function obtenerGuionMensaje(lead, tipoGuion = 'encuesta') {
@@ -2095,6 +2116,12 @@
         if (selectCamp) selectCamp.value = campanaSaved;
         if (selectSede) selectSede.value = sedeSaved;
         if (labelCamp) labelCamp.textContent = CAMPANAS_SINERGIX[campanaSaved]?.nombre || campanaSaved;
+
+        const nomSaved = localStorage.getItem('sherpa_nombre') || '';
+        const inpNom = document.getElementById('input-sherpa-nombre');
+        if (inpNom && nomSaved) {
+          inpNom.value = nomSaved;
+        }
 
         const celSaved = localStorage.getItem('sherpa_celular') || '';
         const inpCel = document.getElementById('input-sherpa-celular');
