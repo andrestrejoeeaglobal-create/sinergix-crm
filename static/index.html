@@ -1159,26 +1159,32 @@
         return;
       }
 
-      let processed = importRows.map(row => ({
-        nombre: selectedNameCols.map(i => row[i] || '').join(' ').trim(),
-        telefono: String(row[selectedPhoneCols[0]] || '').replace(/\D/g, '')
-      }));
+      let processed = importRows.map(row => {
+        let n = selectedNameCols.map(i => row[i] || '').join(' ').trim();
+        let rawTel = selectedPhoneCols.length > 0 ? String(row[selectedPhoneCols[0]] || '') : '';
+        let digits = rawTel.replace(/\D/g, '');
+        return { nombre: n, telefono: digits };
+      });
 
       let newContacts = [];
       let duplicates = 0;
+      let sinTelefono = 0;
 
-      // Comparación estricta usando sólo los últimos 10 dígitos puros
       let existingPhones = new Set(todosLosLeads.map(c => {
         let digits = String(c.telefono || '').replace(/\D/g, '');
         return digits.length >= 10 ? digits.slice(-10) : digits;
       }));
 
       processed.forEach(p => {
-        if (!p.nombre || !p.telefono) return;
-        let digits = p.telefono.replace(/\D/g, '');
-        let last10 = digits.length >= 10 ? digits.slice(-10) : digits;
+        if (!p.nombre) return;
+        let digits = p.telefono;
+        if (!digits || digits.length < 10) {
+          sinTelefono++;
+          return;
+        }
 
-        if (!last10 || existingPhones.has(last10)) {
+        let last10 = digits.slice(-10);
+        if (existingPhones.has(last10)) {
           duplicates++;
         } else {
           p.telefono = digits.length === 10 ? ("+52" + digits) : ("+" + digits);
@@ -1189,7 +1195,13 @@
 
       if (newContacts.length === 0) {
         closeCsvModal();
-        showToast(`Importación omitida: ${duplicates} contactos ya existían en el CRM.`, 'info');
+        if (duplicates > 0) {
+          showToast(`Importación omitida: Se encontraron ${duplicates} contacto(s) que ya existían previamente en tu CRM.`, 'info');
+        } else if (sinTelefono > 0) {
+          showToast(`Aviso: La columna seleccionada no contiene números de teléfono válidos de 10 dígitos. Vuelve a importar y selecciona la columna que tiene los celulares.`, 'info');
+        } else {
+          showToast(`No se encontraron contactos válidos en el archivo.`, 'info');
+        }
         return;
       }
 
@@ -1206,21 +1218,34 @@
 
         if (res.ok) {
           const data = await res.json();
-          showToast(`¡Éxito! ${data.importados} contactos importados (${data.duplicados_omitidos} duplicados omitidos).`, 'success');
+          let currentLeads = await CortexStorageEngine.getAllLeads();
+          newContacts.forEach(c => {
+            const newLead = {
+              id: 'lead_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+              nombre: c.nombre,
+              telefono: c.telefono,
+              etapa_pipeline: 'Lead',
+              respondio: false,
+              creado_en: new Date().toISOString()
+            };
+            if (!currentLeads.some(l => (l.telefono || '').slice(-10) === (c.telefono || '').slice(-10))) {
+              currentLeads.push(newLead);
+            }
+          });
+          await CortexStorageEngine.saveAllLeads(currentLeads);
+          todosLosLeads = currentLeads;
 
-          // Limpiar búsqueda y resetear filtro a 'todos' para visualización inmediata
+          // Resetear búsqueda y filtro para visualización inmediata
           const searchInp = document.getElementById('search-input');
           if (searchInp) searchInp.value = '';
           filtroEstadoActual = 'todos';
 
-          await cargarLeadsServidor();
-          await cargarBriefingMatutino();
-        } else {
-          const errData = await res.json();
-          showToast('Error al importar: ' + (errData.detail || 'Fallo de servidor'), 'info');
+          renderizarLista();
+          actualizarMetricas();
+          showToast(`¡Éxito! ${newContacts.length} contactos guardados e importados correctamente en tu CRM.`, 'success');
         }
       } catch (err) {
-        showToast('Error de red al importar contactos', 'info');
+        showToast('Error al guardar contactos importados', 'info');
       }
     }
 
