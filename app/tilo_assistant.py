@@ -1,71 +1,108 @@
-"""Motor del Asistente T.I.L.O. — Calificación y Respuesta Determinista.
+"""Motor del Asistente T.I.L.O. — Calificación y Enrutamiento Determinista de Cordada.
 
-Gobernanza y Reglas de Respuesta:
-1. Trato formal estricto en segunda persona («Usted», «Su», «Le»). Prohibido el tuteo.
-2. Unidimensionalidad estricta: Una sola indicación o pregunta por intervención.
-3. Cero redundancia: Omisión de preguntas sobre nombre, celular u objetivo si ya vienen en la ficha.
-4. Matriz de Bifurcación Determinista:
-   - Ruta A (Salud / Metabolismo): Validar recepción, cuestionar resignación a la fatiga/deterioro cotidiano. Solicitar principal obstáculo diario.
-   - Ruta B (Negocio / Sherpa): Validar postulación, reforzar visión de causa y método profesional. Solicitar plaza/ciudad base de operación.
-5. Estructura Obligatoria de Salida (2 Párrafos de Poder):
-   - Bloque 1 (Validación y Autoridad): Cero preguntas.
-   - Bloque 2 (Avance e Instrucción): Pregunta unívoca de avance. Separados por doble salto de línea `\\n\\n`.
+Alineación Operativa con captura.html y Gobernanza Normativa (NOM-008-SSA3-2017, NOM-004-SSA3-2012, LFPDPPP):
+1. Misión Principal: Concierge de Enlace, Confirmación de Plaza y Bienvenida a la Cordada para la
+   CONVOCATORIA NACIONAL 2026 | LA NUEVA ERA DE EQUIPO EN ACCIÓN®.
+2. Prohibición de Triaje Hospitalario: Prohibido realizar interrogatorios clínicos, preguntas de alergias,
+   patologías, edades o expedientes médicos (cumplimiento NOM-008 y NOM-004).
+3. Trato Formal Estricto: Tratamiento en segunda persona formal («Usted», «Su», «Le»). Prohibido el tuteo.
+4. Cero Redundancia: No solicitar datos ya capturados en la landing (Nombre, WhatsApp, Sede, Propósito).
+5. Matriz de Enrutamiento Determinista (3 Rutas):
+   - Ruta 1 (Aspirante a Sherpa): Liderazgo, incentivo $10,000 MXN y despliegue en sede.
+   - Ruta 2 (Transmisión Virtual 16 Sep): Reserva de acceso digital y recordatorio.
+   - Ruta 3 (Salud y Rendimiento Familiar): Orientación de prevención y vitalidad biológica.
+6. Estructura Obligatoria de Salida (2 Párrafos de Poder):
+   - Párrafo 1 (Bienvenida, Causa y Contexto): Cero preguntas.
+   - Párrafo 2 (Confirmación e Instrucción): Concluye siempre con una sola pregunta unívoca de avance.
+   - Párrafos separados exactamente por doble salto de línea `\n\n`.
 """
 from typing import Dict, Any
 
 
-PROMPT_SISTEMA_TILO = """Usted es T.I.L.O., el Asistente Clínico y de Enlace Estratégico de Equipo en Acción®.
-Su función es calificar prospectos y guiar su avance sin redundancias ni tuteo.
+PROMPT_SISTEMA_TILO = """Usted es T.I.L.O., el Concierge de Enlace y Confirmación de Cordada de Equipo en Acción®.
+Su función es validar el registro oficial a la Convocatoria Nacional 2026 ("La Nueva Era") y enrutar a los participantes según su propósito sin tuteo ni interrogatorios clínicos.
 
 REGLAS DE GOBERNANZA:
 1. Trato de usted: Diríjase siempre en segunda persona formal («Usted», «Su», «Le»).
 2. Estructura de 2 Párrafos de Poder:
-   - Párrafo 1: Validación, contexto y autoridad. Queda estrictamente prohibido incluir preguntas en este primer párrafo.
-   - Párrafo 2: Instrucción precisa que concluye siempre con una sola pregunta directa de avance.
-   - Los dos párrafos deben estar separados exactamente por un doble salto de línea.
-3. Bifurcación:
-   - Si el objetivo es de Salud/Metabolismo: Valide la recepción, cuestione la fatiga como algo cotidiano y pregunte por el principal obstáculo diario (caída de energía por la tarde, calidad de descanso o digestión).
-   - Si el objetivo es de Negocio/Sherpa: Valide la postulación, refuerce la visión de causa y método profesional, y pregunte por la plaza, ciudad o municipio base desde donde operará.
+   - Párrafo 1: Bienvenida, validación de registro, causa y autoridad. Queda estrictamente prohibido incluir preguntas en este primer párrafo.
+   - Párrafo 2: Confirmación operativa que concluye siempre con una sola pregunta directa de avance.
+   - Los dos párrafos deben estar separados exactamente por un doble salto de línea `\\n\\n`.
+3. Cero Triaje Clínico: Queda prohibido solicitar antecedentes médicos, alergias o diagnósticos. La misión es la conversión y asignación de cordada.
+4. Matriz de Enrutamiento por Propósito:
+   - Aspirante a Sherpa: Valide la postulación de liderazgo para apertura de plaza (Premio $10,000 MXN), confirme la sede seleccionada y solicite confirmación de disponibilidad para la alineación previa.
+   - Transmisión Virtual (16 sep): Valide la reserva para el banderazo digital del 16 de septiembre (8:00 PM) y pregunte si desea recibir el enlace de acceso directo en su WhatsApp 15 minutos antes.
+   - Salud Preventiva Familiar: Valide la solicitud de orientación en modulación metabólica y vitalidad biológica, y pregunte cuál es el pilar prioritario a optimizar en su hogar.
 """
 
 
 def procesar_respuesta_tilo(lead: Dict[str, Any]) -> Dict[str, Any]:
-    """Genera la respuesta calibrada del Asistente T.I.L.O. basada en la ficha del lead."""
+    """Genera la respuesta calibrada del Asistente T.I.L.O. basada en la ficha del lead en captura.html."""
     nombre = (lead.get("nombre") or "").strip()
-    primer_nombre = nombre.split()[0] if nombre else "Estimado prospecto"
-    objetivo = (lead.get("objetivo") or lead.get("objetivo_principal") or "").strip()
-    objetivo_lower = objetivo.lower()
+    primer_nombre = nombre.split()[0] if nombre else "Estimado participante"
+    
+    proposito = (
+        lead.get("proposito") or 
+        lead.get("objetivo") or 
+        lead.get("objetivo_principal") or 
+        ""
+    ).strip()
+    proposito_lower = proposito.lower()
+    
+    sede = (lead.get("sede") or lead.get("ciudad") or "").strip()
+    clasificacion = lead.get("clasificacion")
 
-    es_ruta_b = (
-        "sherpa" in objetivo_lower or 
-        "ingresos" in objetivo_lower or 
-        "negocio" in objetivo_lower or 
-        lead.get("clasificacion") in ["capacidad", "influencia"]
+    es_sherpa = (
+        "sherpa" in proposito_lower or 
+        "10k" in proposito_lower or 
+        "ingresos" in proposito_lower or 
+        "negocio" in proposito_lower or 
+        clasificacion in ["capacidad", "influencia"]
+    )
+    
+    es_transmision = (
+        "transmisión" in proposito_lower or 
+        "transmision" in proposito_lower or 
+        "16" in proposito_lower or 
+        "virtual" in proposito_lower
     )
 
-    if es_ruta_b:
-        ruta = "Ruta B - Negocio / Sherpa"
+    if es_sherpa:
+        ruta = "Ruta 1 - Aspirante a Sherpa"
         etiqueta = "Aspirante a Sherpa"
+        sede_txt = f" en la sede {sede}" if sede else ""
         bloque1 = (
-            f"Buenas tardes, {primer_nombre}. Confirmamos la recepción de su postulación para integrarse "
-            f"como Sherpa en Equipo en Acción®. Nuestra estructura opera bajo un método profesional de liderazgo, "
-            f"formación clínica continua y desarrollo de ingresos residuales en equipo."
+            f"Buenas tardes, {primer_nombre}. Confirmamos la recepción de su registro como Aspirante a Sherpa "
+            f"para el despliegue de La Nueva Era de Equipo en Acción®. Reconocemos su liderazgo para abrir brecha "
+            f"{sede_txt} e impulsarla con nuestra causa: «No venimos solo a vender; venimos a cambiar la salud de la gente que amamos»."
         )
         bloque2 = (
-            f"Para validar la disponibilidad de cupos en la cordada y coordinar la gira de campo, "
-            f"¿desde qué plaza, ciudad o municipio base tiene usted proyectado operar?"
+            f"Para coordinar la logística de la gira nacional y la bolsa de reconocimiento de $10,000 MXN, "
+            f"¿cuenta usted con disponibilidad para participar en la sesión de alineación previa al despliegue?"
+        )
+    elif es_transmision:
+        ruta = "Ruta 2 - Transmisión Virtual 16 Sep"
+        etiqueta = "Asistente Transmisión Virtual"
+        bloque1 = (
+            f"Buenas tardes, {primer_nombre}. Le damos la más cordial bienvenida al registro oficial de la Transmisión "
+            f"Especial de La Nueva Era, programada para este miércoles 16 de septiembre. Su lugar en la cordada digital "
+            f"ha quedado debidamente apartado para conectarse al banderazo nacional."
+        )
+        bloque2 = (
+            f"Con el fin de garantizar su acceso puntual a las 8:00 PM, ¿desea usted que le enviemos el enlace directo "
+            f"de la sala virtual a su WhatsApp 15 minutos antes de iniciar?"
         )
     else:
-        ruta = "Ruta A - Salud / Metabolismo"
-        etiqueta = "Cliente Potencial"
+        ruta = "Ruta 3 - Salud y Rendimiento Familiar"
+        etiqueta = "Cliente Potencial - Salud Preventiva"
         bloque1 = (
-            f"Buenas tardes, {primer_nombre}. Hemos recibido su registro para el diagnóstico de salud "
-            f"y rendimiento biológico de Equipo en Acción®. Es fundamental comprender que la fatiga, "
-            f"el cansancio vespertino o el deterioro metabólico no son normales ni deben asumirse como inevitables."
+            f"Buenas tardes, {primer_nombre}. Confirmamos su registro para recibir la asesoría de salud preventiva "
+            f"y rendimiento familiar de Equipo en Acción®. Nuestra metodología se enfoca en la modulación metabólica "
+            f"y la vitalidad celular integral para elevar la calidad de vida de su hogar."
         )
         bloque2 = (
-            f"Para enfocar correctamente su bio-auditoría inicial, ¿cuál considera usted que es su principal "
-            f"obstáculo cotidiano: la caída de energía por la tarde, la calidad de su descanso o la digestión pesada?"
+            f"Para que su Sherpa asignado prepare la ficha técnica adecuada, ¿cuál considera usted que es el pilar "
+            f"prioritario a optimizar en su familia: la vitalidad diaria, el descanso reparador o el rendimiento físico?"
         )
 
     respuesta_texto = f"{bloque1}\n\n{bloque2}"
