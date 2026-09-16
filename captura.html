@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-  <title>Diagnóstico & Evaluación — Equipo en Acción®</title>
+  <title>Registro Oficial — La Nueva Era | Equipo en Acción®</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -41,7 +41,7 @@
 
   <!-- Header TCK-2026-GOV-HEADER-001 -->
   <header class="w-full bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 sm:px-6 py-4 shadow-clinical-sm">
-    <div class="max-w-xl mx-auto flex items-center justify-between">
+    <div class="max-w-xl mx-auto flex items-center justify-between gap-3">
       <div class="flex items-center space-x-3">
         <div class="h-10 min-w-[100px] flex items-center shrink-0">
           <img src="./assets/images/logo_ea.png" 
@@ -52,12 +52,12 @@
                class="h-full w-auto object-contain shrink-0" />
         </div>
         <div>
-          <h1 class="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white">Encuesta de Diagnóstico</h1>
+          <h1 class="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white">LA NUEVA ERA</h1>
           <p class="text-[11px] font-bold text-ea-blue dark:text-blue-400">EQUIPO EN ACCIÓN® • T.I.L.O.</p>
         </div>
       </div>
-      <span class="px-2.5 py-1 rounded-xl text-[10px] font-black uppercase bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-        100% Gratuito
+      <span class="px-2.5 py-1 rounded-xl text-[10px] font-black uppercase bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300 text-center shrink-0">
+        Transmisión (16 sep) + Gira (21-24 sep)
       </span>
     </div>
   </header>
@@ -66,52 +66,66 @@
   <main class="flex-grow flex items-center justify-center p-4 sm:p-6">
     <div class="w-full max-w-lg bg-white dark:bg-slate-800 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-700 shadow-clinical-lg space-y-6 fade-in">
 
-      <!-- FORMULARIO DE DIAGNÓSTICO -->
+      <!-- MANIFIESTO Y CABECERA DE CONVOCATORIA -->
+      <div class="text-center space-y-3 pb-2 border-b border-slate-100 dark:border-slate-700">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-300">
+          <i class="fa-solid fa-fire text-amber-600 dark:text-amber-400"></i> CONVOCATORIA NACIONAL 2026
+        </span>
+        <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight uppercase">
+          LA NUEVA ERA DE EQUIPO EN ACCIÓN®
+        </h2>
+        <blockquote class="italic text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-900/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-700">
+          «No venimos solo a vender. Venimos a cambiar la salud de la gente que amamos.»
+        </blockquote>
+        <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">
+          Atendido por tu Sherpa: <span id="txtSherpaNombre" class="font-bold text-ea-blue dark:text-blue-400">Cargando...</span>
+        </p>
+      </div>
+
+      <!-- FORMULARIO DE REGISTRO DE CORDADA -->
       <form id="formCapture" onsubmit="procesarDiagnostico(event)" class="space-y-5">
-        <div class="space-y-1 text-center sm:text-left border-b border-slate-100 dark:border-slate-700 pb-4">
-          <h2 class="text-lg font-black text-slate-900 dark:text-white flex items-center justify-center sm:justify-start gap-2">
-            <i class="fa-solid fa-clipboard-check text-ea-blue"></i> Diagnóstico de Salud & Rendimiento
-          </h2>
-          <p class="text-xs text-slate-500 dark:text-slate-400">
-            Atendido por tu Sherpa: <span id="txtSherpaNombre" class="font-bold text-slate-800 dark:text-slate-200">Cargando...</span>
+        <div class="space-y-1">
+          <h3 class="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
+            <i class="fa-solid fa-clipboard-check text-ea-blue"></i> Registro de Cordada
+          </h3>
+          <p class="text-[11px] text-slate-500 dark:text-slate-400">
+            Completa tus datos para apartar tu lugar en la transmisión especial y gira de campo.
           </p>
         </div>
 
         <!-- Campos de Datos Personales -->
         <div class="space-y-4">
           <div>
-            <label class="block text-xs font-bold uppercase text-slate-600 dark:text-slate-300 mb-1">Tu Nombre Completo *</label>
+            <label for="inputNombre" class="block text-xs font-bold uppercase text-slate-600 dark:text-slate-300 mb-1">Tu Nombre Completo *</label>
             <input type="text" id="inputNombre" required placeholder="Ej: María Hernández" class="w-full px-4 py-3 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm font-semibold focus:outline-none focus:border-ea-blue transition">
           </div>
 
           <div>
-            <label class="block text-xs font-bold uppercase text-slate-600 dark:text-slate-300 mb-1">Tu Número Celular (WhatsApp) *</label>
+            <label for="inputTelefono" class="block text-xs font-bold uppercase text-slate-600 dark:text-slate-300 mb-1">Tu Número Celular (WhatsApp) *</label>
             <input type="tel" id="inputTelefono" required placeholder="Ej: 5512345678" class="w-full px-4 py-3 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm font-mono font-semibold focus:outline-none focus:border-ea-blue transition">
           </div>
         </div>
 
-        <!-- Preguntas de Diagnóstico -->
+        <!-- Seleccion de Sede y Propósito -->
         <div class="space-y-4 pt-2">
           <div class="p-4 bg-slate-50 dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2">
-            <label class="block text-xs font-extrabold text-slate-800 dark:text-slate-200">1. ¿Cuál es tu principal objetivo de salud o ingresos?</label>
-            <select id="pregObjetivo" class="w-full px-3 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-xs font-semibold focus:outline-none focus:border-ea-blue">
-              <option value="energia">Aumentar Energía y Metabolismo Cellular</option>
-              <option value="peso">Control de Peso & Longevidad</option>
-              <option value="ingresos">Generar Ingresos Residuales como Sherpa</option>
-              <option value="rendimiento">Optimización de Rendimiento Deportivo</option>
+            <label for="pregSede" class="block text-xs font-extrabold text-slate-800 dark:text-slate-200">Selecciona tu Sede / Ciudad *</label>
+            <select id="pregSede" required class="w-full px-3 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-xs font-semibold focus:outline-none focus:border-ea-blue">
+              <option value="puebla">Puebla (Lunes 21 sep)</option>
+              <option value="izucar">Izúcar de Matamoros (Martes 22 sep)</option>
+              <option value="tecamachalco">Tecamachalco (Miércoles 23 sep)</option>
+              <option value="huamantla">Huamantla (Jueves 24 sep)</option>
+              <option value="nacional">Ruta Nacional (Bajío / Norte / Sureste)</option>
             </select>
           </div>
 
           <div class="p-4 bg-slate-50 dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2">
-            <label class="block text-xs font-extrabold text-slate-800 dark:text-slate-200">2. ¿Dispones de 15 min al día para seguir una estrategia estructurada?</label>
-            <div class="flex gap-4 text-xs font-bold">
-              <label class="flex items-center gap-1.5 cursor-pointer">
-                <input type="radio" name="pregTiempo" value="si" checked class="accent-ea-blue"> Sí, totalmente
-              </label>
-              <label class="flex items-center gap-1.5 cursor-pointer">
-                <input type="radio" name="pregTiempo" value="parcial" class="accent-ea-blue"> A veces
-              </label>
-            </div>
+            <label for="pregRol" class="block text-xs font-extrabold text-slate-800 dark:text-slate-200">Tu Propósito en esta Convocatoria *</label>
+            <select id="pregRol" required class="w-full px-3 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-xs font-semibold focus:outline-none focus:border-ea-blue">
+              <option value="sherpa">Quiero sumarme como Sherpa y abrir brecha en mi plaza (Premio $10,000 MXN)</option>
+              <option value="transmision">Quiero sintonizar la Transmisión Especial del 16 de sep</option>
+              <option value="salud">Busco asesoría de salud preventiva para mi familia</option>
+            </select>
           </div>
         </div>
 
@@ -119,25 +133,25 @@
         <div class="p-3 bg-indigo-50 dark:bg-indigo-950/50 rounded-xl border border-indigo-100 dark:border-indigo-900 text-[11px] text-indigo-900 dark:text-indigo-200 space-y-1">
           <p class="font-bold"><i class="fa-solid fa-shield-halved mr-1"></i> Protección de Datos T.I.L.O.</p>
           <p class="text-[10px] leading-tight text-indigo-700 dark:text-indigo-300">
-            Al presionar enviar, aceptas ser contactado por tu Sherpa vía WhatsApp para entregarte tus resultados de diagnóstico.
+            Al enviar tu registro, confirmas tu asistencia y aceptas ser contactado por tu Sherpa asignado vía WhatsApp para coordinar tu acceso.
           </p>
         </div>
 
-        <button type="submit" id="btnSubmit" class="touch-target w-full bg-gradient-to-r from-ea-blue to-emerald-600 hover:from-blue-700 hover:to-emerald-700 text-white font-extrabold py-4 rounded-2xl shadow-clinical-md text-xs uppercase tracking-wider transition flex items-center justify-center gap-2">
-          <span>ENVIAR DIAGNÓSTICO AHORA</span> <i class="fa-solid fa-paper-plane"></i>
+        <button type="submit" id="btnSubmit" class="touch-target w-full bg-gradient-to-r from-red-600 to-ea-blue hover:from-red-700 hover:to-blue-700 text-white font-extrabold py-4 rounded-2xl shadow-clinical-md text-xs uppercase tracking-wider transition flex items-center justify-center gap-2">
+          <span>APARTAR MI LUGAR EN LA CORDADA 🚩</span> <i class="fa-solid fa-flag"></i>
         </button>
       </form>
 
       <!-- PANTALLA DE AGRADECIMIENTO CON DISPARADOR INVERSO (REVERSE TRIGGER) -->
       <div id="thanksScreen" class="hidden text-center space-y-6 py-4 fade-in">
         <div class="w-16 h-16 rounded-3xl bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-3xl mx-auto shadow-clinical-sm">
-          <i class="fa-solid fa-circle-check"></i>
+          <i class="fa-solid fa-flag"></i>
         </div>
 
         <div class="space-y-2">
-          <h2 class="text-xl font-black text-slate-900 dark:text-white">¡Diagnóstico Registrado!</h2>
+          <h2 class="text-xl font-black text-slate-900 dark:text-white">¡Lugar Reservado en la Cordada!</h2>
           <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed max-w-sm mx-auto">
-            Tus respuestas han sido procesadas. Haz clic abajo para notificar directamente a tu Sherpa por WhatsApp y recibir tu evaluación.
+            Tu registro ha sido procesado. Haz clic abajo para notificar directamente a tu Sherpa por WhatsApp y confirmar tu acceso a la transmisión y gira nacional.
           </p>
         </div>
 
@@ -177,20 +191,19 @@
       event.preventDefault();
       const btn = document.getElementById('btnSubmit');
       btn.disabled = true;
-      btn.innerText = "PROCESANDO...";
+      btn.innerText = "PROCESANDO REGISTRO...";
 
       const nombre = document.getElementById('inputNombre').value.trim();
       const telefono = document.getElementById('inputTelefono').value.trim();
-      const objetivoSelect = document.getElementById('pregObjetivo');
-      const objetivoTxt = objetivoSelect.options[objetivoSelect.selectedIndex].text;
-      
-      const tiempoRadio = document.querySelector('input[name="pregTiempo"]:checked');
-      const tiempoTxt = tiempoRadio ? tiempoRadio.value : 'si';
+      const sedeSelect = document.getElementById('pregSede');
+      const sedeTxt = sedeSelect.options[sedeSelect.selectedIndex].text;
+      const rolSelect = document.getElementById('pregRol');
+      const rolTxt = rolSelect.options[rolSelect.selectedIndex].text;
 
-      armarPestañaGracias(nombre, telefono, objetivoTxt, tiempoTxt);
+      armarPestañaGracias(nombre, telefono, sedeTxt, rolTxt);
     }
 
-    function armarPestañaGracias(nombreCliente, telCliente, objetivo, tiempo) {
+    function armarPestañaGracias(nombre, telefono, sede, rol) {
       document.getElementById('formCapture').classList.add('hidden');
       document.getElementById('thanksScreen').classList.remove('hidden');
 
@@ -198,17 +211,18 @@
 
       if (sherpaInfo.telefono) {
         const telLimpio = sherpaInfo.telefono.length === 10 ? `521${sherpaInfo.telefono}` : sherpaInfo.telefono;
+        const nomSherpa = sherpaInfo.nombre || 'Sherpa';
         
-        // Payload condensado sintético (< 500 caracteres)
-        const mensaje = `*NUEVA EVALUACIÓN REGISTRADA* 📋\n` +
-                        `• *Nombre:* ${nombreCliente}\n` +
-                        `• *Celular:* ${telCliente}\n` +
-                        `• *Objetivo:* ${objetivo}\n` +
-                        `• *Tiempo:* ${tiempo === 'si' ? 'Disponible (15m)' : 'Parcial'}\n` +
-                        `• *Fecha:* ${new Date().toLocaleDateString('es-MX')}`;
+        const mensaje = `¡Hola ${nomSherpa}! 👋🏼 Acabo de registrarme para La Nueva Era:\n\n` +
+                        `👤 *Nombre:* ${nombre}\n` +
+                        `📱 *WhatsApp:* ${telefono}\n` +
+                        `📍 *Sede:* ${sede}\n` +
+                        `🎯 *Interés:* ${rol}\n\n` +
+                        `Confirmando mi lugar en la cordada. ¡Nos vemos en la transmisión! 👊💥`;
 
         const waUrl = `https://wa.me/${telLimpio}?text=${encodeURIComponent(mensaje)}`;
         btnReverse.href = waUrl;
+        btnReverse.style.display = 'inline-flex';
       } else {
         btnReverse.style.display = 'none';
       }
