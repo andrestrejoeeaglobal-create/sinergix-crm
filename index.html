@@ -1720,14 +1720,21 @@
 
     function obtenerEnlaceWhatsAppLead(lead, tipoGuion = 'encuesta') {
       const primerNombre = (lead.nombre || '').trim().split(' ')[0] || 'Hola';
-      const sherpaTel = localStorage.getItem('sherpa_celular') || lead.sherpa_tel || lead.sherpa_id || '';
-      const sherpaNom = localStorage.getItem('sherpa_nombre') || (document.getElementById('input-sherpa-nombre')?.value || '').trim() || (document.getElementById('nombreSherpa')?.innerText || '').replace(/^[^\w]+/, '').trim() || '';
+      const sherpaTel = (localStorage.getItem('sherpa_celular') || lead.sherpa_tel || lead.sherpa_id || '').replace(/\D/g, '');
+      const sherpaNom = (localStorage.getItem('sherpa_nombre') || (document.getElementById('input-sherpa-nombre')?.value || '').trim() || (document.getElementById('nombreSherpa')?.innerText || '').replace(/^[^\w]+/, '').trim() || 'Andres Trejo').trim();
+
+      const pNom = (lead.nombre || '').trim();
+      const pTel = (lead.telefono || lead.celular || '').replace(/\D/g, '');
+      const pSede = lead.sede || lead.ciudad || localStorage.getItem('sinergix_sede_activa') || 'Puebla (Lunes 21 sep)';
 
       const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
       let linkRef = `${baseUrl}/captura.html`;
       const params = [];
-      if (sherpaTel) params.push(`tel=${encodeURIComponent(sherpaTel)}`);
-      if (sherpaNom) params.push(`nom=${encodeURIComponent(sherpaNom)}`);
+      if (pNom) params.push(`pnom=${encodeURIComponent(pNom)}`);
+      if (pTel) params.push(`ptel=${encodeURIComponent(pTel)}`);
+      if (pSede) params.push(`sede=${encodeURIComponent(pSede)}`);
+      if (sherpaNom) params.push(`snom=${encodeURIComponent(sherpaNom)}`);
+      if (sherpaTel) params.push(`stel=${encodeURIComponent(sherpaTel)}`);
       if (params.length > 0) linkRef += '?' + params.join('&');
 
       if (tipoGuion === 'recordatorio') {
@@ -1736,7 +1743,7 @@
       }
 
       const campanaKey = localStorage.getItem('sinergix_campana_activa') || 'gira_terreno';
-      const sedeFinal = lead.sede || lead.ciudad || localStorage.getItem('sinergix_sede_activa') || 'Puebla (Lun 21 sep)';
+      const sedeFinal = lead.sede || lead.ciudad || localStorage.getItem('sinergix_sede_activa') || 'Puebla (Lunes 21 sep)';
       const campana = CAMPANAS_SINERGIX[campanaKey] || CAMPANAS_SINERGIX.gira_terreno;
 
       return campana.render(lead.nombre, sedeFinal, linkRef, sherpaNom);
