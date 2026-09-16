@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sinergix-crm-v1';
+const CACHE_NAME = 'sinergix-crm-v2';
 const ASSETS = [
   './',
   './index.html',
@@ -22,6 +22,7 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         keys.map((key) => {
           if (key !== CACHE_NAME) {
+            console.log('[SW] Purgando caché antigua:', key);
             return caches.delete(key);
           }
         })
@@ -32,8 +33,15 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // No interceptar llamadas a dominios externos (ej. Google Sheets, APIs remotas, CDN)
   if (!event.request.url.startsWith(self.location.origin)) {
+    return;
+  }
+
+  // Network First para peticiones HTML para garantizar actualización en vivo
+  if (event.request.mode === 'navigate' || event.request.headers.get('accept')?.includes('text/html')) {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match('./index.html'))
+    );
     return;
   }
 

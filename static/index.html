@@ -1605,7 +1605,7 @@
     }
 
     function loginGoogle() {
-      fetch('/api/auth/google/login')
+      apiFetch('/api/auth/google/login')
         .then(r => r.json())
         .then(d => { if (d.authorization_url) location.href = d.authorization_url; else showToast('Google Auth no configurado', 'info'); })
         .catch(() => showToast('Google Auth no disponible', 'info'));
