@@ -1629,6 +1629,14 @@
       });
     }
 
+    const MAPA_FECHAS_PLAZA = {
+      puebla: "Lunes 21 de septiembre",
+      izúcar: "Martes 22 de septiembre",
+      izucar: "Martes 22 de septiembre",
+      tecamachalco: "Miércoles 23 de septiembre",
+      huamantla: "Jueves 24 de septiembre"
+    };
+
     /* MOTOR DE CAMPANAS DE DIFUSION DUAL (Sinergix Negocio CRM) */
     const CAMPANAS_SINERGIX = {
       nueva_era: {
@@ -1656,20 +1664,16 @@
           const primerNombre = (nombre || '').trim().split(' ')[0] || 'Líder';
           const plaza = sede || 'Puebla';
           const plazaCorta = plaza.split(' ')[0].replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ]/g, '') || 'Puebla';
+          const keyPlaza = plazaCorta.toLowerCase();
+          const fechaLarga = MAPA_FECHAS_PLAZA[keyPlaza] || plaza;
           const soyTexto = sherpaNom ? ` Soy ${sherpaNom}.` : '';
-          return `Hola, ${primerNombre}.${soyTexto} Te escribo directo porque para este arranque en ${plazaCorta} necesito a la gente con la que sé que se puede construir en grande.\n` +
-            `Vamos con todo en la Gira de Poder 2026 y quiero que estés al frente en nuestro equipo:\n\n` +
-            `📅 Fechas de la gira: Del 21 al 24 de septiembre\n` +
-            `📍 Nuestra cita (${plazaCorta}): ${plaza} en la oficina\n` +
-            `🏆 Bolsa directa: $10,000 MXN en efectivo por plaza al equipo con mejores resultados\n\n` +
-            `La agenda de ese día:\n` +
-            `• 10:00 - 12:00 Taller intensivo de prospección y CRM\n` +
-            `• 12:00 - 14:00 Aplicación y prospección en campo\n` +
-            `• 14:00 - 15:00 Comida y receso\n` +
-            `• 15:00 - 18:00 Citas, consultas de salud y cierres en vivo\n\n` +
-            `🎟️ El acceso son $500 MXN (100% reembolsables en producto) o cubrirlo con 5 cajas a tu nombre.\n\n` +
-            `Los lugares en ${plazaCorta} están topados por espacio. Confírmame aquí mismo para apartar tu lugar en el equipo y regístrate en el enlace para tener tus datos listos:\n` +
-            `👉 ${linkRef}`;
+          return `Hola, ${primerNombre}.${soyTexto} Te escribo directo porque para este arranque en ${plazaCorta} necesito a la gente con la que sé que se construye en grande.\n` +
+            `Vamos con todo en la Gira de Poder 2026 y quiero que encabeces el frente de nuestro equipo:\n\n` +
+            `Nuestra fecha en ${plazaCorta}: ${fechaLarga} (Jornada intensiva de prospección y cierres en oficina).\n` +
+            `🏆 Premio de $10,000 MXN en efectivo: El equipo que logre los mejores resultados de la jornada (medidos en el CRM) gana y se lleva la bolsa completa\n` +
+            `Acceso: $500 MXN o cubierto con 5 cajas a tu nombre.\n` +
+            `Por tema de espacio físico, los lugares están estrictamente topados a 30 cupos.\n\n` +
+            `Entra al enlace para registrar tu perfil de cordada y confírmame por aquí en cuanto lo tengas para blindar tu lugar: 👉 ${linkRef}`;
         }
       },
       diagnostico_metabolico: {
