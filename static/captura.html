@@ -15,6 +15,7 @@
         extend: {
           colors: {
             ea: {
+              corporate: '#1C75BC',
               red: '#B70E0C',
               pink: '#F29FC5',
               blue: '#1C75BC',
@@ -40,9 +41,9 @@
     @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
   </style>
 </head>
-<body class="min-h-screen flex flex-col font-sans bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors duration-200">
+<body class="min-h-screen flex flex-col font-sans bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors duration-200 pb-12">
 
-  <!-- Header TCK-2026-GOV-HEADER-001 -->
+  <!-- HEADER CANÓNICO -->
   <header class="w-full bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 sm:px-6 py-4 shadow-clinical-sm">
     <div class="max-w-xl mx-auto flex items-center justify-between gap-3">
       <div class="flex items-center space-x-3">
@@ -56,7 +57,7 @@
         </div>
         <div>
           <h1 class="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white">LA NUEVA ERA</h1>
-          <p class="text-[11px] font-bold text-ea-blue dark:text-blue-400">EQUIPO EN ACCIÓN® • T.I.L.O.</p>
+          <p class="text-[11px] font-bold text-ea-corporate dark:text-blue-400">EQUIPO EN ACCIÓN® • T.I.L.O.</p>
         </div>
       </div>
       <span class="px-2.5 py-1 rounded-xl text-[10px] font-black uppercase bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300 text-center shrink-0">
@@ -65,109 +66,116 @@
     </div>
   </header>
 
-  <!-- MAIN CONTAINER -->
-  <main class="flex-grow flex items-center justify-center p-4 sm:p-6">
-    <div class="w-full max-w-lg bg-white dark:bg-slate-800 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-700 shadow-clinical-lg space-y-6 fade-in">
+  <!-- CONTENEDOR PRINCIPAL ERGONÓMICO CON ESPACIO INFERIOR -->
+  <main class="flex-grow flex items-center justify-center p-4 sm:p-6 mb-8">
+    <div class="card w-full max-w-lg mx-auto bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 shadow-xl border border-slate-200 dark:border-slate-800 my-6 fade-in">
 
-      <!-- MANIFIESTO Y CABECERA DE CONVOCATORIA -->
-      <div class="text-center space-y-3 pb-2 border-b border-slate-100 dark:border-slate-700">
+      <!-- ENCABEZADO Y MANIFIESTO DE LA CONVOCATORIA -->
+      <div class="text-center space-y-3 pb-4 mb-4 border-b border-slate-100 dark:border-slate-800">
         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-300">
           <i class="fa-solid fa-fire text-amber-600 dark:text-amber-400"></i> CONVOCATORIA NACIONAL 2026
         </span>
         <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight uppercase">
           LA NUEVA ERA DE EQUIPO EN ACCIÓN®
         </h2>
-        <blockquote class="italic text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-900/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-700">
+        <blockquote class="italic text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-950 p-3 rounded-2xl border border-slate-200 dark:border-slate-800">
           «No venimos solo a vender. Venimos a cambiar la salud de la gente que amamos.»
         </blockquote>
         <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">
-          Atendido por tu Sherpa: <span id="txtSherpaNombre" class="font-bold text-ea-blue dark:text-blue-400">Cargando...</span>
+          Atendido por tu Sherpa: <span id="sherpa-nombre-badge" class="font-bold text-ea-corporate dark:text-blue-400">Equipo en Acción</span>
+          <span id="txtSherpaNombre" class="hidden">Equipo en Acción</span>
         </p>
       </div>
 
-      <!-- FORMULARIO DE REGISTRO DE CORDADA -->
-      <form id="formCapture" onsubmit="procesarDiagnostico(event)" class="space-y-5">
-        <div class="space-y-1">
-          <h3 class="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
-            <i class="fa-solid fa-clipboard-check text-ea-blue"></i> Registro de Cordada
-          </h3>
-          <p class="text-[11px] text-slate-500 dark:text-slate-400">
-            Completa tus datos para apartar tu lugar en la transmisión especial y gira de campo.
-          </p>
+      <!-- PANTALLA 1: FORMULARIO -->
+      <form id="form-registro" onsubmit="procesarRegistro(event)" class="space-y-4">
+        
+        <div>
+          <label for="reg-nombre" class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+            Tu Nombre Completo *
+          </label>
+          <input type="text" id="reg-nombre" required placeholder="Ej: María Hernández" 
+                 class="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-800 rounded-2xl p-3.5 text-base font-medium text-slate-800 dark:text-white focus:outline-none focus:border-ea-corporate" />
         </div>
 
-        <!-- Campos de Datos Personales -->
-        <div class="space-y-4">
-          <div>
-            <label for="inputNombre" class="block text-xs font-bold uppercase text-slate-600 dark:text-slate-300 mb-1">Tu Nombre Completo *</label>
-            <input type="text" id="inputNombre" required placeholder="Ej: María Hernández" class="w-full px-4 py-3 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm font-semibold focus:outline-none focus:border-ea-blue transition">
-          </div>
-
-          <div>
-            <label for="inputTelefono" class="block text-xs font-bold uppercase text-slate-600 dark:text-slate-300 mb-1">Tu Número Celular (WhatsApp) *</label>
-            <input type="tel" id="inputTelefono" required placeholder="Ej: 5512345678" class="w-full px-4 py-3 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm font-mono font-semibold focus:outline-none focus:border-ea-blue transition">
-          </div>
+        <div>
+          <label for="reg-telefono" class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+            Tu Número Celular (WhatsApp a 10 dígitos) *
+          </label>
+          <input type="tel" id="reg-telefono" required maxlength="10" placeholder="Ej: 5512345678" 
+                 oninput="this.value = this.value.replace(/\D/g, '')"
+                 class="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-800 rounded-2xl p-3.5 text-base font-mono text-slate-800 dark:text-white focus:outline-none focus:border-ea-corporate" />
         </div>
 
-        <!-- Seleccion de Sede y Propósito -->
-        <div class="space-y-4 pt-2">
-          <div class="p-4 bg-slate-50 dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2">
-            <label for="pregSede" class="block text-xs font-extrabold text-slate-800 dark:text-slate-200">Selecciona tu Sede / Ciudad *</label>
-            <select id="pregSede" required class="w-full px-3 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-xs font-semibold focus:outline-none focus:border-ea-blue">
-              <option value="puebla">Puebla (Lunes 21 sep)</option>
-              <option value="izucar">Izúcar de Matamoros (Martes 22 sep)</option>
-              <option value="tecamachalco">Tecamachalco (Miércoles 23 sep)</option>
-              <option value="huamantla">Huamantla (Jueves 24 sep)</option>
-              <option value="nacional">Ruta Nacional (Bajío / Norte / Sureste)</option>
-            </select>
-          </div>
-
-          <div class="p-4 bg-slate-50 dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2">
-            <label for="pregRol" class="block text-xs font-extrabold text-slate-800 dark:text-slate-200">Tu Propósito en esta Convocatoria *</label>
-            <select id="pregRol" required class="w-full px-3 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-xs font-semibold focus:outline-none focus:border-ea-blue">
-              <option value="sherpa">Quiero sumarme como Sherpa y abrir brecha en mi plaza (Premio $10,000 MXN)</option>
-              <option value="transmision">Quiero sintonizar la Transmisión Especial del 16 de sep</option>
-              <option value="salud">Busco asesoría de salud preventiva para mi familia</option>
-            </select>
-          </div>
+        <div>
+          <label for="reg-sede" class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+            Selecciona tu Sede / Ciudad *
+          </label>
+          <select id="reg-sede" class="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-800 rounded-2xl p-3.5 text-sm font-medium text-slate-800 dark:text-white focus:outline-none focus:border-ea-corporate">
+            <option value="Puebla (Lunes 21 sep)">Puebla (Lunes 21 sep - 30 Lugares)</option>
+            <option value="Izúcar de Matamoros (Martes 22 sep)">Izúcar de Matamoros (Martes 22 sep - 10 Lugares)</option>
+            <option value="Tecamachalco (Miércoles 23 sep)">Tecamachalco (Miércoles 23 sep - 10 Lugares)</option>
+            <option value="Huamantla (Jueves 24 sep)">Huamantla (Jueves 24 sep - 30 Lugares)</option>
+            <option value="Ruta Nacional (Bajío / Norte / Sureste)">Ruta Nacional (Bajío / Norte / Sureste)</option>
+          </select>
         </div>
 
-        <!-- Aviso y Consentimiento -->
-        <div class="p-3 bg-indigo-50 dark:bg-indigo-950/50 rounded-xl border border-indigo-100 dark:border-indigo-900 text-[11px] text-indigo-900 dark:text-indigo-200 space-y-1">
-          <p class="font-bold"><i class="fa-solid fa-shield-halved mr-1"></i> Protección de Datos T.I.L.O.</p>
-          <p class="text-[10px] leading-tight text-indigo-700 dark:text-indigo-300">
-            Al enviar tu registro, confirmas tu asistencia y aceptas ser contactado por tu Sherpa asignado vía WhatsApp para coordinar tu acceso.
-          </p>
+        <div>
+          <label for="reg-proposito" class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+            Tu Propósito en esta Convocatoria *
+          </label>
+          <select id="reg-proposito" class="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-800 rounded-2xl p-3.5 text-sm font-medium text-slate-800 dark:text-white focus:outline-none focus:border-ea-corporate">
+            <option value="Aspirante a Sherpa (Abrir plaza - Premio $10K)">Quiero sumarme como Sherpa y abrir brecha en mi plaza (Premio $10,000 MXN)</option>
+            <option value="Transmisión Virtual 16 Sep">Quiero sintonizar la Transmisión Especial del 16 de septiembre</option>
+            <option value="Salud y Rendimiento Familiar">Busco asesoría de salud preventiva para mí y mi familia</option>
+          </select>
         </div>
 
-        <button type="submit" id="btnSubmit" class="touch-target w-full bg-gradient-to-r from-red-600 to-ea-blue hover:from-red-700 hover:to-blue-700 text-white font-extrabold py-4 rounded-2xl shadow-clinical-md text-xs uppercase tracking-wider transition flex items-center justify-center gap-2">
-          <span>APARTAR MI LUGAR EN LA CORDADA 🚩</span> <i class="fa-solid fa-flag"></i>
-        </button>
+        <!-- BOTÓN CTA VISIBLE CON PADDING SUFICIENTE -->
+        <div class="pt-4 pb-2">
+          <button type="submit" id="btn-submit-registro" 
+                  class="touch-target w-full bg-gradient-to-r from-ea-corporate to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-extrabold text-base py-4 px-6 rounded-2xl shadow-lg shadow-blue-500/30 transition-all flex items-center justify-center gap-2 transform active:scale-95 cursor-pointer">
+            <span>APARTAR MI LUGAR EN LA CORDADA</span>
+            <i class="fa-solid fa-flag text-ea-yellow"></i>
+          </button>
+        </div>
+
+        <p class="text-[11px] text-center text-slate-400 font-medium">
+          Tus datos se enlazan directamente con la cordada oficial de tu Sherpa asignado.
+        </p>
       </form>
 
-      <!-- PANTALLA DE AGRADECIMIENTO CON DISPARADOR INVERSO (REVERSE TRIGGER) -->
-      <div id="thanksScreen" class="hidden text-center space-y-6 py-4 fade-in">
-        <div class="w-16 h-16 rounded-3xl bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-3xl mx-auto shadow-clinical-sm">
-          <i class="fa-solid fa-flag"></i>
+      <!-- PANTALLA 2: CONFIRMACIÓN Y TRIGGER INVERSO -->
+      <div id="thanksScreen" class="hidden text-center py-6 space-y-5 fade-in">
+        <div class="w-16 h-16 bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400 rounded-full flex items-center justify-center mx-auto text-2xl shadow-inner">
+          <i class="fa-solid fa-check-double"></i>
         </div>
 
         <div class="space-y-2">
-          <h2 class="text-xl font-black text-slate-900 dark:text-white">¡Lugar Reservado en la Cordada!</h2>
-          <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed max-w-sm mx-auto">
-            Tu registro ha sido procesado. Haz clic abajo para notificar directamente a tu Sherpa por WhatsApp y confirmar tu acceso a la transmisión y gira nacional.
+          <h3 class="text-2xl font-black text-slate-900 dark:text-white">¡Lugar Pre-Registrado!</h3>
+          <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-sm mx-auto">
+            Para confirmar tu sintonía en la Transmisión del 16 de sep y asegurar tu acceso a la gira, envía tu confirmación por WhatsApp a tu Sherpa:
           </p>
         </div>
 
-        <a id="btnReverseTrigger" href="#" target="_blank" class="touch-target inline-flex items-center justify-center w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-4 rounded-2xl shadow-clinical-md text-xs uppercase tracking-wider transition gap-2">
-          <i class="fa-brands fa-whatsapp text-lg"></i> NOTIFICAR A MI SHERPA POR WHATSAPP
-        </a>
+        <div class="pt-2">
+          <a id="btn-wa-confirmar" href="#" target="_blank"
+             class="touch-target w-full bg-[#25D366] hover:bg-[#20bd5a] text-white font-black text-base py-4 px-6 rounded-2xl shadow-xl shadow-emerald-600/30 flex items-center justify-center gap-2 transition-all transform active:scale-95">
+            <i class="fa-brands fa-whatsapp text-2xl"></i>
+            <span>Confirmar mi Lugar por WhatsApp</span>
+          </a>
+        </div>
+
+        <p class="text-[11px] text-slate-400 italic">
+          Se abrirá WhatsApp con tu ficha pre-llenada lista para enviar en 1 clic.
+        </p>
       </div>
 
     </div>
   </main>
 
   <!-- FOOTER CANÓNICO -->
-  <footer class="w-full bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-4 px-4 text-center text-[11px] text-slate-500">
+  <footer class="w-full bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-4 px-4 text-center text-[11px] text-slate-500 mt-auto">
     <p class="font-bold text-slate-800 dark:text-slate-300">© 2026 Equipo en Acción®. Todos los derechos reservados.</p>
   </footer>
 
@@ -180,63 +188,73 @@
       });
     }
 
-    let sherpaInfo = { nombre: '', telefono: '' };
+    // SCRIPT DE EXTRACCIÓN Y PROCESAMIENTO DETERMINISTA
+    let sherpaTel = "5215512345678"; // Fallback general
+    let sherpaNom = "Equipo en Acción";
 
     document.addEventListener('DOMContentLoaded', () => {
       const urlParams = new URLSearchParams(window.location.search);
-      const telParam = urlParams.get('tel') || urlParams.get('ref') || localStorage.getItem('sherpa_celular') || '';
-      const nomParam = urlParams.get('nom') || localStorage.getItem('sherpa_nombre') || '';
+      const rawTel = urlParams.get('tel') || urlParams.get('ref') || localStorage.getItem('sherpa_celular') || '';
+      const rawNom = urlParams.get('nom') || localStorage.getItem('sherpa_nombre') || '';
 
-      sherpaInfo = {
-        nombre: nomParam ? decodeURIComponent(nomParam) : '',
-        telefono: telParam ? telParam.replace(/\D/g, '') : ''
-      };
+      if (rawTel) {
+        const cleanDigits = rawTel.replace(/\D/g, '');
+        if (cleanDigits.length === 10) {
+          sherpaTel = '521' + cleanDigits;
+        } else if (cleanDigits.length > 0) {
+          sherpaTel = cleanDigits;
+        }
+      }
+
+      if (rawNom) {
+        sherpaNom = decodeURIComponent(rawNom);
+      }
+
+      const badgeSherpa = document.getElementById('sherpa-nombre-badge');
+      if (badgeSherpa) badgeSherpa.textContent = sherpaNom;
 
       const txtSherpa = document.getElementById('txtSherpaNombre');
-      if (txtSherpa) {
-        txtSherpa.innerText = sherpaInfo.nombre || 'Equipo en Acción®';
-      }
+      if (txtSherpa) txtSherpa.textContent = sherpaNom;
     });
 
-    function procesarDiagnostico(event) {
-      event.preventDefault();
-      const btn = document.getElementById('btnSubmit');
-      btn.disabled = true;
-      btn.innerText = "PROCESANDO REGISTRO...";
+    function procesarRegistro(e) {
+      e.preventDefault();
 
-      const nombre = document.getElementById('inputNombre').value.trim();
-      const telefono = document.getElementById('inputTelefono').value.trim();
-      const sedeSelect = document.getElementById('pregSede');
-      const sedeTxt = sedeSelect.options[sedeSelect.selectedIndex].text;
-      const rolSelect = document.getElementById('pregRol');
-      const rolTxt = rolSelect.options[rolSelect.selectedIndex].text;
+      const nombre = document.getElementById('reg-nombre').value.trim();
+      const telefono = document.getElementById('reg-telefono').value.trim();
+      const sede = document.getElementById('reg-sede').value;
+      const proposito = document.getElementById('reg-proposito').value;
 
-      armarPestañaGracias(nombre, telefono, sedeTxt, rolTxt);
-    }
-
-    function armarPestañaGracias(nombre, telefono, sede, rol) {
-      document.getElementById('formCapture').classList.add('hidden');
-      document.getElementById('thanksScreen').classList.remove('hidden');
-
-      const btnReverse = document.getElementById('btnReverseTrigger');
-
-      if (sherpaInfo.telefono) {
-        const telLimpio = sherpaInfo.telefono.length === 10 ? `521${sherpaInfo.telefono}` : sherpaInfo.telefono;
-        const nomSherpa = sherpaInfo.nombre || 'Sherpa';
-        
-        const mensaje = `¡Hola ${nomSherpa}! 👋🏼 Acabo de registrarme para La Nueva Era:\n\n` +
-                        `👤 *Nombre:* ${nombre}\n` +
-                        `📱 *WhatsApp:* ${telefono}\n` +
-                        `📍 *Sede:* ${sede}\n` +
-                        `🎯 *Interés:* ${rol}\n\n` +
-                        `Confirmando mi lugar en la cordada. ¡Nos vemos en la transmisión! 👊💥`;
-
-        const waUrl = `https://wa.me/${telLimpio}?text=${encodeURIComponent(mensaje)}`;
-        btnReverse.href = waUrl;
-        btnReverse.style.display = 'inline-flex';
-      } else {
-        btnReverse.style.display = 'none';
+      if (telefono.length !== 10) {
+        alert("Por favor ingresa un número celular de WhatsApp válido a 10 dígitos.");
+        return;
       }
+
+      // Payload condensado (< 450 caracteres) para WhatsApp
+      const mensajeWA = 
+        `¡Hola ${sherpaNom}! 👋🏼 Acabo de apartar mi lugar para La Nueva Era:\n\n` +
+        `👤 *Nombre:* ${nombre}\n` +
+        `📱 *WhatsApp:* ${telefono}\n` +
+        `📍 *Sede:* ${sede}\n` +
+        `🎯 *Propósito:* ${proposito}\n\n` +
+        `Confirmando mi lugar en la cordada. ¡Listo para la transmisión! 👊💥`;
+
+      const linkWa = `https://wa.me/${sherpaTel}?text=${encodeURIComponent(mensajeWA)}`;
+
+      // Actualizar botón de WhatsApp y alternar pantallas
+      const btnWa = document.getElementById('btn-wa-confirmar');
+      if (btnWa) {
+        btnWa.setAttribute('href', linkWa);
+      }
+
+      const formReg = document.getElementById('form-registro');
+      if (formReg) formReg.classList.add('hidden');
+
+      const thanksSc = document.getElementById('thanksScreen');
+      if (thanksSc) thanksSc.classList.remove('hidden');
+
+      // Redirigir de forma reactiva a WhatsApp
+      window.open(linkWa, '_blank');
     }
   </script>
 </body>
