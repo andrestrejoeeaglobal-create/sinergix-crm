@@ -2000,19 +2000,37 @@
       if (!texto) return;
       let nombre = "";
       let tel = "";
+      let objetivo = "";
 
-      const nomMatch = texto.match(/(?:Nombre|Soy|Cliente|Prospecto)\s*[:\*]?\s*([^\n\*]+)/i);
+      const nomMatch = texto.match(/(?:Nombre)\s*[:\*]?\s*([^\n\*]+)/i) || texto.match(/(?:Soy|Cliente|Prospecto)\s*[:\*]?\s*([^\n\*]+)/i);
       if (nomMatch) nombre = nomMatch[1].trim();
 
       const telMatch = texto.match(/(?:Celular|Teléfono|Tel|WhatsApp)\s*[:\*]?\s*([+\d\s-]+)/i) || texto.match(/(\+?52\s?\d{10}|\d{10})/);
       if (telMatch) tel = telMatch[1].replace(/\D/g, '');
 
+      const objMatch = texto.match(/(?:Objetivo)\s*[:\*]?\s*([^\n\*]+)/i);
+      if (objMatch) objetivo = objMatch[1].trim();
+
       if (nombre && document.getElementById('input-nuevo-nombre')) document.getElementById('input-nuevo-nombre').value = nombre;
       if (tel && document.getElementById('input-nuevo-tel')) document.getElementById('input-nuevo-tel').value = tel;
 
-      if (nombre || tel) {
-        showToast('Datos de WhatsApp extraídos automáticamente', 'success');
+      let clasificacion = "confianza";
+      let etiqueta = "Cliente Potencial";
+
+      const objLower = objetivo.toLowerCase();
+      if (objLower.includes("sherpa") || objLower.includes("ingresos") || objLower.includes("negocio")) {
+        clasificacion = "capacidad";
+        etiqueta = "Aspirante a Sherpa";
+      } else if (objetivo) {
+        clasificacion = "cliente_potencial";
+        etiqueta = "Cliente Potencial";
       }
+
+      if (nombre || tel || objetivo) {
+        showToast(`Datos extraídos (${etiqueta}): ${nombre || 'Prospecto'}`, 'success');
+      }
+
+      return { nombre, telefono: tel, objetivo, clasificacion, etiqueta };
     }
 
     // Inicio Asíncrono con Bloqueo de Inicialización (DOMContentLoaded)

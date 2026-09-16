@@ -1330,3 +1330,10 @@ async def telegram_webhook(request: Request, db: Any = Depends(get_db)):
         return {"status": "processed", "chat_id": chat_id}
 
     return {"status": "ignored"}
+
+
+from .tilo_assistant import procesar_respuesta_tilo
+
+@app.post("/api/tilo/qualify")
+def qualify_lead_tilo(payload: dict):
+    return procesar_respuesta_tilo(payload)
