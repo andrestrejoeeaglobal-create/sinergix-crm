@@ -8,12 +8,12 @@ from typing import Any, Dict, List
 
 def generar_briefing_matutino(db: Any, sherpa_id: str = "admin") -> Dict[str, Any]:
     """Genera el briefing diario a las 8:00 AM para el Sherpa basado 100% en MongoDB en vivo."""
-    filtro = {} if sherpa_id == "admin" else {"sherpa_id": sherpa_id}
+    filtro = {} if (sherpa_id in ["admin", "s1"] or not sherpa_id) else {"sherpa_id": sherpa_id}
 
     ahora = datetime.now(timezone.utc)
     fecha_str = ahora.strftime("%Y-%m-%d")
 
-    sherpa_doc = db.sherpas.find_one({"_id": "s1"}) if sherpa_id == "admin" else db.sherpas.find_one({"_id": sherpa_id})
+    sherpa_doc = db.sherpas.find_one({"rol": "admin"}) or db.sherpas.find_one({"_id": sherpa_id}) or db.sherpas.find_one()
     sherpa_nombre = sherpa_doc.get("nombre", "Sherpa") if sherpa_doc else "Sherpa Admin"
 
     # 1. Consultar leads reales en MongoDB

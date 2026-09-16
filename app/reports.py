@@ -133,7 +133,7 @@ def obtener_sprint_history(db: Any, sherpa_id: str = "admin") -> Dict[str, Any]:
 
 def obtener_salud_cartera_reporte(db: Any, sherpa_id: str = "admin") -> Dict[str, Any]:
     """Genera la tabla de Salud de Cartera en vivo desde MongoDB."""
-    filtro = {} if sherpa_id == "admin" else {"sherpa_id": sherpa_id}
+    filtro = {} if (sherpa_id in ["admin", "s1"] or not sherpa_id) else {"sherpa_id": sherpa_id}
     filtro["is_cancelled"] = {"$ne": True}
 
     leads = list(db.leads.find(filtro))
@@ -178,12 +178,12 @@ def obtener_salud_cartera_reporte(db: Any, sherpa_id: str = "admin") -> Dict[str
 
 def obtener_radar_multiplicadores(db: Any, sherpa_id: str = "admin") -> Dict[str, Any]:
     """Genera el Radar de Multiplicadores en vivo desde MongoDB."""
-    filtro = {} if sherpa_id == "admin" else {"sherpa_id": sherpa_id}
+    filtro = {} if (sherpa_id in ["admin", "s1"] or not sherpa_id) else {"sherpa_id": sherpa_id}
     sherpas = list(db.sherpas.find(filtro))
 
     lideres = []
     for s in sherpas:
-        if s.get("_id") == "s1":
+        if s.get("rol") == "admin" and len(sherpas) > 1:
             continue
         reclutas = db.leads.count_documents({"sherpa_id": s["_id"]})
         if reclutas >= 3:
