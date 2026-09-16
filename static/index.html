@@ -1643,19 +1643,21 @@
         badge: "Despliegue Terreno",
         render: (nombre, sede, linkRef) => {
           const primerNombre = (nombre || '').trim().split(' ')[0] || 'Líder';
-          const plaza = sede || 'Puebla (Lun 21 Sep)';
-          return `⚡ *GIRA DE PODER 2026: DESPLIEGUE PUEBLA & TLAXCALA* ⚡\n\n` +
-            `Hola, *${primerNombre}*. Has sido seleccionado por tu liderazgo para el despliegue en terreno:\n\n` +
-            `📅 *Del 21 al 24 de septiembre*\n` +
-            `🏆 *Bolsa:* $10,000 MXN en efectivo por ciudad al equipo campeón.\n\n` +
-            `📍 *Programa en oficina (${plaza}):*\n` +
-            `• 10:00 - 12:00: Taller Élite de Prospección y CRM.\n` +
-            `• 12:00 - 14:00: Aplicación Práctica en Terreno.\n` +
-            `• 14:00 - 15:00: Receso Estratégico.\n` +
-            `• 15:00 - 18:00: Citas y Cierres en Vivo.\n\n` +
-            `🎟️ *Entrada:* $500 MXN (reembolsable) o 5 cajas a tu nombre.\n\n` +
-            `👉 *Responde a este mensaje* para confirmar tu lugar antes del cierre de cupos.\n\n` +
-            `Detalles de la cordada: ${linkRef}`;
+          const plaza = sede || 'Puebla';
+          const plazaCorta = plaza.split(' ')[0].replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ]/g, '') || 'Puebla';
+          return `Hola, ${primerNombre}. Te escribo directo porque para este arranque en ${plazaCorta} necesito a la gente con la que sé que se puede construir en grande.\n` +
+            `Vamos con todo en la Gira de Poder 2026 y quiero que estés al frente en nuestro equipo:\n\n` +
+            `📅 Fechas de la gira: Del 21 al 24 de septiembre\n` +
+            `📍 Nuestra cita (${plazaCorta}): ${plaza} en la oficina\n` +
+            `🏆 Bolsa directa: $10,000 MXN en efectivo por plaza al equipo con mejores resultados\n\n` +
+            `La agenda de ese día:\n` +
+            `• 10:00 - 12:00 Taller intensivo de prospección y CRM\n` +
+            `• 12:00 - 14:00 Aplicación y prospección en campo\n` +
+            `• 14:00 - 15:00 Comida y receso\n` +
+            `• 15:00 - 18:00 Citas, consultas de salud y cierres en vivo\n\n` +
+            `🎟️ El acceso son $500 MXN (100% reembolsables en producto) o cubrirlo con 5 cajas a tu nombre.\n\n` +
+            `Los lugares en ${plazaCorta} están topados por espacio. Confírmame aquí mismo para apartar tu lugar en el equipo y regístrate en el enlace para tener tus datos listos:\n` +
+            `👉 ${linkRef}`;
         }
       },
       diagnostico_metabolico: {

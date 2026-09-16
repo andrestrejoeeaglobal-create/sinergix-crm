@@ -131,11 +131,11 @@
           </select>
         </div>
 
-        <!-- BOTÓN CTA VISIBLE CON PADDING SUFICIENTE -->
+        <!-- BOTÓN CTA VISIBLE UNIFICADO -->
         <div class="pt-4 pb-2">
           <button type="submit" id="btn-submit-registro" 
                   class="touch-target w-full bg-gradient-to-r from-ea-corporate to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-extrabold text-base py-4 px-6 rounded-2xl shadow-lg shadow-blue-500/30 transition-all flex items-center justify-center gap-2 transform active:scale-95 cursor-pointer">
-            <span>APARTAR MI LUGAR EN LA CORDADA</span>
+            <span>¡SÍ, SÍ VOY A PARTICIPAR!</span>
             <i class="fa-solid fa-flag text-ea-yellow"></i>
           </button>
         </div>
@@ -145,16 +145,16 @@
         </p>
       </form>
 
-      <!-- PANTALLA 2: CONFIRMACIÓN Y TRIGGER INVERSO -->
+      <!-- PANTALLA 2: CONFIRMACIÓN Y NOTIFICACIÓN DE ACEPTACIÓN -->
       <div id="thanksScreen" class="hidden text-center py-6 space-y-5 fade-in">
         <div class="w-16 h-16 bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400 rounded-full flex items-center justify-center mx-auto text-2xl shadow-inner">
           <i class="fa-solid fa-check-double"></i>
         </div>
 
         <div class="space-y-2">
-          <h3 class="text-2xl font-black text-slate-900 dark:text-white">¡Lugar Pre-Registrado!</h3>
+          <h3 class="text-2xl font-black text-slate-900 dark:text-white">¡Lugar Confirmado en el Equipo!</h3>
           <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-sm mx-auto">
-            Para confirmar tu sintonía en la Transmisión del 16 de sep y asegurar tu acceso a la gira, envía tu confirmación por WhatsApp a tu Sherpa:
+            Tu aceptación ha sido procesada. Envía tu notificación de confirmación directamente por WhatsApp a tu Sherpa para asegurar tu lugar:
           </p>
         </div>
 
@@ -162,12 +162,12 @@
           <a id="btn-wa-confirmar" href="#" target="_blank"
              class="touch-target w-full bg-[#25D366] hover:bg-[#20bd5a] text-white font-black text-base py-4 px-6 rounded-2xl shadow-xl shadow-emerald-600/30 flex items-center justify-center gap-2 transition-all transform active:scale-95">
             <i class="fa-brands fa-whatsapp text-2xl"></i>
-            <span>Confirmar mi Lugar por WhatsApp</span>
+            <span>Enviar Notificación de Aceptación por WhatsApp</span>
           </a>
         </div>
 
         <p class="text-[11px] text-slate-400 italic">
-          Se abrirá WhatsApp con tu ficha pre-llenada lista para enviar en 1 clic.
+          Se abrirá WhatsApp con tu notificación de aceptación lista para enviar en 1 clic.
         </p>
       </div>
 
@@ -230,14 +230,14 @@
         return;
       }
 
-      // Payload condensado (< 450 caracteres) para WhatsApp
+      // Notificación de Aceptación (< 450 caracteres) para WhatsApp
       const mensajeWA = 
-        `¡Hola ${sherpaNom}! 👋🏼 Acabo de apartar mi lugar para La Nueva Era:\n\n` +
+        `¡Hola ${sherpaNom}! 👋🏼 ¡Sí, sí voy a participar en la Gira de Poder 2026!:\n\n` +
         `👤 *Nombre:* ${nombre}\n` +
         `📱 *WhatsApp:* ${telefono}\n` +
         `📍 *Sede:* ${sede}\n` +
         `🎯 *Propósito:* ${proposito}\n\n` +
-        `Confirmando mi lugar en la cordada. ¡Listo para la transmisión! 👊💥`;
+        `Confirmando mi participación en el equipo. ¡Listo para arrancar con todo! 👊💥`;
 
       const linkWa = `https://wa.me/${sherpaTel}?text=${encodeURIComponent(mensajeWA)}`;
 
