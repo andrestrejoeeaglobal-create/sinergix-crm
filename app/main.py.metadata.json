@@ -1,0 +1,4 @@
+{
+  "summary": "Remover la inserción de seed data (leads l1, l2, l3) del lifespan en app/main.py para garantizar una BD 100% limpia.",
+  "updatedAt": "2026-08-31T10:44:59.286645400Z"
+}

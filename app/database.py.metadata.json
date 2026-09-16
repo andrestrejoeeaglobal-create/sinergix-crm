@@ -1,0 +1,4 @@
+{
+  "summary": "Actualizar app/database.py con fallback automático a mongomock en desarrollo si MongoDB no está disponible en localhost.",
+  "updatedAt": "2026-08-31T10:39:07.484804Z"
+}

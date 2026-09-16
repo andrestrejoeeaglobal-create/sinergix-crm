@@ -1,0 +1,4 @@
+{
+  "summary": "Agregar import os en app/services/ecosystem_bus_service.py para corregir NameError.",
+  "updatedAt": "2026-08-31T10:30:27.822097300Z"
+}

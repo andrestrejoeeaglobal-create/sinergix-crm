@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  sinergix-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sinergix-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - MONGODB_URI=mongodb://sinergix-db:27017
+      - MONGODB_DB_NAME=sinergix_crm
+      - ENVIRONMENT=production
+      - PORT=8000
+    depends_on:
+      - sinergix-db
+    networks:
+      - sinergix-net
+
+  sinergix-db:
+    image: mongo:7.0
+    container_name: sinergix-db
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - sinergix-net
+
+networks:
+  sinergix-net:
+    driver: bridge
+
+volumes:
+  mongodb_data:
+    driver: local

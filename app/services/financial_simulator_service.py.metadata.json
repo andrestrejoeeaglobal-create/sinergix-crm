@@ -1,0 +1,4 @@
+{
+  "summary": "Refactorizar app/services/financial_simulator_service.py para calcular MRR y proyecciones 100% dinámicas desde MongoDB.",
+  "updatedAt": "2026-08-31T10:45:41.425503Z"
+}

@@ -1,0 +1,81 @@
+"""SafetyEngine COFEPRIS — middleware de compliance para todo mensaje saliente.
+
+Fuente: sinergix-dev/safety_engine.py (versión probada), adaptado como módulo del CRM.
+Regla dura: NINGÚN mensaje sale sin pasar por validate().
+"""
+import re
+from typing import Any, Dict, List
+
+# (patrón, severidad, categoría, sustitución segura)
+REGLAS = [
+    (re.compile(r"\bcura(?:r|s|n)?\b", re.I), "alta", "atribución terapéutica", "apoya el bienestar"),
+    (re.compile(r"\btrata(?:r|s|n|miento)\b", re.I), "alta", "vocabulario clínico", "acompaña tu proceso"),
+    (re.compile(r"\bpaciente[s]?\b", re.I), "alta", "vocabulario clínico", "Ascendans"),
+    (re.compile(r"\benfermedad(?:es)?\b", re.I), "alta", "mención de enfermedad", "desafío de bienestar"),
+    (re.compile(r"\bdiagnóstic[oa]s?\b", re.I), "alta", "vocabulario clínico", "evaluación de bienestar"),
+    (re.compile(r"\breceta[s]?\b", re.I), "alta", "vocabulario clínico", "plan nutricional"),
+    (re.compile(r"\bquema(?:r|s|n)?\s+(la\s+)?grasa\b", re.I), "alta", "promesa de pérdida", "promueve la ignición mitocondrial para usar ácidos grasos"),
+    (re.compile(r"\b(?:pierde|baja|adelgaz)\w*\s+(de\s+)?(peso|kilos)\b", re.I), "alta", "promesa de pérdida", "apoya la composición corporal"),
+    (re.compile(r"\belimina\w*\b", re.I), "media", "resultado garantizado", "favorece la regeneración y reducción de"),
+    (re.compile(r"\bgarantizamos?\b", re.I), "alta", "garantía de resultados", "buscamos que"),
+    (re.compile(r"\b100%\s+(eficaz|garantizado|seguro)\b", re.I), "alta", "garantía de resultados", "con constancia y datos"),
+    (re.compile(r"\bdiabetes|hipertensión|cáncer|cancer|colesterol\b", re.I), "alta", "mención de enfermedad", "sensibilidad a la insulina / condición de salud"),
+    (re.compile(r"\bantes\s+y\s+después\b", re.I), "media", "imagen antes/después", "comparativa de métricas personales"),
+    (re.compile(r"\bdesaparec\w+\b", re.I), "media", "resultado garantizado", "se reduce"),
+]
+
+
+def validate(texto: str) -> dict:
+    """Audita un texto. Devuelve {ok, hallazgos, texto_seguro}.
+
+    ok=False → el mensaje NO debe enviarse tal cual; usar texto_seguro.
+    """
+    hallazgos = []
+    texto_seguro = texto
+    for patron, severidad, categoria, sustituto in REGLAS:
+        m = patron.search(texto_seguro)
+        if m:
+            hallazgos.append({"termino": m.group(0), "severidad": severidad, "categoria": categoria})
+            texto_seguro = patron.sub(sustituto, texto_seguro)
+    return {"ok": not hallazgos, "hallazgos": hallazgos, "texto_seguro": texto_seguro}
+
+
+def assert_seguro(texto: str) -> str:
+    """Devuelve el texto seguro o lanza ValueError si tiene hallazgos de severidad alta."""
+    r = validate(texto)
+    altas = [h for h in r["hallazgos"] if h["severidad"] == "alta"]
+    if altas:
+        raise ValueError(f"Mensaje bloqueado por SafetyEngine: {altas}")
+    return r["texto_seguro"]
+
+
+def auditar_texto_cofepris(texto: str) -> Dict[str, Any]:
+    """Linter normativo en tiempo real para el frontend.
+
+    Retorna diccionario compatible con COFEPRISCheckOut:
+    {
+       "es_seguro": bool,
+       "palabras_detectadas": List[str],
+       "sugerencias": List[{termino_prohibido, reemplazo_normativo, motivo}],
+       "texto_sanitizado": str
+    }
+    """
+    val = validate(texto)
+    palabras = [h["termino"] for h in val["hallazgos"]]
+    sugerencias = []
+
+    for patron, severidad, categoria, sustituto in REGLAS:
+        m = patron.search(texto)
+        if m:
+            sugerencias.append({
+                "termino_prohibido": m.group(0),
+                "reemplazo_normativo": sustituto,
+                "motivo": f"Infracción COFEPRIS: {categoria} ({severidad})"
+            })
+
+    return {
+        "es_seguro": val["ok"],
+        "palabras_detectadas": palabras,
+        "sugerencias": sugerencias,
+        "texto_sanitizado": val["texto_seguro"]
+    }

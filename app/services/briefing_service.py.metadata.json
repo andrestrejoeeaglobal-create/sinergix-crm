@@ -1,0 +1,4 @@
+{
+  "summary": "Refactorizar app/services/briefing_service.py para consultar MongoDB exclusivamente en vivo sin datos quemados.",
+  "updatedAt": "2026-08-31T10:45:29.558488100Z"
+}

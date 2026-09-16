@@ -1,0 +1,4 @@
+{
+  "summary": "Refactorizar app/reports.py para calcular Salud de Cartera, Radar y Bono Retiro dinámicamente desde MongoDB sin datos duros ni ZeroDivisionError.",
+  "updatedAt": "2026-08-31T10:45:35.324534600Z"
+}

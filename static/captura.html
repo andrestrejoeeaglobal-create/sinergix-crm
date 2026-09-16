@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-slate-50 text-slate-900">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Diagnóstico & Evaluación — Equipo en Acción®</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            ea: {
+              red: '#B70E0C',
+              pink: '#F29FC5',
+              blue: '#1C75BC',
+              green: '#3AAA35',
+              yellow: '#FFCC00',
+              navy: '#0F172A',
+              bg: '#F8FAFC'
+            }
+          },
+          boxShadow: {
+            'clinical-sm': '0 1px 3px 0 rgba(15, 23, 42, 0.08)',
+            'clinical-md': '0 4px 12px -2px rgba(15, 23, 42, 0.10)',
+            'clinical-lg': '0 12px 24px -4px rgba(15, 23, 42, 0.12)'
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    .touch-target { min-height: 48px; min-width: 48px; }
+    .fade-in { animation: fadeIn 0.3s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col font-sans bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors duration-200">
+
+  <!-- Header TCK-2026-GOV-HEADER-001 -->
+  <header class="w-full bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 sm:px-6 py-4 shadow-clinical-sm">
+    <div class="max-w-xl mx-auto flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="h-10 min-w-[100px] flex items-center shrink-0">
+          <img src="./assets/images/logo_ea.png" 
+               onerror="this.onerror=null; this.src='https://equipoenaccion.net/images/logo_ea.png';" 
+               width="140" 
+               height="40" 
+               alt="Equipo en Acción®" 
+               class="h-full w-auto object-contain shrink-0" />
+        </div>
+        <div>
+          <h1 class="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white">Encuesta de Diagnóstico</h1>
+          <p class="text-[11px] font-bold text-ea-blue dark:text-blue-400">EQUIPO EN ACCIÓN® • T.I.L.O.</p>
+        </div>
+      </div>
+      <span class="px-2.5 py-1 rounded-xl text-[10px] font-black uppercase bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+        100% Gratuito
+      </span>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="flex-grow flex items-center justify-center p-4 sm:p-6">
+    <div class="w-full max-w-lg bg-white dark:bg-slate-800 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-700 shadow-clinical-lg space-y-6 fade-in">
+
+      <!-- FORMULARIO DE DIAGNÓSTICO -->
+      <form id="formCapture" onsubmit="procesarDiagnostico(event)" class="space-y-5">
+        <div class="space-y-1 text-center sm:text-left border-b border-slate-100 dark:border-slate-700 pb-4">
+          <h2 class="text-lg font-black text-slate-900 dark:text-white flex items-center justify-center sm:justify-start gap-2">
+            <i class="fa-solid fa-clipboard-check text-ea-blue"></i> Diagnóstico de Salud & Rendimiento
+          </h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400">
+            Atendido por tu Sherpa: <span id="txtSherpaNombre" class="font-bold text-slate-800 dark:text-slate-200">Cargando...</span>
+          </p>
+        </div>
+
+        <!-- Campos de Datos Personales -->
+        <div class="space-y-4">
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-600 dark:text-slate-300 mb-1">Tu Nombre Completo *</label>
+            <input type="text" id="inputNombre" required placeholder="Ej: María Hernández" class="w-full px-4 py-3 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm font-semibold focus:outline-none focus:border-ea-blue transition">
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-600 dark:text-slate-300 mb-1">Tu Número Celular (WhatsApp) *</label>
+            <input type="tel" id="inputTelefono" required placeholder="Ej: 5512345678" class="w-full px-4 py-3 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-sm font-mono font-semibold focus:outline-none focus:border-ea-blue transition">
+          </div>
+        </div>
+
+        <!-- Preguntas de Diagnóstico -->
+        <div class="space-y-4 pt-2">
+          <div class="p-4 bg-slate-50 dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2">
+            <label class="block text-xs font-extrabold text-slate-800 dark:text-slate-200">1. ¿Cuál es tu principal objetivo de salud o ingresos?</label>
+            <select id="pregObjetivo" class="w-full px-3 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-xs font-semibold focus:outline-none focus:border-ea-blue">
+              <option value="energia">Aumentar Energía y Metabolismo Cellular</option>
+              <option value="peso">Control de Peso & Longevidad</option>
+              <option value="ingresos">Generar Ingresos Residuales como Sherpa</option>
+              <option value="rendimiento">Optimización de Rendimiento Deportivo</option>
+            </select>
+          </div>
+
+          <div class="p-4 bg-slate-50 dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2">
+            <label class="block text-xs font-extrabold text-slate-800 dark:text-slate-200">2. ¿Dispones de 15 min al día para seguir una estrategia estructurada?</label>
+            <div class="flex gap-4 text-xs font-bold">
+              <label class="flex items-center gap-1.5 cursor-pointer">
+                <input type="radio" name="pregTiempo" value="si" checked class="accent-ea-blue"> Sí, totalmente
+              </label>
+              <label class="flex items-center gap-1.5 cursor-pointer">
+                <input type="radio" name="pregTiempo" value="parcial" class="accent-ea-blue"> A veces
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Aviso y Consentimiento -->
+        <div class="p-3 bg-indigo-50 dark:bg-indigo-950/50 rounded-xl border border-indigo-100 dark:border-indigo-900 text-[11px] text-indigo-900 dark:text-indigo-200 space-y-1">
+          <p class="font-bold"><i class="fa-solid fa-shield-halved mr-1"></i> Protección de Datos T.I.L.O.</p>
+          <p class="text-[10px] leading-tight text-indigo-700 dark:text-indigo-300">
+            Al presionar enviar, aceptas ser contactado por tu Sherpa vía WhatsApp para entregarte tus resultados de diagnóstico.
+          </p>
+        </div>
+
+        <button type="submit" id="btnSubmit" class="touch-target w-full bg-gradient-to-r from-ea-blue to-emerald-600 hover:from-blue-700 hover:to-emerald-700 text-white font-extrabold py-4 rounded-2xl shadow-clinical-md text-xs uppercase tracking-wider transition flex items-center justify-center gap-2">
+          <span>ENVIAR DIAGNÓSTICO AHORA</span> <i class="fa-solid fa-paper-plane"></i>
+        </button>
+      </form>
+
+      <!-- PANTALLA DE AGRADECIMIENTO CON DISPARADOR INVERSO (REVERSE TRIGGER) -->
+      <div id="thanksScreen" class="hidden text-center space-y-6 py-4 fade-in">
+        <div class="w-16 h-16 rounded-3xl bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-3xl mx-auto shadow-clinical-sm">
+          <i class="fa-solid fa-circle-check"></i>
+        </div>
+
+        <div class="space-y-2">
+          <h2 class="text-xl font-black text-slate-900 dark:text-white">¡Diagnóstico Registrado!</h2>
+          <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed max-w-sm mx-auto">
+            Tus respuestas han sido procesadas. Haz clic abajo para notificar directamente a tu Sherpa por WhatsApp y recibir tu evaluación.
+          </p>
+        </div>
+
+        <a id="btnReverseTrigger" href="#" target="_blank" class="touch-target inline-flex items-center justify-center w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-4 rounded-2xl shadow-clinical-md text-xs uppercase tracking-wider transition gap-2">
+          <i class="fa-brands fa-whatsapp text-lg"></i> NOTIFICAR A MI SHERPA POR WHATSAPP
+        </a>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- FOOTER CANÓNICO -->
+  <footer class="w-full bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-4 px-4 text-center text-[11px] text-slate-500">
+    <p class="font-bold text-slate-800 dark:text-slate-300">© 2026 Equipo en Acción®. Todos los derechos reservados.</p>
+  </footer>
+
+  <script>
+    let sherpaInfo = { nombre: 'Tu Sherpa', telefono: '5215500000000' };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const telParam = urlParams.get('tel') || urlParams.get('ref') || '5215500000000';
+      const nomParam = urlParams.get('nom') || 'Tu Sherpa';
+
+      sherpaInfo = {
+        nombre: decodeURIComponent(nomParam),
+        telefono: telParam.replace(/\D/g, '')
+      };
+
+      document.getElementById('txtSherpaNombre').innerText = sherpaInfo.nombre;
+    });
+
+    function procesarDiagnostico(event) {
+      event.preventDefault();
+      const btn = document.getElementById('btnSubmit');
+      btn.disabled = true;
+      btn.innerText = "PROCESANDO...";
+
+      const nombre = document.getElementById('inputNombre').value.trim();
+      const telefono = document.getElementById('inputTelefono').value.trim();
+      const objetivoSelect = document.getElementById('pregObjetivo');
+      const objetivoTxt = objetivoSelect.options[objetivoSelect.selectedIndex].text;
+      
+      const tiempoRadio = document.querySelector('input[name="pregTiempo"]:checked');
+      const tiempoTxt = tiempoRadio ? tiempoRadio.value : 'si';
+
+      armarPestañaGracias(nombre, telefono, objetivoTxt, tiempoTxt);
+    }
+
+    function armarPestañaGracias(nombreCliente, telCliente, objetivo, tiempo) {
+      document.getElementById('formCapture').classList.add('hidden');
+      document.getElementById('thanksScreen').classList.remove('hidden');
+
+      const telLimpio = sherpaInfo.telefono.length === 10 ? `521${sherpaInfo.telefono}` : sherpaInfo.telefono;
+      
+      // Payload condensado sintético (< 500 caracteres)
+      const mensaje = `*NUEVA EVALUACIÓN REGISTRADA* 📋\n` +
+                      `• *Nombre:* ${nombreCliente}\n` +
+                      `• *Celular:* ${telCliente}\n` +
+                      `• *Objetivo:* ${objetivo}\n` +
+                      `• *Tiempo:* ${tiempo === 'si' ? 'Disponible (15m)' : 'Parcial'}\n` +
+                      `• *Fecha:* ${new Date().toLocaleDateString('es-MX')}`;
+
+      const waUrl = `https://wa.me/${telLimpio}?text=${encodeURIComponent(mensaje)}`;
+
+      const btnReverse = document.getElementById('btnReverseTrigger');
+      btnReverse.href = waUrl;
+    }
+  </script>
+</body>
+</html>
