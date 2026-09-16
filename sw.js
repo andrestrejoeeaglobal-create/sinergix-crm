@@ -1,8 +1,7 @@
-const CACHE_NAME = 'sinergix-crm-v9';
+const CACHE_NAME = 'sinergix-crm-v10';
 const ASSETS = [
   './',
   './index.html',
-  './captura.html',
   './manifest.json',
   './assets/images/logo_ea.png'
 ];
@@ -37,10 +36,18 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Network First para peticiones HTML para garantizar actualización en vivo
+  // Network First sin caché de disco para peticiones HTML para garantizar actualización en vivo
   if (event.request.mode === 'navigate' || event.request.headers.get('accept')?.includes('text/html')) {
     event.respondWith(
-      fetch(event.request).catch(() => caches.match('./index.html'))
+      fetch(event.request, { cache: 'no-cache' })
+        .then((response) => {
+          if (response && response.status === 200) {
+            const responseClone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
+          }
+          return response;
+        })
+        .catch(() => caches.match(event.request).then((res) => res || caches.match('./index.html')))
     );
     return;
   }
