@@ -1116,7 +1116,11 @@
     function renderColumnSelectors() {
       const nc = document.getElementById('nameColumns'); nc.innerHTML = '';
       importHeaders.forEach((h, i) => {
-        let btn = document.createElement('button'); btn.innerText = h;
+        let sampleVal = (importRows[0] && importRows[0][i]) ? String(importRows[0][i]).trim() : '';
+        if (sampleVal.length > 14) sampleVal = sampleVal.substring(0, 11) + '...';
+        let label = sampleVal ? `${h} ("${sampleVal}")` : h;
+
+        let btn = document.createElement('button'); btn.innerText = label;
         btn.className = selectedNameCols.includes(i) ? "px-3 py-1.5 rounded-xl border text-xs font-bold bg-indigo-600 text-white transition shadow-sm" : "px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-600 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-700 transition";
         btn.onclick = () => {
           if (selectedNameCols.includes(i)) {
@@ -1133,7 +1137,11 @@
 
       const pc = document.getElementById('phoneColumns'); pc.innerHTML = '';
       importHeaders.forEach((h, i) => {
-        let btn = document.createElement('button'); btn.innerText = h;
+        let sampleVal = (importRows[0] && importRows[0][i]) ? String(importRows[0][i]).trim() : '';
+        if (sampleVal.length > 14) sampleVal = sampleVal.substring(0, 11) + '...';
+        let label = sampleVal ? `${h} ("${sampleVal}")` : h;
+
+        let btn = document.createElement('button'); btn.innerText = label;
         btn.className = selectedPhoneCols.includes(i) ? "px-3 py-1.5 rounded-xl border text-xs font-bold bg-emerald-600 text-white transition shadow-sm" : "px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-600 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-700 transition";
         btn.onclick = () => {
           selectedPhoneCols = [i];
