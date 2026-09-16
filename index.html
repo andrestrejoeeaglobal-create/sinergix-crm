@@ -1055,23 +1055,47 @@
         selectedNameCols = [0];
         selectedPhoneCols = [1];
       } else {
-        // Auto-detección inteligente de columnas para encabezados de Google Contacts
+        let phoneValueIndex = -1;
+        let nameColsFound = [];
+
         importHeaders.forEach((h, i) => {
           const lower = h.toLowerCase().trim();
-          if (lower === 'given name' || lower === 'family name' || lower === 'name' || lower.includes('nombre') || lower.includes('contacto')) {
-            if (!selectedNameCols.includes(i)) selectedNameCols.push(i);
+          if (lower === 'given name' || lower === 'first name' || lower === 'family name' || lower === 'name' || lower === 'nombre' || lower.includes('nombre')) {
+            if (!nameColsFound.includes(i)) nameColsFound.push(i);
           }
-          if (lower === 'phone 1 - value' || lower.includes('phone') || lower.includes('telef') || lower.includes('celular') || lower.includes('mobile')) {
-            if (selectedPhoneCols.length === 0) selectedPhoneCols.push(i);
+          if (!lower.includes('type') && (lower === 'phone 1 - value' || lower.includes('value') || lower === 'phone' || lower === 'celular' || lower.includes('telefono') || lower.includes('teléfono'))) {
+            if (phoneValueIndex === -1) phoneValueIndex = i;
           }
         });
 
-        // Fallbacks inteligentes por índice
+        if (phoneValueIndex === -1) {
+          importHeaders.forEach((h, i) => {
+            const lower = h.toLowerCase().trim();
+            if (!lower.includes('type') && (lower.includes('phone') || lower.includes('telef') || lower.includes('celular') || lower.includes('mobile'))) {
+              if (phoneValueIndex === -1) phoneValueIndex = i;
+            }
+          });
+        }
+
+        if (nameColsFound.length > 0) selectedNameCols = nameColsFound;
+        if (phoneValueIndex !== -1) selectedPhoneCols = [phoneValueIndex];
+
         if (selectedNameCols.length === 0 && importHeaders.length > 0) selectedNameCols = [0];
         if (selectedPhoneCols.length === 0 && importHeaders.length > 1) selectedPhoneCols = [1];
-        if (selectedPhoneCols.length === 0 && importHeaders.length === 1) selectedPhoneCols = [0];
       }
 
+      // Verificar si la columna detectada contiene números de teléfono válidos (>= 10 dígitos)
+      let sampleDigits = (importRows[0] && selectedPhoneCols.length > 0 && importRows[0][selectedPhoneCols[0]]) 
+        ? String(importRows[0][selectedPhoneCols[0]]).replace(/\D/g, '') 
+        : '';
+
+      // Si la auto-detección fue 100% exitosa con teléfono válido de Google, IMPORTACIÓN DIRECTA EN 1-CLIC (Sin modal)
+      if (selectedNameCols.length > 0 && selectedPhoneCols.length > 0 && sampleDigits.length >= 10) {
+        prepareFileImport();
+        return;
+      }
+
+      // Si la detección requiere intervención del usuario, abrir el modal de mapeo
       renderColumnSelectors();
       refreshPreviewSample();
       document.getElementById('row-count-display').textContent = `Se detectaron ${importRows.length} contacto(s) en el archivo.`;
