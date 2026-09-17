@@ -1411,38 +1411,48 @@
         const res = await apiFetch('/api/sherpa/briefing');
         if (res.ok) {
           const data = await res.json();
-          document.getElementById('briefing-fecha-txt').innerText = 'Resumen de hoy (' + data.fecha + ')';
-          document.getElementById('briefing-resumen-box').innerText = data.resumen_texto;
+          const elFecha = document.getElementById('briefing-fecha-txt');
+          const elResumen = document.getElementById('briefing-resumen-box');
+          const elKpiPend = document.getElementById('briefing-kpi-pendientes');
+          const elKpiCrit = document.getElementById('briefing-kpi-criticos');
 
-          document.getElementById('briefing-kpi-pendientes').innerText = data.contactos_seguimiento || 0;
-          document.getElementById('briefing-kpi-criticos').innerText = data.sprints_por_vencer || 0;
+          if (elFecha) elFecha.innerText = 'Resumen de hoy (' + (data.fecha || new Date().toLocaleDateString()) + ')';
+          if (elResumen) elResumen.innerText = data.resumen_texto || 'Corte diario del pipeline gerencial.';
+
+          if (elKpiPend) elKpiPend.innerText = data.contactos_seguimiento || 0;
+          if (elKpiCrit) elKpiCrit.innerText = data.sprints_por_vencer || 0;
 
           const list = document.getElementById('briefing-acciones-list');
-          list.innerHTML = '';
-          if (!data.acciones_prioritarias || data.acciones_prioritarias.length === 0) {
-            list.innerHTML = `<div class="col-span-full p-8 text-center text-slate-400 dark:text-slate-500 font-medium text-xs bg-slate-50 dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-700">Base de datos inicializada. No hay prospectos pendientes de contacto.</div>`;
-          } else {
-            data.acciones_prioritarias.forEach(a => {
-              const card = document.createElement('div');
-              card.className = 'p-4 rounded-2xl border flex flex-col justify-between space-y-3 ' + (a.tipo === 'critico' ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 shadow-clinical-sm');
-              card.innerHTML = `
-                <div class="space-y-2">
-                  <div class="flex items-center justify-between">
-                    <span class="font-extrabold text-xs ${a.tipo === 'critico' ? 'text-amber-800 dark:text-amber-300' : 'text-slate-800 dark:text-slate-200'}">${a.nombre}</span>
-                    <span class="text-[9px] px-2 py-0.5 rounded-md font-black uppercase ${a.tipo === 'critico' ? 'bg-amber-200 text-amber-900' : 'bg-slate-200 text-slate-800'}">${a.tipo}</span>
+          if (list) {
+            if (data.acciones_prioritarias && data.acciones_prioritarias.length > 0) {
+              list.innerHTML = '';
+              data.acciones_prioritarias.forEach(a => {
+                const card = document.createElement('div');
+                card.className = 'p-4 rounded-2xl border flex flex-col justify-between space-y-3 ' + (a.tipo === 'critico' ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 shadow-clinical-sm');
+                card.innerHTML = `
+                  <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                      <span class="font-extrabold text-xs ${a.tipo === 'critico' ? 'text-amber-800 dark:text-amber-300' : 'text-slate-800 dark:text-slate-200'}">${a.nombre}</span>
+                      <span class="text-[9px] px-2 py-0.5 rounded-md font-black uppercase ${a.tipo === 'critico' ? 'bg-amber-200 text-amber-900' : 'bg-slate-200 text-slate-800'}">${a.tipo}</span>
+                    </div>
+                    <p class="text-xs text-slate-600 dark:text-slate-300 font-medium leading-relaxed">${a.mensaje}</p>
                   </div>
-                  <p class="text-xs text-slate-600 dark:text-slate-300 font-medium leading-relaxed">${a.mensaje}</p>
-                </div>
-                <button onclick="abrirWaLinkDirecto('${a.lead_id}')" class="touch-target px-3.5 py-2 bg-ea-blue text-white rounded-xl text-xs font-bold self-start hover:bg-blue-700 transition shadow-clinical-sm">
-                  <i class="fa-brands fa-whatsapp mr-1.5"></i> ${a.boton_label}
-                </button>
-              `;
-              list.appendChild(card);
-            });
+                  <button onclick="abrirWaLinkDirecto('${a.lead_id}')" class="touch-target px-3.5 py-2 bg-ea-blue text-white rounded-xl text-xs font-bold self-start hover:bg-blue-700 transition shadow-clinical-sm">
+                    <i class="fa-brands fa-whatsapp mr-1.5"></i> ${a.boton_label}
+                  </button>
+                `;
+                list.appendChild(card);
+              });
+            } else {
+              renderAccionesPrioritarias();
+            }
           }
+        } else {
+          renderAccionesPrioritarias();
         }
       } catch (err) {
-        console.warn('Briefing error:', err);
+        console.warn('Briefing error, ejecutando renderAccionesPrioritarias local:', err);
+        renderAccionesPrioritarias();
       }
     }
 
@@ -1577,9 +1587,85 @@
         else if (l.respondio) responded++;
         else pending++;
       });
-      document.getElementById('count-pending').innerText = pending;
-      document.getElementById('count-responded').innerText = responded;
-      document.getElementById('count-cancelled').innerText = cancelled;
+      const elP = document.getElementById('count-pending');
+      const elR = document.getElementById('count-responded');
+      const elC = document.getElementById('count-cancelled');
+
+      if (elP) elP.innerText = pending;
+      if (elR) elR.innerText = responded;
+      if (elC) elC.innerText = cancelled;
+
+      renderAccionesPrioritarias();
+    }
+
+    function renderAccionesPrioritarias() {
+      const contenedor = document.getElementById('contenedor-acciones-prioritarias') || 
+                         document.getElementById('briefing-acciones-list') ||
+                         document.querySelector('#acciones-prioritarias-box');
+      
+      if (!contenedor) return;
+
+      const leads = Array.isArray(todosLosLeads) ? todosLosLeads : [];
+
+      // Criterio Real de Pendiente de Primer Contacto
+      const pendientes = leads.filter(l => {
+        if (l.is_cancelled) return false;
+        const esLeadInicial = (l.tag === 'LEAD' || l.etiqueta === 'LEAD' || l.etapa_pipeline === 'Lead' || !l.mensaje_enviado || !l.contactado);
+        const noHaRespondido = !l.respondio && !l.yaRespondio;
+        return esLeadInicial && noHaRespondido;
+      });
+
+      const kpiPend = document.getElementById('briefing-kpi-pendientes');
+      if (kpiPend) kpiPend.innerText = pendientes.length;
+
+      if (pendientes.length === 0) {
+        contenedor.innerHTML = `
+          <div class="col-span-full p-6 text-center text-xs text-slate-400 dark:text-slate-500 font-medium bg-slate-50 dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-700">
+            Todos tus prospectos han sido contactados o están al día.
+          </div>`;
+        return;
+      }
+
+      const topPrioritarios = pendientes.slice(0, 6);
+
+      let html = `
+        <div class="col-span-full p-3 bg-blue-50/50 dark:bg-blue-950/20 rounded-2xl border border-blue-100 dark:border-blue-900/40 mb-1 flex items-center justify-between">
+          <span class="text-xs font-bold text-ea-blue dark:text-sky-400 flex items-center gap-1.5">
+            <i class="fa-solid fa-bolt text-amber-500"></i> Tienes ${pendientes.length} prospectos pendientes de primer contacto
+          </span>
+          <span class="text-[11px] font-mono text-slate-500 dark:text-slate-400 font-semibold">Mostrando top ${topPrioritarios.length}</span>
+        </div>
+      `;
+
+      topPrioritarios.forEach(lead => {
+        const telLimpio = String(lead.telefono || lead.celular || '').replace(/\D/g, '');
+        const leadId = lead._id || lead.id || telLimpio;
+
+        html += `
+          <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-clinical-sm flex items-center justify-between gap-3">
+            <div class="truncate">
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs font-extrabold text-slate-900 dark:text-white truncate">${lead.nombre}</span>
+                <span class="px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-blue-100 text-ea-blue dark:bg-blue-950 dark:text-blue-300">LEAD</span>
+              </div>
+              <span class="text-[11px] font-mono text-slate-500 dark:text-slate-400 block mt-0.5">${telLimpio || 'Sin teléfono'}</span>
+            </div>
+            <button onclick="registrarEnvioEnUnClic('${leadId}', 'encuesta')" 
+               class="touch-target bg-ea-blue hover:bg-blue-700 text-white text-xs font-extrabold px-3 py-2 rounded-xl flex items-center gap-1.5 shadow-clinical-sm shrink-0 cursor-pointer">
+              <i class="fa-brands fa-whatsapp text-sm"></i>
+              <span>Contactar</span>
+            </button>
+          </div>
+        `;
+      });
+
+      contenedor.innerHTML = html;
+    }
+
+    function marcarComoContactado(leadId) {
+      if (typeof registrarEnvioEnUnClic === 'function') {
+        registrarEnvioEnUnClic(leadId, 'encuesta');
+      }
     }
 
     function renderizarLista() {
