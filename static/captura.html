@@ -74,15 +74,20 @@
           «No venimos solo a vender. Venimos a cambiar la salud de la gente que amamos.»
         </blockquote>
         <p class="text-xs text-slate-500 font-medium">
-          Invitación directa de tu Sherpa: <strong id="lbl-sherpa-nom" class="text-ea-corporate">Andres Trejo</strong>
+          Invitación directa de tu Sherpa: <strong id="lbl-sherpa-nom" class="text-ea-corporate">Sin asignación</strong>
         </p>
+      </div>
+
+      <!-- ALERTA ENLACE INCOMPLETO -->
+      <div id="alert-incompleto" class="hidden bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-300 p-4 rounded-2xl mb-6 text-xs text-center font-bold">
+        ⚠️ Enlace incompleto: No se identificó al Sherpa que te compartió la invitación. Solicita a tu contacto que te reenvíe su enlace personalizado.
       </div>
 
       <!-- FICHA DE DATOS PRECARGADOS (SOLO LECTURA, SIN INPUTS EDITABLES) -->
       <div class="space-y-3 mb-6">
         <div class="bg-slate-50 dark:bg-slate-950 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
           <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Participante</span>
-          <span id="lbl-prospecto-nom" class="text-base font-bold text-slate-800 dark:text-white block">Crisanta</span>
+          <span id="lbl-prospecto-nom" class="text-base font-bold text-slate-800 dark:text-white block">Líder</span>
         </div>
 
         <div class="bg-slate-50 dark:bg-slate-950 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
@@ -103,7 +108,7 @@
 
       <!-- BOTÓN ÚNICO DE CONFIRMACIÓN (1-CLIC) -->
       <div class="space-y-3">
-        <button type="button" onclick="confirmarParticipacion()" 
+        <button type="button" id="btn-confirmar" onclick="confirmarParticipacion()" 
                 class="touch-target w-full bg-gradient-to-r from-ea-corporate to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-black text-lg py-4 px-6 rounded-2xl shadow-xl shadow-blue-500/30 transition-all flex items-center justify-center gap-2 transform active:scale-95 cursor-pointer">
           <span>¡SÍ, SÍ VOY A PARTICIPAR!</span>
           <i class="fa-solid fa-flag text-ea-yellow text-xl"></i>
@@ -134,8 +139,8 @@
     let prospectoNom = "Líder";
     let prospectoTel = "";
     let prospectoSede = "Puebla (Lunes 21 sep)";
-    let sherpaNom = "Andres Trejo";
-    let sherpaTel = "5215512345678";
+    let sherpaNom = "";
+    let sherpaTel = "";
 
     document.addEventListener('DOMContentLoaded', () => {
       const urlParams = new URLSearchParams(window.location.search);
@@ -150,12 +155,13 @@
       if (urlParams.get('sede')) prospectoSede = decodeURIComponent(urlParams.get('sede')).trim();
 
       // Parámetros del Sherpa remitente
-      if (urlParams.get('snom')) sherpaNom = decodeURIComponent(urlParams.get('snom')).trim();
-      else if (urlParams.get('sherpaNom')) sherpaNom = decodeURIComponent(urlParams.get('sherpaNom')).trim();
+      let urlSnom = urlParams.get('snom') || urlParams.get('sherpaNom');
+      let urlStel = urlParams.get('stel') || urlParams.get('sherpaTel') || urlParams.get('ref');
 
-      if (urlParams.get('stel')) sherpaTel = urlParams.get('stel').replace(/\D/g, '');
-      else if (urlParams.get('sherpaTel')) sherpaTel = urlParams.get('sherpaTel').replace(/\D/g, '');
-      else if (urlParams.get('ref')) sherpaTel = urlParams.get('ref').replace(/\D/g, '');
+      if (urlSnom) sherpaNom = decodeURIComponent(urlSnom).trim();
+      else if (localStorage.getItem('sherpa_nombre')) sherpaNom = localStorage.getItem('sherpa_nombre').trim();
+
+      if (urlStel) sherpaTel = urlStel.replace(/\D/g, '');
       else if (localStorage.getItem('sherpa_celular')) sherpaTel = localStorage.getItem('sherpa_celular').replace(/\D/g, '');
 
       // Formatear teléfono del Sherpa
@@ -170,21 +176,53 @@
       const elPropTel = document.getElementById('lbl-prospecto-tel');
       const elPropSede = document.getElementById('lbl-prospecto-sede');
       const elSherpaNom = document.getElementById('lbl-sherpa-nom');
+      const btnConfirmar = document.getElementById('btn-confirmar');
+      const alertIncompleto = document.getElementById('alert-incompleto');
 
       if (elPropNom) elPropNom.textContent = prospectoNom;
       if (elPropTel) elPropTel.textContent = prospectoTel || "Confirmar por WhatsApp";
       if (elPropSede) elPropSede.textContent = prospectoSede;
-      if (elSherpaNom) elSherpaNom.textContent = sherpaNom;
+      if (elSherpaNom) elSherpaNom.textContent = sherpaNom || "No identificado";
+
+      // Validar presencia estricta de Sherpa
+      if (!sherpaNom || !sherpaTel) {
+        if (alertIncompleto) alertIncompleto.classList.remove('hidden');
+        if (btnConfirmar) {
+          btnConfirmar.disabled = true;
+          btnConfirmar.classList.add('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
+        }
+      } else {
+        if (alertIncompleto) alertIncompleto.classList.add('hidden');
+        if (btnConfirmar) {
+          btnConfirmar.disabled = false;
+          btnConfirmar.classList.remove('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
+        }
+      }
     });
 
     function confirmarParticipacion() {
+      if (!sherpaTel || !sherpaNom) {
+        alert("Enlace incompleto: No se identificó al Sherpa que te compartió la invitación. Solicita a tu contacto que te reenvíe su enlace personalizado.");
+        return;
+      }
+
       const mensajeConfirmacion = 
         `¡Hola ${sherpaNom}! ✋🏼 Confirmo que *¡SÍ, SÍ VOY A PARTICIPAR!*\n\n` +
         `📍 *Sede:* ${prospectoSede}\n` +
         `🎯 *Propósito:* Quiero sumarme como Sherpa y abrir brecha en mi plaza (Premio $10,000 MXN)\n\n` +
         `¡Apártame en tu equipo, nos vemos en la oficina! 👊💥`;
 
-      const targetTel = sherpaTel || "5215512345678";
+      // Guardado automático opcional en historial local de confirmaciones
+      try {
+        localStorage.setItem('sinergix_ultima_confirmacion', JSON.stringify({
+          fecha: new Date().toISOString(),
+          prospecto: prospectoNom,
+          sede: prospectoSede,
+          sherpa: sherpaNom
+        }));
+      } catch (e) {}
+
+      const targetTel = sherpaTel;
       const urlWa = `https://wa.me/${targetTel}?text=${encodeURIComponent(mensajeConfirmacion)}`;
       window.location.href = urlWa;
     }

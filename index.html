@@ -152,6 +152,20 @@
     </div>
   </header>
 
+  <!-- BANNER DE IDENTIDAD DE SESIÓN DEL SHERPA -->
+  <div id="sherpa-session-bar" class="w-full bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 sm:px-6 lg:px-8 py-2.5 text-xs font-bold transition-colors duration-200">
+    <div class="max-w-[1600px] mx-auto flex items-center justify-between gap-3">
+      <div class="flex items-center gap-2 text-slate-700 dark:text-slate-200">
+        <i class="fa-solid fa-user-shield text-ea-blue text-sm"></i>
+        <span>Estás operando como: <strong id="sherpa-indicador-nom" class="text-ea-blue dark:text-blue-400">Sin configurar</strong> <span id="sherpa-indicador-tel" class="text-slate-500 font-mono text-[11px]">(Sin teléfono)</span></span>
+      </div>
+      <button onclick="abrirModalConfigSherpa()" class="px-3 py-1.5 bg-ea-blue hover:bg-blue-700 text-white rounded-xl text-[11px] font-extrabold transition flex items-center gap-1.5 shadow-clinical-sm cursor-pointer">
+        <i class="fa-solid fa-gear text-xs"></i>
+        <span>Cambiar / Configurar Sherpa</span>
+      </button>
+    </div>
+  </div>
+
   <!-- Navegación de Pestañas Gerencial (Full-Width Responsive Grid) -->
   <div class="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pt-4">
     <nav class="grid grid-cols-3 sm:grid-cols-6 p-1.5 gap-2 bg-slate-200/80 dark:bg-slate-800/80 rounded-2xl border border-slate-300/50 dark:border-slate-700/50 text-xs font-bold" aria-label="Tabs">
@@ -1690,6 +1704,55 @@
       requestAnimationFrame(() => window.scrollTo(0, currentScrollY));
     }
 
+    function obtenerSherpaSesion() {
+      const nombre = (localStorage.getItem('sherpa_nombre') || (document.getElementById('input-sherpa-nombre')?.value || '').trim()).trim();
+      const rawCelular = (localStorage.getItem('sherpa_celular') || (document.getElementById('input-sherpa-celular')?.value || '').trim()).replace(/\D/g, '');
+      const celular = rawCelular ? (rawCelular.length === 10 ? '521' + rawCelular : rawCelular) : '';
+      
+      if (!nombre || !celular) {
+        return { valido: false, nombre: '', celular: '' };
+      }
+      return { valido: true, nombre, celular };
+    }
+
+    function actualizarIndicadorSherpa() {
+      const sesion = obtenerSherpaSesion();
+      const elNom = document.getElementById('sherpa-indicador-nom');
+      const elTel = document.getElementById('sherpa-indicador-tel');
+      const elInputNom = document.getElementById('input-sherpa-nombre');
+      const elInputTel = document.getElementById('input-sherpa-celular');
+      const elSpanHeader = document.getElementById('nombreSherpa');
+
+      if (elInputNom && localStorage.getItem('sherpa_nombre')) elInputNom.value = localStorage.getItem('sherpa_nombre');
+      if (elInputTel && localStorage.getItem('sherpa_celular')) {
+        const celClean = localStorage.getItem('sherpa_celular').replace(/^521/, '').replace(/^52/, '');
+        elInputTel.value = celClean;
+      }
+
+      if (sesion.valido) {
+        if (elNom) {
+          elNom.textContent = sesion.nombre;
+          elNom.className = 'text-emerald-600 dark:text-emerald-400 font-extrabold';
+        }
+        if (elTel) {
+          const celDisplay = sesion.celular.replace(/^521/, '').replace(/^52/, '');
+          elTel.textContent = `(+52 1 ${celDisplay})`;
+          elTel.className = 'text-slate-600 dark:text-slate-300 font-mono text-xs font-bold';
+        }
+        if (elSpanHeader) elSpanHeader.textContent = `• Sherpa ${sesion.nombre}`;
+      } else {
+        if (elNom) {
+          elNom.textContent = 'Sin configurar';
+          elNom.className = 'text-red-500 font-bold animate-pulse';
+        }
+        if (elTel) {
+          elTel.textContent = '(Configura tu WhatsApp)';
+          elTel.className = 'text-red-400 font-mono text-xs';
+        }
+        if (elSpanHeader) elSpanHeader.textContent = '• Sherpa no configurado';
+      }
+    }
+
     function guardarNombreSherpa(val) {
       const clean = String(val || '').trim();
       if (clean) {
@@ -1699,6 +1762,7 @@
         localStorage.removeItem('sherpa_nombre');
         if (typeof showToast === 'function') showToast('Nombre de batalla removido de configuración', 'info');
       }
+      actualizarIndicadorSherpa();
       if (typeof renderizarLista === 'function') renderizarLista();
     }
 
@@ -1715,30 +1779,45 @@
         localStorage.removeItem('sherpa_celular');
         if (typeof showToast === 'function') showToast('Celular removido de configuración', 'info');
       }
+      actualizarIndicadorSherpa();
       if (typeof renderizarLista === 'function') renderizarLista();
     }
 
+    function generarLinkCaptura(lead, sherpaNom, sherpaTel) {
+      if (!lead || !lead.nombre) throw new Error("Lead no válido");
+      if (!sherpaNom || !sherpaTel) throw new Error("Datos de Sherpa no configurados");
+
+      const pNom = encodeURIComponent(lead.nombre.trim());
+      const pTel = encodeURIComponent((lead.telefono || lead.celular || '').replace(/\D/g, ''));
+      const pSede = encodeURIComponent(lead.sede || lead.ciudad || localStorage.getItem('sinergix_sede_activa') || 'Puebla (Lunes 21 sep)');
+      const sNom = encodeURIComponent(sherpaNom.trim());
+      const sTel = encodeURIComponent(sherpaTel.replace(/\D/g, ''));
+
+      const baseUrl = window.location.origin + window.location.pathname.replace(/\/index\.html$/, '').replace(/\/$/, '');
+      return `${baseUrl}/captura.html?pnom=${pNom}&ptel=${pTel}&sede=${pSede}&snom=${sNom}&stel=${sTel}`;
+    }
+
     function obtenerEnlaceWhatsAppLead(lead, tipoGuion = 'encuesta') {
+      if (!lead) return '';
+      const sesion = obtenerSherpaSesion();
+      if (!sesion.valido) {
+        abrirModalConfigSherpa("Configura tu nombre y número de WhatsApp para que las confirmaciones lleguen a tu cuenta personal.");
+        return '';
+      }
+
+      let linkRef = '';
+      try {
+        linkRef = generarLinkCaptura(lead, sesion.nombre, sesion.celular);
+      } catch (err) {
+        console.warn("Error generando link de captura:", err);
+        abrirModalConfigSherpa("Configura tu nombre y número de WhatsApp para que las confirmaciones lleguen a tu cuenta personal.");
+        return '';
+      }
+
       const primerNombre = (lead.nombre || '').trim().split(' ')[0] || 'Hola';
-      const sherpaTel = (localStorage.getItem('sherpa_celular') || lead.sherpa_tel || lead.sherpa_id || '').replace(/\D/g, '');
-      const sherpaNom = (localStorage.getItem('sherpa_nombre') || (document.getElementById('input-sherpa-nombre')?.value || '').trim() || (document.getElementById('nombreSherpa')?.innerText || '').replace(/^[^\w]+/, '').trim() || 'Andres Trejo').trim();
-
-      const pNom = (lead.nombre || '').trim();
-      const pTel = (lead.telefono || lead.celular || '').replace(/\D/g, '');
-      const pSede = lead.sede || lead.ciudad || localStorage.getItem('sinergix_sede_activa') || 'Puebla (Lunes 21 sep)';
-
-      const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
-      let linkRef = `${baseUrl}/captura.html`;
-      const params = [];
-      if (pNom) params.push(`pnom=${encodeURIComponent(pNom)}`);
-      if (pTel) params.push(`ptel=${encodeURIComponent(pTel)}`);
-      if (pSede) params.push(`sede=${encodeURIComponent(pSede)}`);
-      if (sherpaNom) params.push(`snom=${encodeURIComponent(sherpaNom)}`);
-      if (sherpaTel) params.push(`stel=${encodeURIComponent(sherpaTel)}`);
-      if (params.length > 0) linkRef += '?' + params.join('&');
 
       if (tipoGuion === 'recordatorio') {
-        const soyTexto = sherpaNom ? ` Soy ${sherpaNom}.` : '';
+        const soyTexto = ` Soy ${sesion.nombre}.`;
         return `Hola ${primerNombre}.${soyTexto}\n¿Pudiste responder la encuesta? 😃\nTe agradecería mucho! 🙏\n${linkRef}`;
       }
 
@@ -1746,7 +1825,7 @@
       const sedeFinal = lead.sede || lead.ciudad || localStorage.getItem('sinergix_sede_activa') || 'Puebla (Lunes 21 sep)';
       const campana = CAMPANAS_SINERGIX[campanaKey] || CAMPANAS_SINERGIX.gira_terreno;
 
-      return campana.render(lead.nombre, sedeFinal, linkRef, sherpaNom);
+      return campana.render(lead.nombre, sedeFinal, linkRef, sesion.nombre);
     }
 
     function obtenerGuionMensaje(lead, tipoGuion = 'encuesta') {
@@ -1754,8 +1833,15 @@
     }
 
     function abrirModalPrevisualizacion(leadSample = null) {
-      const lead = leadSample || (todosLosLeads && todosLosLeads.length > 0 ? todosLosLeads[0] : { nombre: 'María Hernández', ciudad: '' });
+      const lead = leadSample || (todosLosLeads && todosLosLeads.length > 0 ? todosLosLeads[0] : { nombre: 'Prospecto Ejemplo', telefono: '5512345678', ciudad: '' });
+      const sesion = obtenerSherpaSesion();
+      if (!sesion.valido) {
+        abrirModalConfigSherpa("Configura tu nombre y número de WhatsApp para que las confirmaciones lleguen a tu cuenta personal.");
+        return;
+      }
+
       const msg = obtenerEnlaceWhatsAppLead(lead, 'encuesta');
+      if (!msg) return;
       
       const previewText = document.getElementById('preview-copy-text');
       const charCount = document.getElementById('preview-char-count');
@@ -2124,12 +2210,108 @@
 
         renderizarLista();
         actualizarMetricas();
+        actualizarIndicadorSherpa();
       } catch (err) {
         console.warn('Error inicializando almacenamiento:', err);
       }
     });
+
+    function abrirModalConfigSherpa(mensajeAlerta = null) {
+      const modal = document.getElementById('modal-config-sherpa');
+      const alertBox = document.getElementById('alert-modal-sherpa');
+      const alertTxt = document.getElementById('txt-alert-modal-sherpa');
+      const inputNom = document.getElementById('modal-input-sherpa-nombre');
+      const inputTel = document.getElementById('modal-input-sherpa-celular');
+
+      if (inputNom) inputNom.value = localStorage.getItem('sherpa_nombre') || '';
+      if (inputTel) {
+        const celStored = localStorage.getItem('sherpa_celular') || '';
+        inputTel.value = celStored.replace(/^521/, '').replace(/^52/, '');
+      }
+
+      if (mensajeAlerta && alertBox && alertTxt) {
+        alertTxt.textContent = mensajeAlerta;
+        alertBox.classList.remove('hidden');
+      } else if (alertBox) {
+        alertBox.classList.add('hidden');
+      }
+
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function cerrarModalConfigSherpa() {
+      const modal = document.getElementById('modal-config-sherpa');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function guardarConfiguracionSherpaModal() {
+      const inputNom = document.getElementById('modal-input-sherpa-nombre');
+      const inputTel = document.getElementById('modal-input-sherpa-celular');
+
+      const valNom = (inputNom?.value || '').trim();
+      const valTel = (inputTel?.value || '').replace(/\D/g, '');
+
+      if (!valNom) {
+        if (typeof showToast === 'function') showToast('Por favor ingresa tu nombre de Sherpa', 'warning');
+        return;
+      }
+      if (!valTel || (valTel.length !== 10 && valTel.length !== 12 && valTel.length !== 13)) {
+        if (typeof showToast === 'function') showToast('Por favor ingresa un número celular de WhatsApp válido (10 dígitos)', 'warning');
+        return;
+      }
+
+      localStorage.setItem('sherpa_nombre', valNom);
+      const formattedTel = valTel.length === 10 ? '521' + valTel : valTel;
+      localStorage.setItem('sherpa_celular', formattedTel);
+
+      actualizarIndicadorSherpa();
+      cerrarModalConfigSherpa();
+      if (typeof showToast === 'function') showToast('Identidad de Sherpa guardada con éxito', 'success');
+    }
   </script>
 
-  
+  <!-- MODAL: Configuración de Identidad del Sherpa -->
+  <div id="modal-config-sherpa" class="hidden fixed inset-0 z-[70] modal-overlay flex items-center justify-center p-4 fade-in">
+    <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200 dark:border-slate-700 flex flex-col">
+      <div class="bg-gradient-to-r from-ea-blue to-indigo-600 p-5 flex justify-between items-center text-white shrink-0">
+        <div class="flex items-center gap-2.5">
+          <i class="fa-solid fa-user-gear text-xl"></i>
+          <div>
+            <h3 class="font-extrabold text-base">Identidad del Sherpa</h3>
+            <p class="text-xs text-blue-100">Configura tus datos para recibir confirmaciones</p>
+          </div>
+        </div>
+        <button onclick="cerrarModalConfigSherpa()" class="text-white/80 hover:text-white touch-target"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <div class="p-6 space-y-4 bg-slate-50 dark:bg-slate-900/60">
+        <div id="alert-modal-sherpa" class="hidden bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200 p-3.5 rounded-2xl text-xs font-bold">
+          <i class="fa-solid fa-triangle-exclamation mr-1 text-amber-500"></i>
+          <span id="txt-alert-modal-sherpa">Configura tu nombre y número de WhatsApp para que las confirmaciones lleguen a tu cuenta personal.</span>
+        </div>
+
+        <div class="space-y-1.5">
+          <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">Tu Nombre de Batalla (Sherpa):</label>
+          <input type="text" id="modal-input-sherpa-nombre" placeholder="Ej. Marco Polo" class="w-full px-3.5 py-2.5 text-xs font-bold border rounded-xl bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white focus:outline-none focus:border-ea-blue shadow-clinical-sm" />
+        </div>
+
+        <div class="space-y-1.5">
+          <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">Tu Número de WhatsApp Celular (10 dígitos):</label>
+          <input type="tel" id="modal-input-sherpa-celular" placeholder="Ej. 2221234567" class="w-full px-3.5 py-2.5 text-xs font-mono font-bold border rounded-xl bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white focus:outline-none focus:border-ea-blue shadow-clinical-sm" />
+          <p class="text-[11px] text-slate-400">Las respuestas de tus prospectos se enviarán directamente a este número.</p>
+        </div>
+
+        <div class="pt-2 flex gap-3">
+          <button onclick="cerrarModalConfigSherpa()" class="w-1/3 py-3 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 text-slate-700 dark:text-slate-200 font-bold rounded-xl text-xs transition">
+            Cancelar
+          </button>
+          <button onclick="guardarConfiguracionSherpaModal()" class="w-2/3 py-3 bg-ea-blue hover:bg-blue-700 text-white font-extrabold rounded-xl text-xs transition shadow-clinical-md flex items-center justify-center gap-1.5">
+            <i class="fa-solid fa-check"></i> Guardar Identidad
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>
