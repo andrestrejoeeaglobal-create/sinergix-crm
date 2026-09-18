@@ -61,3 +61,30 @@ def test_code_integrity_no_hardcoding():
 
     # Verificar ausencia de números o credenciales hardcodeadas sensibles
     assert "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" not in content
+
+
+def test_apertura_mensaje_opcional_y_link_integridad():
+    import os
+    index_path = os.path.join(os.path.dirname(__file__), "..", "index.html")
+    static_index_path = os.path.join(os.path.dirname(__file__), "..", "static", "index.html")
+    assert os.path.exists(index_path)
+    assert os.path.exists(static_index_path)
+
+    for p in [index_path, static_index_path]:
+        with open(p, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        # 1. Existencia de función obtenerMensajeApertura y APERTURA_DEFAULT
+        assert "APERTURA_DEFAULT" in content
+        assert "function obtenerMensajeApertura" in content
+
+        # 2. Ausencia de teléfonos/nombres hardcodeados en el flujo de apertura
+        assert "sinergix_apertura_activa" in content
+        assert "sinergix_apertura_texto" in content
+
+        # 3. El guion conserva los 5 parámetros requeridos en el enlace de captura
+        assert "pnom=" in content
+        assert "ptel=" in content
+        assert "sede=" in content
+        assert "snom=" in content
+        assert "stel=" in content

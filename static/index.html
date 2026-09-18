@@ -743,27 +743,66 @@
 
   <!-- MODAL DE PREVISUALIZACIÓN DINÁMICA (WYSIWYG) -->
   <div id="modal-preview-copy" class="hidden fixed inset-0 z-[110] modal-overlay flex items-center justify-center p-4 fade-in">
-    <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 max-w-lg w-full overflow-hidden shadow-2xl flex flex-col">
-      <div class="bg-slate-100 dark:bg-slate-800 px-5 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+    <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 max-w-lg w-full overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+      <div class="bg-slate-100 dark:bg-slate-800 px-5 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between shrink-0">
         <h4 class="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
           <i class="fa-brands fa-whatsapp text-emerald-500 text-base"></i>
-          <span>Simulador de Mensaje WhatsApp</span>
+          <span>Simulador WhatsApp</span>
+          <span id="preview-lead-nombre" class="text-ea-blue dark:text-blue-400 font-mono text-[11px] normal-case truncate max-w-[200px]"></span>
         </h4>
         <button onclick="cerrarModalPrevisualizacion()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white touch-target">
           <i class="fa-solid fa-xmark text-lg"></i>
         </button>
       </div>
       
-      <div class="p-5 bg-slate-50 dark:bg-[#0b141a] max-h-96 overflow-y-auto">
-        <div id="preview-copy-text" class="text-xs sm:text-sm whitespace-pre-line text-slate-800 dark:text-slate-200 font-sans leading-relaxed"></div>
+      <div class="p-5 overflow-y-auto space-y-4 bg-slate-50 dark:bg-[#0b141a]">
+        <!-- Interruptor Mensaje de Apertura -->
+        <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-clinical-sm space-y-3">
+          <div class="flex items-center justify-between">
+            <label for="toggle-apertura-activa" class="flex items-center gap-2.5 cursor-pointer">
+              <input type="checkbox" id="toggle-apertura-activa" onchange="toggleAperturaActiva(this.checked)" class="w-4 h-4 accent-emerald-600 rounded cursor-pointer" />
+              <span class="text-xs font-extrabold text-slate-900 dark:text-white">Enviar mensaje de apertura</span>
+            </label>
+            <span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">Rompehielos</span>
+          </div>
+
+          <div id="box-apertura-editor" class="hidden space-y-2 pt-1 border-t border-slate-100 dark:border-slate-700">
+            <div class="flex justify-between items-center">
+              <label class="text-[11px] font-bold text-slate-600 dark:text-slate-400">Plantilla de Saludo (usa <code class="bg-slate-100 dark:bg-slate-700 px-1 py-0.5 rounded text-ea-blue font-mono">{nombre}</code>):</label>
+              <button onclick="restaurarSugerenciaApertura()" class="text-[10px] text-ea-blue dark:text-blue-400 font-bold hover:underline flex items-center gap-1 touch-target">
+                <i class="fa-solid fa-rotate-left"></i> Restaurar sugerencia
+              </button>
+            </div>
+            <textarea id="input-apertura-texto" inputmode="text" rows="3" oninput="guardarTextoApertura(this.value)" class="w-full px-3 py-2 text-xs font-semibold border rounded-xl bg-slate-50 dark:bg-slate-900 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 shadow-clinical-sm"></textarea>
+            <div class="flex justify-end">
+              <span id="apertura-char-count" class="text-[10px] font-mono text-slate-400">0 caracteres</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Vista Previa WYSIWYG -->
+        <div id="preview-copy-text" class="text-xs sm:text-sm text-slate-800 dark:text-slate-200 font-sans leading-relaxed"></div>
       </div>
 
-      <div class="p-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
-        <span id="preview-char-count" class="text-[11px] font-mono font-bold text-slate-500 dark:text-slate-400">0 caracteres</span>
-        <button onclick="copiarMensajePrevisualizado()" class="bg-ea-blue hover:bg-blue-700 text-white font-extrabold px-4 py-2.5 rounded-xl text-xs flex items-center gap-1.5 shadow-clinical-sm transition">
-          <i class="fa-solid fa-copy"></i>
-          <span>Copiar Plantilla</span>
-        </button>
+      <div class="p-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0 gap-2">
+        <span id="preview-char-count" class="text-[11px] font-mono font-bold text-slate-500 dark:text-slate-400 shrink-0">0 caracteres</span>
+        
+        <div class="flex items-center gap-2">
+          <!-- Acciones Duales -->
+          <button id="btn-modal-enviar-apertura" onclick="enviarAperturaWhatsApp()" class="hidden bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-3 py-2.5 rounded-xl text-xs flex items-center gap-1.5 shadow-clinical-sm transition touch-target">
+            <i class="fa-brands fa-whatsapp text-sm"></i>
+            <span>Enviar apertura</span>
+          </button>
+          
+          <button onclick="enviarInvitacionWhatsAppModal()" class="bg-ea-blue hover:bg-blue-700 text-white font-extrabold px-3 py-2.5 rounded-xl text-xs flex items-center gap-1.5 shadow-clinical-sm transition touch-target">
+            <i class="fa-solid fa-paper-plane text-xs"></i>
+            <span>Enviar invitación</span>
+          </button>
+
+          <button onclick="copiarMensajePrevisualizado()" class="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold px-3 py-2.5 rounded-xl text-xs flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 transition" title="Copiar Plantilla">
+            <i class="fa-solid fa-copy"></i>
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -2020,24 +2059,165 @@
       return obtenerEnlaceWhatsAppLead(lead, tipoGuion);
     }
 
+const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo que creo que te va a interesar.";
+
+    function obtenerMensajeApertura(lead) {
+      const plantilla = localStorage.getItem('sinergix_apertura_texto') || APERTURA_DEFAULT;
+      const nombre = (lead?.nombre || '').trim().split(' ')[0] || '';
+      return plantilla.replace(/\{nombre\}/g, nombre).trim();
+    }
+
+    function guardarTextoApertura(val) {
+      localStorage.setItem('sinergix_apertura_texto', val);
+      actualizarPrevisualizacionModal();
+    }
+
+    function restaurarSugerenciaApertura() {
+      localStorage.removeItem('sinergix_apertura_texto');
+      const input = document.getElementById('input-apertura-texto');
+      if (input) input.value = APERTURA_DEFAULT;
+      actualizarPrevisualizacionModal();
+      if (typeof showToast === 'function') showToast('Sugerencia de apertura restaurada', 'info');
+    }
+
+    function toggleAperturaActiva(checked) {
+      localStorage.setItem('sinergix_apertura_activa', checked ? "1" : "0");
+      const box = document.getElementById('box-apertura-editor');
+      if (box) {
+        if (checked) box.classList.remove('hidden');
+        else box.classList.add('hidden');
+      }
+      actualizarPrevisualizacionModal();
+    }
+
+    let leadPrevisualizadoActivo = null;
+
     function abrirModalPrevisualizacion(leadSample = null) {
-      const lead = leadSample || (todosLosLeads && todosLosLeads.length > 0 ? todosLosLeads[0] : { nombre: 'Prospecto Ejemplo', telefono: '5512345678', ciudad: '' });
+      const lead = leadSample || (todosLosLeads && todosLosLeads.length > 0 ? todosLosLeads[0] : null);
+      if (!lead) {
+        if (typeof showToast === 'function') showToast('Por favor selecciona un prospecto válido de la agenda.', 'info');
+        return;
+      }
+
       const sesion = obtenerSherpaSesion();
       if (!sesion.valido) {
         abrirModalConfigSherpa("Configura tu nombre y número de WhatsApp para que las confirmaciones lleguen a tu cuenta personal.");
         return;
       }
 
-      const msg = obtenerEnlaceWhatsAppLead(lead, 'encuesta');
-      if (!msg) return;
-      
-      const previewText = document.getElementById('preview-copy-text');
-      const charCount = document.getElementById('preview-char-count');
-      const modal = document.getElementById('modal-preview-copy');
+      leadPrevisualizadoActivo = lead;
 
-      if (previewText) previewText.textContent = msg;
-      if (charCount) charCount.textContent = `${msg.length} caracteres`;
+      const aperturaActiva = localStorage.getItem('sinergix_apertura_activa') === "1";
+      const toggleSwitch = document.getElementById('toggle-apertura-activa');
+      if (toggleSwitch) toggleSwitch.checked = aperturaActiva;
+
+      const boxEditor = document.getElementById('box-apertura-editor');
+      if (boxEditor) {
+        if (aperturaActiva) boxEditor.classList.remove('hidden');
+        else boxEditor.classList.add('hidden');
+      }
+
+      const inputTexto = document.getElementById('input-apertura-texto');
+      if (inputTexto) {
+        inputTexto.value = localStorage.getItem('sinergix_apertura_texto') || APERTURA_DEFAULT;
+      }
+
+      actualizarPrevisualizacionModal();
+
+      const modal = document.getElementById('modal-preview-copy');
       if (modal) modal.classList.remove('hidden');
+    }
+
+    function actualizarPrevisualizacionModal() {
+      const lead = leadPrevisualizadoActivo || (todosLosLeads && todosLosLeads.length > 0 ? todosLosLeads[0] : null);
+      if (!lead) return;
+
+      const aperturaActiva = (document.getElementById('toggle-apertura-activa')?.checked) ?? (localStorage.getItem('sinergix_apertura_activa') === "1");
+      const textoAperturaCustom = document.getElementById('input-apertura-texto')?.value;
+      if (textoAperturaCustom !== undefined) {
+        localStorage.setItem('sinergix_apertura_texto', textoAperturaCustom);
+      }
+
+      const msgGuion = obtenerEnlaceWhatsAppLead(lead, 'encuesta');
+      const msgApertura = obtenerMensajeApertura(lead);
+
+      const elNombreLead = document.getElementById('preview-lead-nombre');
+      if (elNombreLead) elNombreLead.textContent = lead.nombre ? `• ${lead.nombre}` : '';
+
+      const elPreviewText = document.getElementById('preview-copy-text');
+      const elCharCount = document.getElementById('preview-char-count');
+      const elAperturaCharCount = document.getElementById('apertura-char-count');
+
+      if (elAperturaCharCount) elAperturaCharCount.textContent = `${msgApertura.length} caracteres`;
+
+      if (elPreviewText) {
+        if (aperturaActiva) {
+          elPreviewText.innerHTML = `
+            <div class="mb-3 p-3.5 bg-emerald-50 dark:bg-emerald-950/40 rounded-2xl border border-emerald-200 dark:border-emerald-800">
+              <span class="text-[10px] font-black uppercase tracking-wider text-emerald-800 dark:text-emerald-300 block mb-1">
+                <i class="fa-solid fa-comment-dots mr-1"></i> 1. Mensaje de Apertura (Rompehielos):
+              </span>
+              <p class="whitespace-pre-line text-xs font-semibold text-slate-900 dark:text-slate-100">${msgApertura}</p>
+            </div>
+            <div class="p-3.5 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700">
+              <span class="text-[10px] font-black uppercase tracking-wider text-ea-blue dark:text-blue-300 block mb-1">
+                <i class="fa-solid fa-paper-plane mr-1"></i> 2. Guion de Invitación de Campaña:
+              </span>
+              <p class="whitespace-pre-line text-xs text-slate-800 dark:text-slate-200">${msgGuion}</p>
+            </div>
+          `;
+        } else {
+          elPreviewText.textContent = msgGuion;
+        }
+      }
+
+      if (elCharCount) {
+        const totalChars = aperturaActiva ? (msgApertura.length + msgGuion.length) : msgGuion.length;
+        elCharCount.textContent = `${totalChars} caracteres`;
+      }
+
+      const btnEnviarApertura = document.getElementById('btn-modal-enviar-apertura');
+      if (btnEnviarApertura) {
+        if (aperturaActiva) btnEnviarApertura.classList.remove('hidden');
+        else btnEnviarApertura.classList.add('hidden');
+      }
+    }
+
+    function enviarAperturaWhatsApp() {
+      const lead = leadPrevisualizadoActivo || (todosLosLeads && todosLosLeads.length > 0 ? todosLosLeads[0] : null);
+      if (!lead) {
+        if (typeof showToast === 'function') showToast('Por favor selecciona un prospecto válido de la agenda.', 'info');
+        return;
+      }
+
+      const msgApertura = obtenerMensajeApertura(lead);
+      const telLimpio = String(lead.telefono || lead.celular || '').replace(/\D/g, '');
+      if (!telLimpio) {
+        if (typeof showToast === 'function') showToast('El prospecto no cuenta con número telefónico válido.', 'warning');
+        return;
+      }
+
+      const waUrl = `https://wa.me/${telLimpio}?text=${encodeURIComponent(msgApertura)}`;
+      lead._aperturaEnviada = true;
+      window.open(waUrl, '_blank');
+      if (typeof showToast === 'function') showToast(`Mensaje de apertura enviado a ${lead.nombre}`, 'success');
+    }
+
+    function enviarInvitacionWhatsAppModal() {
+      const lead = leadPrevisualizadoActivo || (todosLosLeads && todosLosLeads.length > 0 ? todosLosLeads[0] : null);
+      if (!lead) {
+        if (typeof showToast === 'function') showToast('Por favor selecciona un prospecto válido de la agenda.', 'info');
+        return;
+      }
+
+      const aperturaActiva = localStorage.getItem('sinergix_apertura_activa') === "1";
+      if (aperturaActiva && !lead._aperturaEnviada) {
+        if (typeof showToast === 'function') showToast('¿Seguro? La apertura todavía no se ha enviado.', 'info');
+      }
+
+      const leadId = lead._id || lead.id || lead.telefono;
+      registrarEnvioEnUnClic(leadId, 'encuesta');
+      cerrarModalPrevisualizacion();
     }
 
     function cerrarModalPrevisualizacion() {
@@ -2046,14 +2226,18 @@
     }
 
     async function copiarMensajePrevisualizado() {
-      const previewText = document.getElementById('preview-copy-text');
-      if (previewText && previewText.textContent) {
-        try {
-          await navigator.clipboard.writeText(previewText.textContent);
-          showToast('Mensaje copiado al portapapeles exitosamente', 'success');
-        } catch (e) {
-          showToast('Mensaje copiado al portapapeles', 'info');
-        }
+      const lead = leadPrevisualizadoActivo || (todosLosLeads && todosLosLeads.length > 0 ? todosLosLeads[0] : null);
+      if (!lead) return;
+      const aperturaActiva = localStorage.getItem('sinergix_apertura_activa') === "1";
+      const msgGuion = obtenerEnlaceWhatsAppLead(lead, 'encuesta');
+      const msgApertura = obtenerMensajeApertura(lead);
+
+      const textoFinal = aperturaActiva ? `${msgApertura}\n\n${msgGuion}` : msgGuion;
+      try {
+        await navigator.clipboard.writeText(textoFinal);
+        showToast('Mensaje copiado al portapapeles exitosamente', 'success');
+      } catch (e) {
+        showToast('Mensaje copiado al portapapeles', 'info');
       }
     }
 
