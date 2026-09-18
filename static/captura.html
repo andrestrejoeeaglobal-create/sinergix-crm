@@ -68,7 +68,7 @@
       <!-- ENCABEZADO OFICIAL -->
       <div class="text-center space-y-2 mb-6">
         <h1 class="text-2xl font-black text-slate-900 dark:text-white font-display">
-          LA NUEVA ERA DE EQUIPO EN ACCIÓN®
+          GIRA DE PODER 2026
         </h1>
         <blockquote class="text-xs italic text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-950 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
           «No venimos solo a vender. Venimos a cambiar la salud de la gente que amamos.»
@@ -200,10 +200,30 @@
       }
     });
 
-    function confirmarParticipacion() {
+    async function confirmarParticipacion() {
       if (!sherpaTel || !sherpaNom) {
         alert("Enlace incompleto: No se identificó al Sherpa que te compartió la invitación. Solicita a tu contacto que te reenvíe su enlace personalizado.");
         return;
+      }
+
+      // Registro unificado asíncrono al backend antes de redirigir a WhatsApp
+      if (prospectoTel && prospectoNom) {
+        try {
+          await fetch('/api/leads/capture', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              sherpa_id: sherpaTel,
+              nombre: prospectoNom,
+              telefono: prospectoTel.startsWith('+') ? prospectoTel : ('+52' + prospectoTel),
+              consentimiento_whatsapp: true,
+              mecanismo_captura: 'landing_captura_gira',
+              referidor_nombre: sherpaNom
+            })
+          });
+        } catch (e) {
+          console.warn("Intento de registro asíncrono de lead (captura):", e);
+        }
       }
 
       const mensajeConfirmacion = 

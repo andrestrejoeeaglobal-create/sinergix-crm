@@ -21,7 +21,7 @@ use_mock_db()
 from fastapi.testclient import TestClient  # noqa: E402
 from app.main import app  # noqa: E402
 
-client = TestClient(app)
+client = TestClient(app, headers={"X-API-Token": "token-default"})
 
 
 @pytest.fixture()

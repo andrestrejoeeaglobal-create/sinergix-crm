@@ -317,3 +317,19 @@ def test_delete_lead_endpoint(api, lead_de_prueba):
     assert r_get.status_code == 404
 
 
+def test_h01_sin_token_devuelve_401(api):
+    r = api.get("/api/reports/dashboard", headers={"X-API-Token": ""})
+    assert r.status_code == 401
+    assert "Token de API no proporcionado" in r.json()["detail"]
+
+
+def test_h02_purge_bloqueado_sin_master_token(api):
+    r_no_token = api.delete("/api/leads/purge", headers={"X-API-Token": "token-default"})
+    assert r_no_token.status_code == 403
+    assert "X-Master-Token" in r_no_token.json()["detail"]
+
+    r_ok = api.delete("/api/leads/purge", headers={"X-API-Token": "token-default", "X-Master-Token": "sinergix-master-purge-key"})
+    assert r_ok.status_code == 200
+    assert r_ok.json()["status"] == "success"
+
+

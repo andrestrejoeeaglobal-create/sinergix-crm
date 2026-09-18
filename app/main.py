@@ -197,19 +197,34 @@ def health(db: Any = Depends(get_db)) -> dict:
 # ── Helper Aislamiento Sherpa ────────────────────────────────────
 
 def get_current_sherpa(
-    x_api_token: str = Header(default=""),
+    x_api_token: str = Header(default="", alias="X-API-Token"),
     db: Any = Depends(get_db)
 ) -> dict:
-    if x_api_token and x_api_token != "token-default":
-        sherpa = db.sherpas.find_one({"api_token": x_api_token})
-        if sherpa:
+    token_clean = x_api_token.strip() if x_api_token else ""
+    if not token_clean:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token de API no proporcionado (Header X-API-Token requerido)"
+        )
+
+    sherpa = db.sherpas.find_one({"api_token": token_clean})
+    if not sherpa:
+        if token_clean == "token-default":
+            sherpa = db.sherpas.find_one({"_id": "s1"}) or db.sherpas.find_one({"rol": "admin"})
+            if not sherpa:
+                sherpa = crear_sherpa_doc("sub_default", "admin@sinergix.mx", "Sherpa Admin", api_token="token-default", rol="admin")
+                sherpa["_id"] = "s1"
+                db.sherpas.insert_one(sherpa)
+            else:
+                db.sherpas.update_one({"_id": sherpa["_id"]}, {"$set": {"api_token": "token-default"}})
+                sherpa["api_token"] = "token-default"
             return sherpa
 
-    sherpa = db.sherpas.find_one({"_id": "s1"}) or db.sherpas.find_one({"api_token": "token-default"}) or db.sherpas.find_one({"rol": "admin"})
-    if not sherpa:
-        sherpa = crear_sherpa_doc("sub_default", "admin@sinergix.mx", "Sherpa Admin", api_token="token-default", rol="admin")
-        sherpa["_id"] = "s1"
-        db.sherpas.insert_one(sherpa)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token de API inválido o no configurado"
+        )
+
     return sherpa
 
 
@@ -861,9 +876,17 @@ def batch_import(
 
 @app.delete("/api/leads/purge")
 def purge_all_leads(
+    x_master_token: str = Header(default="", alias="X-Master-Token"),
     current_sherpa: dict = Depends(get_current_sherpa),
     db: Any = Depends(get_db)
 ):
+    if current_sherpa.get("rol") != "admin":
+        raise HTTPException(status_code=403, detail="Permiso denegado: se requiere rol de Administrador")
+
+    master_expected = os.environ.get("SINERGIX_MASTER_TOKEN", "sinergix-master-purge-key")
+    if not x_master_token or x_master_token != master_expected:
+        raise HTTPException(status_code=403, detail="Operación de purga bloqueada: Requiere cabecera X-Master-Token válida")
+
     res = db.leads.delete_many({})
     return {"status": "success", "purged": res.deleted_count}
 
