@@ -106,6 +106,7 @@ class LeadUpdatePatch(BaseModel):
     nombre: str | None = None
     telefono: str | None = None
     email: str | None = None
+    sede: str | None = None
     etapa_pipeline: str | None = None
     respondio: bool | None = None
     is_cancelled: bool | None = None

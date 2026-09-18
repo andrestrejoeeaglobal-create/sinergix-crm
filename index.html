@@ -1804,6 +1804,10 @@
             </div>
             
             <div class="flex items-center space-x-1.5 shrink-0">
+              <!-- Editar Contacto (Lápiz) -->
+              <button onclick="abrirModalEditarLead('${leadId}')" class="touch-target w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 flex items-center justify-center transition shadow-clinical-sm" title="Editar o Eliminar Contacto">
+                <i class="fa-solid fa-pen-to-square text-xs"></i>
+              </button>
               <!-- Enviar Encuesta (Avión) -->
               <button onclick="registrarEnvioEnUnClic('${leadId}', 'encuesta')" class="touch-target w-9 h-9 rounded-xl ${l.mensaje_enviado ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-ea-blue hover:bg-blue-700'} text-white flex items-center justify-center transition shadow-clinical-sm" title="Enviar Encuesta WhatsApp 1-Clic">
                 <i class="fa-solid fa-paper-plane text-xs"></i>
@@ -2097,6 +2101,107 @@
       }).catch(err => console.warn(err));
     }
 
+    function abrirModalEditarLead(leadId) {
+      const lead = todosLosLeads.find(l => String(l._id || l.id) === String(leadId) || String(l.telefono || '').replace(/\D/g, '').endsWith(String(leadId).replace(/\D/g, '')));
+      if (!lead) {
+        if (typeof showToast === 'function') showToast('No se encontró el contacto a editar', 'warning');
+        return;
+      }
+
+      const idEl = document.getElementById('edit-lead-id');
+      const nomEl = document.getElementById('edit-nombre');
+      const telEl = document.getElementById('edit-telefono');
+      const sedeEl = document.getElementById('edit-sede');
+      const etapaEl = document.getElementById('edit-etapa');
+
+      if (idEl) idEl.value = lead._id || lead.id || lead.telefono;
+      if (nomEl) nomEl.value = lead.nombre || '';
+      if (telEl) telEl.value = lead.telefono || '';
+      if (sedeEl) {
+        if (lead.sede) sedeEl.value = lead.sede;
+        else sedeEl.selectedIndex = 0;
+      }
+      if (etapaEl) etapaEl.value = lead.etapa_pipeline || 'Lead';
+
+      const modal = document.getElementById('modal-editar-lead');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function cerrarModalEditarLead() {
+      const modal = document.getElementById('modal-editar-lead');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    async function guardarLeadEditado(e) {
+      if (e) e.preventDefault();
+      const leadId = document.getElementById('edit-lead-id').value;
+      const lead = todosLosLeads.find(l => String(l._id || l.id) === String(leadId) || String(l.telefono || '').replace(/\D/g, '').endsWith(String(leadId).replace(/\D/g, '')));
+      if (!lead) return;
+
+      const nuevoNombre = (document.getElementById('edit-nombre')?.value || '').trim();
+      const nuevoTel = (document.getElementById('edit-telefono')?.value || '').trim();
+      const nuevaSede = document.getElementById('edit-sede')?.value;
+      const nuevaEtapa = document.getElementById('edit-etapa')?.value;
+
+      if (!nuevoNombre || !nuevoTel) {
+        if (typeof showToast === 'function') showToast('El nombre y el teléfono son obligatorios', 'warning');
+        return;
+      }
+
+      lead.nombre = nuevoNombre;
+      lead.telefono = nuevoTel.startsWith('+') ? nuevoTel : ('+52' + nuevoTel.replace(/\D/g, ''));
+      if (nuevaSede) lead.sede = nuevaSede;
+      if (nuevaEtapa) lead.etapa_pipeline = nuevaEtapa;
+      lead.actualizado_en = new Date().toISOString();
+
+      if (typeof CortexStorageEngine !== 'undefined' && CortexStorageEngine.saveLead) {
+        await CortexStorageEngine.saveLead(lead);
+      }
+
+      apiFetch(`/api/leads/${lead._id || lead.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          nombre: lead.nombre,
+          telefono: lead.telefono,
+          sede: lead.sede,
+          etapa_pipeline: lead.etapa_pipeline
+        })
+      }).catch(err => console.warn('PATCH optional backend sync:', err));
+
+      cerrarModalEditarLead();
+      renderizarLista();
+      actualizarMetricas();
+      if (typeof showToast === 'function') showToast('Contacto actualizado correctamente', 'success');
+    }
+
+    async function eliminarLeadDefinitivo() {
+      const leadId = document.getElementById('edit-lead-id').value;
+      const lead = todosLosLeads.find(l => String(l._id || l.id) === String(leadId) || String(l.telefono || '').replace(/\D/g, '').endsWith(String(leadId).replace(/\D/g, '')));
+      if (!lead) return;
+
+      if (!confirm(`¿Estás seguro de que deseas eliminar permanentemente a "${lead.nombre}"? Esta acción removerá el contacto del CRM.`)) {
+        return;
+      }
+
+      const targetId = lead._id || lead.id;
+      todosLosLeads = todosLosLeads.filter(l => (l._id || l.id) !== targetId && l.telefono !== lead.telefono);
+
+      if (typeof CortexStorageEngine !== 'undefined' && CortexStorageEngine.eliminarLead) {
+        await CortexStorageEngine.eliminarLead(targetId);
+      } else if (typeof CortexStorageEngine !== 'undefined' && CortexStorageEngine.saveAllLeads) {
+        await CortexStorageEngine.saveAllLeads(todosLosLeads);
+      }
+
+      apiFetch(`/api/leads/${targetId}`, {
+        method: 'DELETE'
+      }).catch(err => console.warn('DELETE optional backend sync:', err));
+
+      cerrarModalEditarLead();
+      renderizarLista();
+      actualizarMetricas();
+      if (typeof showToast === 'function') showToast('Contacto eliminado del CRM', 'info');
+    }
+
     function abrirModalAgregar() { 
       const inpN = document.getElementById('input-nuevo-nombre');
       const inpT = document.getElementById('input-nuevo-tel');
@@ -2242,6 +2347,20 @@
         }
         this._saveLocalStorageLead(lead);
         return lead;
+      },
+
+      async eliminarLead(leadId) {
+        if (this.db) {
+          await new Promise((resolve) => {
+            const tx = this.db.transaction('leads', 'readwrite');
+            const store = tx.objectStore('leads');
+            store.delete(leadId);
+            tx.oncomplete = () => resolve(true);
+            tx.onerror = () => resolve(false);
+          });
+        }
+        const leads = this._getLocalStorageLeads().filter(l => (l.id || l._id) !== leadId && l.telefono !== leadId);
+        localStorage.setItem('sinergix_leads', JSON.stringify(leads));
       },
 
       async saveAllLeads(leadsList) {
@@ -2494,6 +2613,74 @@
           </button>
         </div>
       </div>
+    </div>
+  <!-- MODAL: Editar y Borrar Contacto -->
+  <div id="modal-editar-lead" class="hidden fixed inset-0 z-[70] modal-overlay flex items-center justify-center p-4 fade-in">
+    <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200 dark:border-slate-700 flex flex-col">
+      <div class="bg-gradient-to-r from-ea-blue to-indigo-600 p-5 flex justify-between items-center text-white shrink-0">
+        <div class="flex items-center gap-2.5">
+          <i class="fa-solid fa-user-pen text-xl"></i>
+          <div>
+            <h3 class="font-extrabold text-base">Editar Contacto</h3>
+            <p class="text-xs text-blue-100">Modifica datos o elimina del CRM</p>
+          </div>
+        </div>
+        <button onclick="cerrarModalEditarLead()" class="text-white/80 hover:text-white touch-target"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <form onsubmit="guardarLeadEditado(event)" class="p-6 space-y-4 bg-slate-50 dark:bg-slate-900/60">
+        <input type="hidden" id="edit-lead-id" />
+
+        <div class="space-y-1.5">
+          <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">Nombre Completo:</label>
+          <input type="text" id="edit-nombre" required class="w-full px-3.5 py-2.5 text-xs font-bold border rounded-xl bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white focus:outline-none focus:border-ea-blue shadow-clinical-sm" />
+        </div>
+
+        <div class="space-y-1.5">
+          <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">Teléfono / WhatsApp:</label>
+          <input type="tel" id="edit-telefono" required class="w-full px-3.5 py-2.5 text-xs font-mono font-bold border rounded-xl bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white focus:outline-none focus:border-ea-blue shadow-clinical-sm" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div class="space-y-1.5">
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">Sede:</label>
+            <select id="edit-sede" class="w-full px-3 py-2.5 text-xs font-bold border rounded-xl bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white focus:outline-none focus:border-ea-blue shadow-clinical-sm">
+              <option value="Puebla (Lun 21 sep)">Puebla (Lun 21 sep)</option>
+              <option value="Izúcar (Mar 22 sep)">Izúcar (Mar 22 sep)</option>
+              <option value="Tecamachalco (Mié 23 sep)">Tecamachalco (Mié 23 sep)</option>
+              <option value="Huamantla (Jue 24 sep)">Huamantla (Jue 24 sep)</option>
+              <option value="Otra / Online">Otra / Online</option>
+            </select>
+          </div>
+
+          <div class="space-y-1.5">
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">Etapa Pipeline:</label>
+            <select id="edit-etapa" class="w-full px-3 py-2.5 text-xs font-bold border rounded-xl bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white focus:outline-none focus:border-ea-blue shadow-clinical-sm">
+              <option value="Lead">Lead</option>
+              <option value="Bio-Auditoría">Bio-Auditoría</option>
+              <option value="Datos Enviados">Datos Enviados</option>
+              <option value="Plan Vendido">Plan Vendido</option>
+              <option value="Sprint Activo">Sprint Activo</option>
+              <option value="Renovación">Renovación</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="pt-3 flex flex-col gap-2.5">
+          <div class="flex gap-3">
+            <button type="button" onclick="cerrarModalEditarLead()" class="w-1/3 py-2.5 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 text-slate-700 dark:text-slate-200 font-bold rounded-xl text-xs transition">
+              Cancelar
+            </button>
+            <button type="submit" class="w-2/3 py-2.5 bg-ea-blue hover:bg-blue-700 text-white font-extrabold rounded-xl text-xs transition shadow-clinical-md flex items-center justify-center gap-1.5">
+              <i class="fa-solid fa-floppy-disk"></i> Guardar Cambios
+            </button>
+          </div>
+
+          <button type="button" onclick="eliminarLeadDefinitivo()" class="w-full py-2.5 bg-red-50 hover:bg-red-100 dark:bg-red-950/50 dark:hover:bg-red-900/60 text-red-600 dark:text-red-400 font-bold rounded-xl text-xs border border-red-200 dark:border-red-800 transition flex items-center justify-center gap-1.5 mt-1">
+            <i class="fa-solid fa-trash-can"></i> Eliminar Contacto del CRM
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 

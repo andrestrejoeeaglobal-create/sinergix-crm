@@ -307,3 +307,13 @@ def test_sherpa_info_endpoint(api, db):
     assert info["nombre"] == "Sherpa Test"
 
 
+def test_delete_lead_endpoint(api, lead_de_prueba):
+    lead_id = lead_de_prueba["id"]
+    r_del = api.delete(f"/api/leads/{lead_id}")
+    assert r_del.status_code == 200
+    assert r_del.json()["deleted_id"] == lead_id
+
+    r_get = api.get(f"/api/leads/{lead_id}")
+    assert r_get.status_code == 404
+
+

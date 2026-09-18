@@ -1047,6 +1047,24 @@ def patch_lead(
     return updated
 
 
+@app.delete("/api/leads/{lead_id}")
+def delete_lead(
+    lead_id: str,
+    current_sherpa: dict = Depends(get_current_sherpa),
+    db: Any = Depends(get_db)
+):
+    filtro = {"$or": [{"_id": lead_id}, {"id": lead_id}, {"_id": parse_object_id(lead_id)}]}
+    lead = db.leads.find_one(filtro)
+    if not lead:
+        raise HTTPException(404, "Lead no encontrado")
+    
+    if current_sherpa.get("rol") != "admin" and lead.get("sherpa_id") != current_sherpa.get("_id"):
+        raise HTTPException(403, "Sin permisos para eliminar este lead")
+
+    db.leads.delete_one({"_id": lead["_id"]})
+    return {"status": "success", "deleted_id": lead_id}
+
+
 @app.post("/api/leads/{lead_id}/classify")
 def classify(lead_id: str, payload: ClasificacionIn, current_sherpa: dict = Depends(get_current_sherpa), db: Any = Depends(get_db)):
     filtro = {"_id": lead_id}
