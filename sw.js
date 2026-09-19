@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sinergix-crm-v33';
+const CACHE_NAME = 'sinergix-crm-v34';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
