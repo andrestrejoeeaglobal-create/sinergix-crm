@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-  <title>Sinergix Negocio CRM — Gira de Poder 2026</title>
+  <title>Sinergix Negocio CRM — Dashboard Gerencial del Sherpa (Sprint 28)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -28,1274 +28,499 @@
           }
         }
       }
-    }
+    };
   </script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700;800&display=swap" rel="stylesheet">
   <style>
-    .touch-target { min-height: 44px; min-width: 44px; }
-    .fade-in { animation: fadeIn 0.3s ease-out; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
-    .tabular-nums { font-variant-numeric: tabular-nums; }
-    .modal-overlay { background-color: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); }
-
-    /* Contraste canónico para Imagotipo en Modo Oscuro (WCAG 2.2 AAA) */
-    .dark .logo-clinical-contrast {
-      filter: brightness(1.1) contrast(1.15) drop-shadow(0 1px 2px rgba(255, 255, 255, 0.18)) drop-shadow(0 0 1px rgba(255, 255, 255, 0.25));
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      -webkit-tap-highlight-color: transparent;
     }
-
-    /* Animación canónica de la firma de 5 hexágonos en Footer */
-    .ea-hexagon-wave span {
-      display: inline-flex;
-      animation: eaHexWave 1.8s ease-in-out infinite;
+    .font-heading {
+      font-family: 'Space Grotesk', sans-serif;
     }
-    .ea-hexagon-wave span:nth-child(1) { animation-delay: 0.0s; }
-    .ea-hexagon-wave span:nth-child(2) { animation-delay: 0.15s; }
-    .ea-hexagon-wave span:nth-child(3) { animation-delay: 0.3s; }
-    .ea-hexagon-wave span:nth-child(4) { animation-delay: 0.45s; }
-    .ea-hexagon-wave span:nth-child(5) { animation-delay: 0.6s; }
-
-    @keyframes eaHexWave {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-5px); }
+    .touch-target {
+      min-height: 48px;
+      min-width: 48px;
     }
-
-    .gold-gradient-text {
-      background: linear-gradient(135deg, #D97706 0%, #F59E0B 50%, #B45309 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+    /* Constellation background for dark azabache modal */
+    #login-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
     }
   </style>
 </head>
-<body class="h-full bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans transition-colors duration-200">
+<body class="h-full flex flex-col bg-slate-50 dark:bg-slate-900 dark:text-slate-100 transition-colors duration-200">
 
-  <!-- Banner Superior de Despliegue Estratégico (Diseño Canónico Equipo en Acción®) -->
-  <div class="bg-slate-900 dark:bg-slate-950 text-white px-4 py-2.5 border-b border-slate-800 text-xs font-medium relative z-40 transition-colors duration-200">
-    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+  <!-- Persistent Banner WCAG 2.2 AAA / NOM-004 (Sin auto-desaparición) -->
+  <div id="toast-persistent-container" class="sticky top-0 z-50 w-full hidden">
+    <div id="toast-persistent-content" class="w-full px-4 py-3 text-sm font-semibold flex items-center justify-between shadow-md">
       <div class="flex items-center space-x-2">
-        <!-- Badge Élite Hexagonal Estático de Certificación -->
-        <span class="inline-flex items-center space-x-1.5 bg-ea-green/20 text-ea-green px-2.5 py-0.5 rounded-full border border-ea-green/40 text-[11px] font-bold">
-          <i class="fa-solid fa-shield-halved text-ea-green text-[10px]" aria-hidden="true"></i>
-          <span>Gobernanza Omnicanal T.I.L.O.</span>
-        </span>
-        <span class="text-slate-400 font-semibold hidden md:inline">• Gira de Poder Puebla & Tlaxcala 2026</span>
+        <i id="toast-persistent-icon" class="fa-solid fa-circle-info"></i>
+        <span id="toast-persistent-message">Mensaje del sistema</span>
       </div>
-
-      <!-- Control de Estado de Red & Indicador de Sincronización Estricta -->
-      <div class="flex items-center space-x-3 tabular-nums text-[11px]">
-        <div id="net-status-pill" class="inline-flex items-center space-x-1.5 bg-emerald-950/80 text-emerald-300 border border-emerald-700/60 px-2.5 py-0.5 rounded-full font-bold">
-          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span id="net-status-text">Operación En Vivo (Online)</span>
-        </div>
-        <span class="text-slate-400 hidden sm:inline">|</span>
-        <span class="text-slate-300 font-bold hidden sm:inline">Cupo Élite: <strong class="text-amber-400">40 Plazas</strong></span>
-      </div>
+      <button onclick="dismissPersistentToast()" class="ml-4 px-2 py-1 bg-black/20 hover:bg-black/40 rounded text-xs text-white" aria-label="Cerrar aviso">
+        Entendido <i class="fa-solid fa-xmark ml-1"></i>
+      </button>
     </div>
   </div>
 
-  <!-- Header Directivo (Limpio, sin hexágonos) -->
-  <header class="sticky top-0 z-50 border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-950/90 backdrop-blur-md shadow-clinical-md transition-colors duration-200">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-      <div class="flex items-center space-x-4">
-        <div class="flex items-center space-x-3">
-          <a href="#" class="flex items-center focus:outline-none" aria-label="Equipo en Acción® - Inicio">
-            <img 
-              src="./assets/images/logo_ea.png" 
-              onerror="this.onerror=null; this.src='https://equipoenaccion.net/images/logo_ea.png';"
-              alt="Equipo en Acción® - Tocando vidas, alcanzando sueños" 
-              class="h-10 sm:h-12 w-auto object-contain transition-transform duration-200 hover:scale-105"
-              loading="eager"
-            />
-          </a>
+  <!-- Header Gerencial -->
+  <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-30 shadow-clinical-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      
+      <!-- Brand & Status -->
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-ea-navy to-ea-blue flex items-center justify-center text-white font-heading font-extrabold text-xl shadow-clinical-sm">
+          S
         </div>
         <div>
           <div class="flex items-center space-x-2">
-            <span class="inline-flex items-center space-x-1 text-xs font-bold text-amber-700 dark:text-ea-yellow bg-amber-50 dark:bg-ea-yellow/10 px-2.5 py-0.5 rounded-full border border-amber-300 dark:border-ea-yellow/30">
-              <i class="fa-solid fa-crown text-amber-600 dark:text-ea-yellow text-[10px]" aria-hidden="true"></i>
-              <span>Despliegue Élite</span>
+            <h1 class="font-heading font-bold text-base sm:text-lg text-slate-900 dark:text-white leading-none">
+              Sinergix CRM
+            </h1>
+            <span class="px-2 py-0.5 text-[10px] font-extrabold bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-300 rounded-full border border-blue-200 dark:border-blue-700 uppercase tracking-wider">
+              Sprint 28
             </span>
-            <span class="text-xs text-slate-600 dark:text-slate-400 hidden sm:inline tabular-nums">• Puebla & Tlaxcala 2026</span>
           </div>
-          <h1 class="text-lg font-bold text-slate-900 dark:text-white font-display">Centro de Control — Gira de Poder 2026</h1>
+          <p class="text-xs text-slate-500 dark:text-slate-400 font-medium hidden sm:block">
+            Dashboard Gerencial del Sherpa
+          </p>
         </div>
       </div>
-      
+
+      <!-- User & Session Controls -->
       <div class="flex items-center space-x-3">
-        <div id="sherpa-session-container" class="flex items-center space-x-2">
-          <button onclick="abrirModalLogin()" id="btn-header-login" class="touch-target bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-xl px-3.5 py-2 text-xs font-bold transition-all shadow-clinical-sm border border-slate-200 dark:border-slate-800 flex items-center space-x-1.5" title="Perfil / Sesión Sherpa">
-            <i class="fa-solid fa-user-gear text-amber-600 dark:text-ea-yellow" aria-hidden="true"></i>
-            <span id="sherpa-user-display">Iniciar Sesión</span>
-          </button>
-          <button onclick="cerrarSesionSherpa()" id="btn-header-logout" class="hidden touch-target bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900 rounded-xl px-3 py-2 text-xs font-bold transition-all border border-red-200 dark:border-red-800 flex items-center space-x-1" title="Cerrar Sesión">
-            <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
-            <span>Salir</span>
-          </button>
-        </div>
-
-        <button onclick="toggleTheme()" class="touch-target bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-xl p-2.5 transition-all shadow-clinical-sm border border-slate-200 dark:border-slate-800" aria-label="Cambiar Tema" title="Alternar Modo Claro / Oscuro">
-          <i class="fa-solid fa-moon dark:hidden text-base text-slate-700" aria-hidden="true"></i>
-          <i class="fa-solid fa-sun hidden dark:inline text-base text-ea-yellow" aria-hidden="true"></i>
-        </button>
-
-        <div class="hidden md:flex items-center space-x-2 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3.5 py-2 rounded-xl text-xs shadow-clinical-sm tabular-nums text-slate-800 dark:text-slate-200">
-          <span class="w-2.5 h-2.5 rounded-full bg-ea-green animate-pulse" title="Estado: Premio Activo"></span>
-          <i class="fa-solid fa-trophy text-amber-600 dark:text-ea-yellow" aria-hidden="true"></i>
-          <span class="font-medium">Bolsa de Premio: <strong class="text-amber-600 dark:text-ea-yellow font-extrabold">$10,000 MXN</strong></span>
-        </div>
         
-        <button onclick="scrollToSection('whatsapp-sec')" class="touch-target bg-ea-yellow hover:bg-yellow-400 text-slate-950 font-extrabold px-4 py-2.5 rounded-xl text-xs sm:text-sm transition-all duration-200 flex items-center space-x-2 shadow-clinical-md border border-ea-yellow/40 active:scale-95">
-          <i class="fa-brands fa-whatsapp text-base text-slate-950" aria-hidden="true"></i>
-          <span>Difundir Ahora</span>
+        <!-- Sherpa Identity Badge -->
+        <div id="sherpa-session-bar" class="hidden sm:flex items-center space-x-2 bg-slate-100 dark:bg-slate-700/60 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-600">
+          <i class="fa-solid fa-user-shield text-ea-blue dark:text-blue-400 text-sm"></i>
+          <span id="sherpa-display-name" class="text-xs font-bold text-slate-700 dark:text-slate-200">
+            Sherpa Autenticado
+          </span>
+        </div>
+
+        <!-- Dark Mode Toggle -->
+        <button onclick="toggleDarkMode()" 
+                class="touch-target p-2.5 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:text-ea-blue rounded-xl text-sm font-bold border border-slate-200 dark:border-slate-600 transition" 
+                aria-label="Alternar Modo Oscuro">
+          <i class="fa-solid fa-moon dark:hidden" aria-hidden="true"></i>
+          <i class="fa-solid fa-sun hidden dark:block text-yellow-400" aria-hidden="true"></i>
         </button>
+
+        <!-- Botón Salir (Cierre de Sesión) -->
+        <button onclick="salir()" id="btn-header-logout"
+                class="touch-target px-3 py-2 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 rounded-xl text-xs font-bold border border-slate-200 dark:border-slate-600 transition inline-flex items-center" 
+                style="min-height: 48px; min-width: 48px;" 
+                aria-label="Cerrar sesión">
+          <i class="fa-solid fa-arrow-right-from-bracket mr-1.5" aria-hidden="true"></i> Salir
+        </button>
+
       </div>
     </div>
   </header>
 
-  <!-- Main CRM Content Wrapper (Enforces mandatory login / complete CRM closure) -->
-  <main id="crm-main-content" class="w-full">
-    <!-- Hero & Executive Status Banner -->
-    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-4">
-    <div class="relative overflow-hidden rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-clinical-lg transition-colors duration-200">
-      <div class="absolute top-0 right-0 -mt-12 -mr-12 w-96 h-96 bg-ea-blue/10 rounded-full blur-3xl pointer-events-none"></div>
-      <div class="absolute bottom-0 left-1/3 -mb-12 w-64 h-64 bg-ea-red/10 rounded-full blur-3xl pointer-events-none"></div>
-
-      <div class="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
-        <!-- Columna Izquierda: Presentación y KPI Badges -->
-        <div class="lg:col-span-6 space-y-5 flex flex-col justify-between">
-          <div class="space-y-3">
-            <div class="inline-flex items-center space-x-2 text-xs font-bold text-amber-700 dark:text-ea-yellow bg-amber-50 dark:bg-slate-950/90 px-3.5 py-1.5 rounded-full border border-amber-300 dark:border-ea-yellow/30 shadow-clinical-sm">
-              <i class="fa-solid fa-shield-halved text-amber-600 dark:text-ea-yellow" aria-hidden="true"></i>
-              <span>Estrategia de Prospección y Conquista Directa</span>
-            </div>
-
-            <h2 class="text-2xl sm:text-4xl font-extrabold text-slate-900 dark:text-white font-display tracking-tight leading-tight">
-              GIRA DE PODER 2026: <span class="gold-gradient-text">DESPLIEGUE PUEBLA & TLAXCALA</span>
-            </h2>
-            <p class="text-slate-600 dark:text-slate-300 text-sm sm:text-base leading-relaxed">
-              Convocatoria exclusiva para líderes de alto rendimiento. 4 días intensivos de conquista en calle, talleres élite de prospección en frío y bolsa en efectivo al equipo ganador.
-            </p>
-          </div>
-
-          <!-- Hero Metrics Cards -->
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 tabular-nums">
-            <div class="bg-slate-100/80 dark:bg-slate-950/90 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-clinical-sm">
-              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">Capacidad Total</span>
-              <span class="text-2xl font-black text-slate-900 dark:text-white font-display">40</span>
-              <span class="text-[10px] text-ea-green font-semibold block flex items-center mt-0.5">
-                <i class="fa-solid fa-users text-[9px] mr-1" aria-hidden="true"></i> Plazas Élite
-              </span>
-            </div>
-            <div class="bg-slate-100/80 dark:bg-slate-950/90 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-clinical-sm">
-              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">Bolsa Premio</span>
-              <span class="text-2xl font-black text-amber-600 dark:text-ea-yellow font-display">$10K</span>
-              <span class="text-[10px] text-amber-600 dark:text-ea-yellow font-semibold block flex items-center mt-0.5">
-                <i class="fa-solid fa-trophy text-[9px] mr-1" aria-hidden="true"></i> Efectivo Directo
-              </span>
-            </div>
-            <div class="bg-slate-100/80 dark:bg-slate-950/90 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-clinical-sm">
-              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">Sedes Ruta</span>
-              <span class="text-2xl font-black text-ea-blue font-display">4</span>
-              <span class="text-[10px] text-ea-blue font-semibold block flex items-center mt-0.5">
-                <i class="fa-solid fa-map-location-dot text-[9px] mr-1" aria-hidden="true"></i> Ciudades Clave
-              </span>
-            </div>
-            <div class="bg-slate-100/80 dark:bg-slate-950/90 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-clinical-sm">
-              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">Garantía</span>
-              <span class="text-2xl font-black text-ea-green font-display">100%</span>
-              <span class="text-[10px] text-ea-green font-semibold block flex items-center mt-0.5">
-                <i class="fa-solid fa-box-open text-[9px] mr-1" aria-hidden="true"></i> Reembolso Prod.
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Columna Derecha: Tablero de Control de Capacidades con Radiales SVG -->
-        <div class="lg:col-span-6 bg-slate-50 dark:bg-slate-950 rounded-xl p-5 border border-slate-200 dark:border-slate-800 flex flex-col justify-between shadow-clinical-md space-y-4">
-          <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
-            <div class="flex items-center space-x-2">
-              <i class="fa-solid fa-chart-pie text-amber-600 dark:text-ea-yellow text-sm" aria-hidden="true"></i>
-              <span class="text-xs font-extrabold uppercase tracking-wider text-slate-900 dark:text-white font-display">Distribución del Cupo Global (40 Plazas)</span>
-            </div>
-            <span class="inline-flex items-center space-x-1 text-[11px] font-bold text-amber-700 dark:text-ea-yellow bg-amber-50 dark:bg-ea-yellow/10 px-2.5 py-1 rounded-md border border-amber-300 dark:border-ea-yellow/30 tabular-nums">
-              <i class="fa-solid fa-satellite-dish text-[10px] animate-pulse" aria-hidden="true"></i>
-              <span>Cálculo Perimetral SVG</span>
-            </span>
-          </div>
-
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center tabular-nums">
-            <div class="bg-white dark:bg-slate-900/90 p-3 rounded-xl border border-slate-200 dark:border-slate-800/80 flex flex-col items-center justify-between space-y-2">
-              <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200">📍 Puebla</span>
-              <div class="relative w-16 h-16 flex items-center justify-center">
-                <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                  <path class="text-slate-200 dark:text-slate-800" stroke-width="3" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                  <path class="text-ea-green" stroke-dasharray="37.5, 100" stroke-dashoffset="0" stroke-width="3.5" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                </svg>
-                <div class="absolute inset-0 flex flex-col items-center justify-center">
-                  <span class="text-xs font-black text-slate-900 dark:text-white">15/40</span>
-                  <span class="text-[8px] text-ea-green font-extrabold">37.5%</span>
-                </div>
-              </div>
-              <span class="inline-flex items-center space-x-1 text-[9px] font-bold text-ea-green bg-ea-green/10 px-2 py-0.5 rounded border border-ea-green/30">
-                <i class="fa-solid fa-circle-check text-[8px]" aria-hidden="true"></i>
-                <span>Sede Central</span>
-              </span>
-            </div>
-
-            <div class="bg-white dark:bg-slate-900/90 p-3 rounded-xl border border-slate-200 dark:border-slate-800/80 flex flex-col items-center justify-between space-y-2">
-              <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200">📍 Izúcar</span>
-              <div class="relative w-16 h-16 flex items-center justify-center">
-                <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                  <path class="text-slate-200 dark:text-slate-800" stroke-width="3" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                  <path class="text-amber-500 dark:text-ea-yellow" stroke-dasharray="12.5, 100" stroke-dashoffset="0" stroke-width="3.5" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                </svg>
-                <div class="absolute inset-0 flex flex-col items-center justify-center">
-                  <span class="text-xs font-black text-slate-900 dark:text-white">5/40</span>
-                  <span class="text-[8px] text-amber-600 dark:text-ea-yellow font-extrabold">12.5%</span>
-                </div>
-              </div>
-              <span class="inline-flex items-center space-x-1 text-[9px] font-bold text-amber-700 dark:text-ea-yellow bg-amber-50 dark:bg-ea-yellow/10 px-2 py-0.5 rounded border border-amber-300 dark:border-ea-yellow/30">
-                <i class="fa-solid fa-triangle-exclamation text-[8px]" aria-hidden="true"></i>
-                <span>Cupo Ajustado</span>
-              </span>
-            </div>
-
-            <div class="bg-white dark:bg-slate-900/90 p-3 rounded-xl border border-slate-200 dark:border-slate-800/80 flex flex-col items-center justify-between space-y-2">
-              <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200">📍 Tecamach.</span>
-              <div class="relative w-16 h-16 flex items-center justify-center">
-                <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                  <path class="text-slate-200 dark:text-slate-800" stroke-width="3" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                  <path class="text-amber-500 dark:text-ea-yellow" stroke-dasharray="12.5, 100" stroke-dashoffset="0" stroke-width="3.5" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                </svg>
-                <div class="absolute inset-0 flex flex-col items-center justify-center">
-                  <span class="text-xs font-black text-slate-900 dark:text-white">5/40</span>
-                  <span class="text-[8px] text-amber-600 dark:text-ea-yellow font-extrabold">12.5%</span>
-                </div>
-              </div>
-              <span class="inline-flex items-center space-x-1 text-[9px] font-bold text-amber-700 dark:text-ea-yellow bg-amber-50 dark:bg-ea-yellow/10 px-2 py-0.5 rounded border border-amber-300 dark:border-ea-yellow/30">
-                <i class="fa-solid fa-triangle-exclamation text-[8px]" aria-hidden="true"></i>
-                <span>Cupo Ajustado</span>
-              </span>
-            </div>
-
-            <div class="bg-white dark:bg-slate-900/90 p-3 rounded-xl border border-slate-200 dark:border-slate-800/80 flex flex-col items-center justify-between space-y-2">
-              <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200">📍 Huamantla</span>
-              <div class="relative w-16 h-16 flex items-center justify-center">
-                <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                  <path class="text-slate-200 dark:text-slate-800" stroke-width="3" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                  <path class="text-ea-red" stroke-dasharray="37.5, 100" stroke-dashoffset="0" stroke-width="3.5" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                </svg>
-                <div class="absolute inset-0 flex flex-col items-center justify-center">
-                  <span class="text-xs font-black text-slate-900 dark:text-white">15/40</span>
-                  <span class="text-[8px] text-ea-red font-extrabold">37.5%</span>
-                </div>
-              </div>
-              <span class="inline-flex items-center space-x-1 text-[9px] font-bold text-ea-red bg-red-50 dark:bg-ea-red/10 px-2 py-0.5 rounded border border-red-200 dark:border-ea-red/30">
-                <i class="fa-solid fa-bolt text-[8px]" aria-hidden="true"></i>
-                <span>Gran Cierre</span>
-              </span>
-            </div>
-          </div>
-
-          <div class="p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-700 dark:text-slate-300">
-            <span class="flex items-center space-x-2">
-              <i class="fa-solid fa-shield-check text-ea-green" aria-hidden="true"></i>
-              <span>Logística vehicular y catering 100% reservados por sede</span>
-            </span>
-            <button onclick="switchTab('tab-ruta')" class="text-amber-600 dark:text-ea-yellow hover:underline font-bold text-xs flex items-center space-x-1">
-              <span>Ver Itinerario</span>
-              <i class="fa-solid fa-arrow-right text-[10px]" aria-hidden="true"></i>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Navegación Calendárica Reactiva por Semanas y Días -->
-  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
-    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 shadow-clinical-md flex flex-col md:flex-row items-center justify-between gap-4">
-      <div class="flex items-center space-x-3 w-full md:w-auto">
-        <i class="fa-solid fa-calendar-days text-amber-600 dark:text-ea-yellow text-xl" aria-hidden="true"></i>
-        <div>
-          <label for="select-semana-calendario" class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Seleccionar Semana Operativa</label>
-          <select id="select-semana-calendario" onchange="onWeekChange(this.value)" class="bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:border-amber-500">
-            <option value="semana_38">Semana 38 (13 al 19 de Septiembre de 2026)</option>
-            <option value="semana_39" selected>Semana 39 (20 al 26 de Septiembre de 2026)</option>
-            <option value="semana_40">Semana 40 (27 de Septiembre al 03 de Octubre de 2026)</option>
-          </select>
-        </div>
-      </div>
+  <!-- Navegación Tabs Gerenciales -->
+  <nav class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 shadow-sm overflow-x-auto scrollbar-none">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex space-x-2 sm:space-x-4 min-w-max py-2">
       
-      <div class="flex-1 w-full flex flex-col md:flex-row items-center justify-end space-y-2 md:space-y-0 md:space-x-4">
-        <h3 id="current-day-heading" class="text-sm font-extrabold text-slate-900 dark:text-white font-display uppercase tracking-wider min-w-[140px] text-center md:text-left">
-          LUNES 21 SEP
-        </h3>
-        <div id="week-day-buttons-container" class="flex items-center space-x-1.5 overflow-x-auto custom-scrollbar max-w-full py-1">
-          <!-- Generado dinámicamente -->
-        </div>
-      </div>
-    </div>
-  </section>
+      <button onclick="switchTab('tab-chat')" id="btn-tab-chat" class="tab-btn px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center space-x-2 bg-ea-blue text-white shadow-clinical-sm">
+        <i class="fa-solid fa-comments"></i>
+        <span>Chat Briefing</span>
+      </button>
 
-  <!-- Pestañas Principales -->
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
-    <div class="border-b border-slate-200 dark:border-slate-800 flex space-x-4 overflow-x-auto custom-scrollbar pb-px">
-      <button onclick="switchTab('tab-copy')" id="btn-tab-copy" class="touch-target tab-btn px-4 py-3 text-sm font-bold text-amber-600 dark:text-ea-yellow border-b-2 border-amber-500 dark:border-ea-yellow flex items-center space-x-2 whitespace-nowrap">
-        <i class="fa-brands fa-whatsapp text-lg" aria-hidden="true"></i>
-        <span>1. Copywriting & Difusión VIP</span>
+      <button onclick="switchTab('tab-agenda')" id="btn-tab-agenda" class="tab-btn px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center space-x-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">
+        <i class="fa-solid fa-calendar-check"></i>
+        <span>Agenda & Leads</span>
       </button>
-      <button onclick="switchTab('tab-flyers')" id="btn-tab-flyers" class="touch-target tab-btn px-4 py-3 text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 border-b-2 border-transparent flex items-center space-x-2 whitespace-nowrap">
-        <i class="fa-solid fa-palette text-lg" aria-hidden="true"></i>
-        <span>2. Arquitectura Visual & Banners</span>
-      </button>
-      <button onclick="switchTab('tab-ruta')" id="btn-tab-ruta" class="touch-target tab-btn px-4 py-3 text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 border-b-2 border-transparent flex items-center space-x-2 whitespace-nowrap">
-        <i class="fa-solid fa-route text-lg" aria-hidden="true"></i>
-        <span>3. Ruta e Itinerario Operativo</span>
-      </button>
-      <button onclick="switchTab('tab-reglas')" id="btn-tab-reglas" class="touch-target tab-btn px-4 py-3 text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 border-b-2 border-transparent flex items-center space-x-2 whitespace-nowrap">
-        <i class="fa-solid fa-shield-halved text-lg" aria-hidden="true"></i>
-        <span>4. Blindaje y Estructura de Valor</span>
-      </button>
-    </div>
 
-    <!-- SECCIÓN 1: COPYWRITING & DIFUSIÓN -->
-    <div id="tab-copy" class="tab-content py-6">
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8" id="whatsapp-sec">
-        
-        <!-- Panel de Control y Personalización -->
-        <div class="lg:col-span-5 space-y-6">
-          <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-clinical-md transition-colors duration-200">
-            <div class="flex items-center space-x-3 mb-5 border-b border-slate-100 dark:border-slate-800 pb-4">
-              <div class="w-10 h-10 rounded-xl bg-amber-500/10 dark:bg-ea-yellow/10 flex items-center justify-center text-amber-600 dark:text-ea-yellow">
-                <i class="fa-solid fa-sliders text-lg" aria-hidden="true"></i>
+      <button onclick="switchTab('tab-salud')" id="btn-tab-salud" class="tab-btn px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center space-x-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">
+        <i class="fa-solid fa-heart-pulse"></i>
+        <span>Salud Cartera</span>
+      </button>
+
+      <button onclick="switchTab('tab-radar')" id="btn-tab-radar" class="tab-btn px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center space-x-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">
+        <i class="fa-solid fa-radar"></i>
+        <span>Radar MLM</span>
+      </button>
+
+      <button onclick="switchTab('tab-biometria')" id="btn-tab-biometria" class="tab-btn px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center space-x-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">
+        <i class="fa-solid fa-dna"></i>
+        <span>Biometría H7</span>
+      </button>
+
+      <button onclick="switchTab('tab-simulador')" id="btn-tab-simulador" class="tab-btn px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center space-x-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">
+        <i class="fa-solid fa-calculator"></i>
+        <span>Simulador</span>
+      </button>
+
+    </div>
+  </nav>
+
+  <!-- Aplicación Principal CRM -->
+  <main id="main-crm-app" class="flex-grow flex-1 w-full pb-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+      <!-- TAB 1: CHAT BRIEFING -->
+      <section id="tab-chat" class="tab-content block space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          <!-- Panel Izquierdo: Resumen Ejecutivo -->
+          <div class="lg:col-span-1 bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-clinical-md space-y-4">
+            <h2 class="font-heading text-lg font-bold text-slate-900 dark:text-white flex items-center justify-between">
+              <span>Estado Operativo</span>
+              <span class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span>
+            </h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400">
+              Cortex de Inteligencia Asistencial y Seguimiento de Cartera en Tiempo Real.
+            </p>
+
+            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 space-y-3">
+              <div class="flex justify-between items-center text-xs font-bold">
+                <span class="text-slate-500">Leads Calificados:</span>
+                <span class="text-ea-blue dark:text-blue-400 text-sm">24 Activos</span>
               </div>
-              <div>
-                <h3 class="font-extrabold text-slate-900 dark:text-white text-base font-display">Personalización Dinámica</h3>
-                <p class="text-xs text-slate-600 dark:text-slate-400">Inyecta variables directas para Prospección Élite</p>
+              <div class="flex justify-between items-center text-xs font-bold">
+                <span class="text-slate-500">Opt-ins WhatsApp:</span>
+                <span class="text-emerald-600 dark:text-emerald-400 text-sm">100% Verificados</span>
+              </div>
+              <div class="flex justify-between items-center text-xs font-bold">
+                <span class="text-slate-500">Cumplimiento NOM-004:</span>
+                <span class="text-purple-600 dark:text-purple-400 text-sm">Auditoria Vigente</span>
               </div>
             </div>
 
-            <div class="space-y-4">
-              <div>
-                <label for="input-prospect-name" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">
-                  Nombre del Prospecto / Líder:
-                </label>
-                <div class="relative">
-                  <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                    <i class="fa-solid fa-user text-sm" aria-hidden="true"></i>
-                  </span>
-                  <input 
-                    type="text" 
-                    id="input-prospect-name" 
-                    value="Líder Ejemplo" 
-                    oninput="updateCopy()"
-                    class="touch-target w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all"
-                    placeholder="Ej. María Elena González"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label for="select-sede" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">
-                  Sede Asignada / Ruta:
-                </label>
-                <div class="relative">
-                  <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                    <i class="fa-solid fa-location-dot text-sm" aria-hidden="true"></i>
-                  </span>
-                  <select 
-                    id="select-sede" 
-                    onchange="updateCopy()"
-                    class="touch-target w-full pl-10 pr-10 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all appearance-none cursor-pointer"
-                  >
-                    <option value="Puebla (Sede Central - Hotel HQ)">Puebla (Sede Central - Hotel HQ)</option>
-                    <option value="Izúcar de Matamoros">Izúcar de Matamoros</option>
-                    <option value="Tecamachalco">Tecamachalco</option>
-                    <option value="Huamantla, Tlaxcala (Gran Cierre)">Huamantla, Tlaxcala (Gran Cierre)</option>
-                  </select>
-                  <span class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400">
-                    <i class="fa-solid fa-chevron-down text-xs" aria-hidden="true"></i>
-                  </span>
-                </div>
-              </div>
-
-              <div class="pt-2">
-                <button onclick="copyToClipboard()" class="touch-target w-full bg-slate-900 dark:bg-slate-100 hover:bg-slate-800 dark:hover:bg-white text-white dark:text-slate-950 font-extrabold py-3 px-4 rounded-xl text-sm transition-all duration-200 flex items-center justify-center space-x-2.5 shadow-clinical-md active:scale-[0.99]">
-                  <i class="fa-solid fa-copy text-base text-amber-400 dark:text-amber-600" aria-hidden="true"></i>
-                  <span>Copiar Copywriting al Portapapeles</span>
+            <div class="border-t border-slate-200 dark:border-slate-700 pt-4">
+              <h3 class="text-xs font-extrabold uppercase text-slate-400 tracking-wider mb-2">Acciones Rápidas</h3>
+              <div class="space-y-2">
+                <button onclick="copiarBriefingManual()" class="w-full text-left px-3 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 transition flex items-center justify-between">
+                  <span>Generar Briefing de Turno</span>
+                  <i class="fa-solid fa-copy text-slate-400"></i>
+                </button>
+                <button onclick="exportarReporteAuditoria()" class="w-full text-left px-3 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 transition flex items-center justify-between">
+                  <span>Exportar Bitácora NOM-004</span>
+                  <i class="fa-solid fa-download text-slate-400"></i>
                 </button>
               </div>
             </div>
           </div>
 
-          <div class="bg-amber-500/10 dark:bg-ea-yellow/10 border border-amber-300 dark:border-ea-yellow/30 rounded-2xl p-5 shadow-clinical-sm">
-            <div class="flex space-x-3">
-              <i class="fa-solid fa-lightbulb text-amber-600 dark:text-ea-yellow text-xl shrink-0 mt-0.5" aria-hidden="true"></i>
-              <div class="space-y-1">
-                <h4 class="text-xs font-extrabold uppercase tracking-wider text-amber-700 dark:text-ea-yellow font-display">Regla de Difusión VIP</h4>
-                <p class="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
-                  Envía este copywriting únicamente a prospectos con perfil de liderazgo. El mensaje genera urgencia genuina al mencionar el cupo limitado de 40 plazas y la garantía de reembolso 100% en producto.
-                </p>
+          <!-- Panel Derecho: Interacción & Mensajería -->
+          <div class="lg:col-span-2 bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-clinical-md flex flex-col justify-between space-y-4">
+            <div>
+              <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-3 mb-4">
+                <h3 class="font-heading font-bold text-base text-slate-900 dark:text-white">
+                  Consola de Comunicación Sherpa
+                </h3>
+                <span class="text-xs font-bold text-slate-400">Canal Seguro HSM/WA</span>
+              </div>
+
+              <div id="chat-messages-container" class="h-64 overflow-y-auto space-y-3 p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700">
+                <div class="bg-blue-50 dark:bg-blue-950/40 p-3 rounded-xl border border-blue-200 dark:border-blue-800 text-xs">
+                  <span class="font-bold text-blue-900 dark:text-blue-300">Cortex Assistant:</span>
+                  <p class="text-slate-700 dark:text-slate-300 mt-1">
+                    Bienvenido Sherpa. La base de datos sincronizó 13 leads con consentimiento informado registrado.
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
 
-        <!-- Vista Previa Interactiva del Copywriting -->
-        <div class="lg:col-span-7">
-          <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-clinical-md flex flex-col h-full transition-colors duration-200">
-            <div class="flex items-center justify-between mb-4 border-b border-slate-100 dark:border-slate-800 pb-3">
-              <div class="flex items-center space-x-2">
-                <i class="fa-brands fa-whatsapp text-ea-green text-xl" aria-hidden="true"></i>
-                <span class="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-wider">Vista Previa de Salida (Formato WhatsApp)</span>
-              </div>
-              <span class="text-[11px] font-bold text-slate-600 dark:text-slate-400 tabular-nums">Sincronización en Tiempo Real</span>
-            </div>
-
-            <div class="flex-1 bg-slate-100/70 dark:bg-slate-950 p-4 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800/80 overflow-y-auto max-h-[500px] font-sans text-xs sm:text-sm text-slate-800 dark:text-slate-200 leading-relaxed whitespace-pre-wrap select-all transition-colors duration-200" id="copy-output">
-              <!-- Renderizado dinámico vía JavaScript -->
-            </div>
-
-            <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
-              <span class="text-xs text-slate-600 dark:text-slate-400 flex items-center space-x-1.5">
-                <i class="fa-solid fa-circle-check text-ea-green text-sm" aria-hidden="true"></i>
-                <span>Listo para pegar en WhatsApp Web o Móvil</span>
-              </span>
-              <button onclick="openWhatsAppDirect()" class="touch-target w-full sm:w-auto bg-ea-green hover:bg-emerald-600 text-white font-extrabold px-5 py-2.5 rounded-xl text-xs transition-all flex items-center justify-center space-x-2 shadow-clinical-sm active:scale-95">
-                <i class="fa-brands fa-whatsapp text-base" aria-hidden="true"></i>
-                <span>Abrir WhatsApp Web Directo</span>
+            <!-- Input area -->
+            <div class="pt-2 border-t border-slate-200 dark:border-slate-700 flex items-center space-x-2">
+              <input type="text" id="chat-input-text" placeholder="Escribe una instrucción o consulta gerencial..." class="flex-grow px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white text-xs sm:text-sm font-medium border border-slate-200 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-ea-blue">
+              <button onclick="enviarMensajeChat()" class="touch-target px-5 py-3 bg-ea-blue hover:bg-blue-700 text-white font-bold rounded-xl text-xs sm:text-sm transition flex items-center justify-center space-x-1 shadow-clinical-sm">
+                <span>Enviar</span>
+                <i class="fa-solid fa-paper-plane text-xs"></i>
               </button>
             </div>
           </div>
+
         </div>
+      </section>
 
-      </div>
-    </div>
-
-    <!-- SECCIÓN 2: ARQUITECTURA VISUAL & BANNERS -->
-    <div id="tab-flyers" class="tab-content hidden py-6">
-      <div class="space-y-6">
-        <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-clinical-md transition-colors duration-200">
-          <div class="flex items-center space-x-3 mb-6 border-b border-slate-100 dark:border-slate-800 pb-4">
-            <div class="w-10 h-10 rounded-xl bg-ea-blue/10 flex items-center justify-center text-ea-blue">
-              <i class="fa-solid fa-palette text-lg" aria-hidden="true"></i>
-            </div>
+      <!-- TAB 2: AGENDA & LEADS -->
+      <section id="tab-agenda" class="tab-content hidden space-y-6">
+        <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-clinical-md">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <div>
-              <h3 class="font-extrabold text-slate-900 dark:text-white text-base font-display">Banners y Flycards Promocionales de Alto Impacto</h3>
-              <p class="text-xs text-slate-600 dark:text-slate-400">Descarga y difunde material gráfico oficial optimizado para redes sociales</p>
+              <h2 class="font-heading text-lg font-bold text-slate-900 dark:text-white">
+                Gestión de Leads & Agenda Comercial
+              </h2>
+              <p class="text-xs text-slate-500 dark:text-slate-400">
+                Contactos prospectados con validación estricta de consentimiento Opt-in (NOM-043/LFPDPPP).
+              </p>
             </div>
+            <button onclick="mostrarModalNuevoLead()" class="touch-target px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition flex items-center space-x-2 shadow-clinical-sm">
+              <i class="fa-solid fa-user-plus"></i>
+              <span>Registrar Lead Manual</span>
+            </button>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <!-- Card Flyer 1 -->
-            <div class="bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-clinical-sm flex flex-col justify-between">
-              <div class="p-4 space-y-3">
-                <div class="aspect-video bg-slate-200 dark:bg-slate-900 rounded-lg flex items-center justify-center text-slate-400 relative overflow-hidden group">
-                  <i class="fa-solid fa-image text-4xl text-slate-400 dark:text-slate-600" aria-hidden="true"></i>
-                  <div class="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center space-x-2">
-                    <span class="text-xs font-bold text-white bg-slate-950/80 px-3 py-1.5 rounded-full border border-white/20">Banner Cuadrado (1:1)</span>
-                  </div>
-                </div>
-                <h4 class="font-extrabold text-slate-900 dark:text-white text-sm">Flyer Principal: Convocatoria Puebla</h4>
-                <p class="text-xs text-slate-600 dark:text-slate-400">Optimizado para Instagram Feed y publicaciones de Facebook. Muestra bolsa de $10,000 MXN.</p>
-              </div>
-              <div class="p-4 border-t border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-900">
-                <a href="./assets/images/logo_ea.png" download="Flyer_Puebla_Gira2026.png" class="touch-target w-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold py-2 px-3 rounded-lg text-xs flex items-center justify-center space-x-2 transition-all">
-                  <i class="fa-solid fa-download text-amber-600 dark:text-ea-yellow" aria-hidden="true"></i>
-                  <span>Descargar Banner (PNG HD)</span>
-                </a>
-              </div>
-            </div>
-
-            <!-- Card Flyer 2 -->
-            <div class="bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-clinical-sm flex flex-col justify-between">
-              <div class="p-4 space-y-3">
-                <div class="aspect-video bg-slate-200 dark:bg-slate-900 rounded-lg flex items-center justify-center text-slate-400 relative overflow-hidden group">
-                  <i class="fa-solid fa-file-image text-4xl text-slate-400 dark:text-slate-600" aria-hidden="true"></i>
-                  <div class="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center space-x-2">
-                    <span class="text-xs font-bold text-white bg-slate-950/80 px-3 py-1.5 rounded-full border border-white/20">Story Vertical (9:16)</span>
-                  </div>
-                </div>
-                <h4 class="font-extrabold text-slate-900 dark:text-white text-sm">Story / Reel Flyer: RUTA TLAXCALA</h4>
-                <p class="text-xs text-slate-600 dark:text-slate-400">Formato vertical para WhatsApp Status, Instagram Stories y TikTok. Gran Cierre Huamantla.</p>
-              </div>
-              <div class="p-4 border-t border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-900">
-                <a href="./assets/images/logo_ea.png" download="Story_Tlaxcala_Gira2026.png" class="touch-target w-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold py-2 px-3 rounded-lg text-xs flex items-center justify-center space-x-2 transition-all">
-                  <i class="fa-solid fa-download text-amber-600 dark:text-ea-yellow" aria-hidden="true"></i>
-                  <span>Descargar Story (PNG Vertical)</span>
-                </a>
-              </div>
-            </div>
-
-            <!-- Card Flyer 3 -->
-            <div class="bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-clinical-sm flex flex-col justify-between">
-              <div class="p-4 space-y-3">
-                <div class="aspect-video bg-slate-200 dark:bg-slate-900 rounded-lg flex items-center justify-center text-slate-400 relative overflow-hidden group">
-                  <i class="fa-solid fa-id-card text-4xl text-slate-400 dark:text-slate-600" aria-hidden="true"></i>
-                  <div class="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center space-x-2">
-                    <span class="text-xs font-bold text-white bg-slate-950/80 px-3 py-1.5 rounded-full border border-white/20">Ficha Técnica PDF</span>
-                  </div>
-                </div>
-                <h4 class="font-extrabold text-slate-900 dark:text-white text-sm">Ficha Ejecutiva de Despliegue</h4>
-                <p class="text-xs text-slate-600 dark:text-slate-400">Documento PDF completo con reglas de competencia, logística vehicular y catering por sede.</p>
-              </div>
-              <div class="p-4 border-t border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-900">
-                <a href="#" onclick="showToast('Ficha Ejecutiva PDF descargada.'); return false;" class="touch-target w-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold py-2 px-3 rounded-lg text-xs flex items-center justify-center space-x-2 transition-all">
-                  <i class="fa-solid fa-file-pdf text-ea-red" aria-hidden="true"></i>
-                  <span>Descargar Dossier (PDF)</span>
-                </a>
-              </div>
-            </div>
+          <!-- Tabla de Leads -->
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-600 dark:text-slate-300">
+              <thead class="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 uppercase tracking-wider text-[11px] font-bold">
+                <tr>
+                  <th class="px-4 py-3 rounded-l-xl">Nombre / Sherpa</th>
+                  <th class="px-4 py-3">Teléfono / Opt-in</th>
+                  <th class="px-4 py-3">Estado Pipeline</th>
+                  <th class="px-4 py-3">Biometría Puntos</th>
+                  <th class="px-4 py-3 rounded-r-xl text-right">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="tabla-leads-body" class="divide-y divide-slate-200 dark:divide-slate-700 font-medium">
+                <!-- Fila 1 -->
+                <tr>
+                  <td class="px-4 py-3 font-bold text-slate-900 dark:text-white">
+                    Laura Gómez
+                    <span class="block text-[10px] font-normal text-slate-400">Sherpa: Andrés Trejo</span>
+                  </td>
+                  <td class="px-4 py-3">
+                    +52 55 1234 5678
+                    <span class="inline-block ml-1 px-1.5 py-0.5 text-[9px] bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 rounded font-bold">Opt-in OK</span>
+                  </td>
+                  <td class="px-4 py-3">
+                    <span class="px-2.5 py-1 text-[10px] bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded-full font-bold">Valoración Biométrica</span>
+                  </td>
+                  <td class="px-4 py-3 font-bold text-ea-blue dark:text-blue-400">
+                    84 / 100 PTS
+                  </td>
+                  <td class="px-4 py-3 text-right">
+                    <button onclick="abrirWhatsAppLead('+525512345678', 'Laura Gómez')" class="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-xs font-bold transition">
+                      <i class="fa-brands fa-whatsapp mr-1"></i> WA
+                    </button>
+                  </td>
+                </tr>
+                <!-- Fila 2 -->
+                <tr>
+                  <td class="px-4 py-3 font-bold text-slate-900 dark:text-white">
+                    Carlos Mendoza
+                    <span class="block text-[10px] font-normal text-slate-400">Sherpa: Andrés Trejo</span>
+                  </td>
+                  <td class="px-4 py-3">
+                    +52 81 9876 5432
+                    <span class="inline-block ml-1 px-1.5 py-0.5 text-[9px] bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 rounded font-bold">Opt-in OK</span>
+                  </td>
+                  <td class="px-4 py-3">
+                    <span class="px-2.5 py-1 text-[10px] bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200 rounded-full font-bold">Cierre de Protocolo</span>
+                  </td>
+                  <td class="px-4 py-3 font-bold text-ea-blue dark:text-blue-400">
+                    92 / 100 PTS
+                  </td>
+                  <td class="px-4 py-3 text-right">
+                    <button onclick="abrirWhatsAppLead('+528198765432', 'Carlos Mendoza')" class="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-xs font-bold transition">
+                      <i class="fa-brands fa-whatsapp mr-1"></i> WA
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
-      </div>
-    </div>
+      </section>
 
-    <!-- SECCIÓN 3: RUTA E ITINERARIO OPERATIVO -->
-    <div id="tab-ruta" class="tab-content hidden py-6">
-      <div class="space-y-6">
-        <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-clinical-md transition-colors duration-200">
-          <div class="flex items-center space-x-3 mb-6 border-b border-slate-100 dark:border-slate-800 pb-4">
-            <div class="w-10 h-10 rounded-xl bg-ea-green/10 flex items-center justify-center text-ea-green">
-              <i class="fa-solid fa-route text-lg" aria-hidden="true"></i>
-            </div>
-            <div>
-              <h3 class="font-extrabold text-slate-900 dark:text-white text-base font-display">Itinerario Operativo de Conquista — Gira 2026</h3>
-              <p class="text-xs text-slate-600 dark:text-slate-400">Cronograma detallado por día, sede, horarios y objetivos de prospección</p>
-            </div>
-          </div>
+      <!-- TAB 3: SALUD CARTERA -->
+      <section id="tab-salud" class="tab-content hidden space-y-6">
+        <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-clinical-md">
+          <h2 class="font-heading text-lg font-bold text-slate-900 dark:text-white mb-2">
+            Salud y Retención de Cartera H7
+          </h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mb-6">
+            Monitoreo de reordenes de suplementación celular (33Plus / 34Plus) e índice de deserción.
+          </p>
 
-          <div class="relative border-l-2 border-slate-200 dark:border-slate-800 ml-4 space-y-8 pb-4">
-            <!-- Día 1 -->
-            <div class="relative pl-6">
-              <div class="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-ea-green border-4 border-white dark:border-slate-900"></div>
-              <div class="bg-slate-50 dark:bg-slate-950 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                  <span class="text-xs font-extrabold uppercase tracking-wider text-ea-green font-display">LUNES 21 SEPTIEMBRE • DÍA 1</span>
-                  <span class="text-[11px] font-bold text-slate-600 dark:text-slate-400 bg-slate-200 dark:bg-slate-800 px-2.5 py-0.5 rounded-full w-fit">SEDE: PUEBLA CENTRAL</span>
-                </div>
-                <h4 class="font-extrabold text-slate-900 dark:text-white text-sm">Arribo, Alineación de Prospección Élite & Ofensiva Urbana</h4>
-                <p class="text-xs text-slate-600 dark:text-slate-300">
-                  09:00 AM — Bienvenida en Hotel HQ. Taller intensivo de abordaje frío y manejo de objeciones. 02:00 PM — Comida ejecutiva de equipo. 04:00 PM — Conquista en centros comerciales estratégicos de Puebla.
-                </p>
-              </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="p-5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800">
+              <span class="text-xs font-bold text-emerald-700 dark:text-emerald-300 uppercase tracking-wider">Tasa de Reorden</span>
+              <div class="text-2xl font-extrabold text-emerald-900 dark:text-emerald-100 mt-1">78.4%</div>
+              <p class="text-[11px] text-emerald-600 dark:text-emerald-400 mt-1">+4.2% vs mes anterior</p>
             </div>
-
-            <!-- Día 2 -->
-            <div class="relative pl-6">
-              <div class="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-amber-500 border-4 border-white dark:border-slate-900"></div>
-              <div class="bg-slate-50 dark:bg-slate-950 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                  <span class="text-xs font-extrabold uppercase tracking-wider text-amber-600 dark:text-ea-yellow font-display">MARTES 22 SEPTIEMBRE • DÍA 2</span>
-                  <span class="text-[11px] font-bold text-slate-600 dark:text-slate-400 bg-slate-200 dark:bg-slate-800 px-2.5 py-0.5 rounded-full w-fit">SEDE: IZÚCAR DE MATAMOROS</span>
-                </div>
-                <h4 class="font-extrabold text-slate-900 dark:text-white text-sm">Ofensiva Mixteca & Presentaciones Magistrales en Salón</h4>
-                <p class="text-xs text-slate-600 dark:text-slate-300">
-                  08:30 AM — Traslado vehicular a Izúcar. 10:30 AM — Prospección de calle en zonas comerciales. 06:00 PM — Conferencia Magistral de Oportunidad y Salud Celular.
-                </p>
-              </div>
+            <div class="p-5 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800">
+              <span class="text-xs font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wider">Adherencia Nutricional</span>
+              <div class="text-2xl font-extrabold text-blue-900 dark:text-blue-100 mt-1">91.0%</div>
+              <p class="text-[11px] text-blue-600 dark:text-blue-400 mt-1">Basado en bitácora H7</p>
             </div>
-
-            <!-- Día 3 -->
-            <div class="relative pl-6">
-              <div class="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-amber-500 border-4 border-white dark:border-slate-900"></div>
-              <div class="bg-slate-50 dark:bg-slate-950 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                  <span class="text-xs font-extrabold uppercase tracking-wider text-amber-600 dark:text-ea-yellow font-display">MIÉRCOLES 23 SEPTIEMBRE • DÍA 3</span>
-                  <span class="text-[11px] font-bold text-slate-600 dark:text-slate-400 bg-slate-200 dark:bg-slate-800 px-2.5 py-0.5 rounded-full w-fit">SEDE: TECAMACHALCO</span>
-                </div>
-                <h4 class="font-extrabold text-slate-900 dark:text-white text-sm">Penetración de Mercado Agrícola-Comercial & Cierre de Socios</h4>
-                <p class="text-xs text-slate-600 dark:text-slate-300">
-                  09:00 AM — Despliegue de equipos en Tecamachalco. Entrevistas 1 a 1 con prospectos clave. 07:00 PM — Seminario de Nutrición Celular 33Plus & 34Plus.
-                </p>
-              </div>
-            </div>
-
-            <!-- Día 4 -->
-            <div class="relative pl-6">
-              <div class="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-ea-red border-4 border-white dark:border-slate-900"></div>
-              <div class="bg-slate-50 dark:bg-slate-950 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                  <span class="text-xs font-extrabold uppercase tracking-wider text-ea-red font-display">JUEVES 24 SEPTIEMBRE • DÍA 4</span>
-                  <span class="text-[11px] font-bold text-slate-600 dark:text-slate-400 bg-slate-200 dark:bg-slate-800 px-2.5 py-0.5 rounded-full w-fit">SEDE: HUAMANTLA (GRAN CIERRE)</span>
-                </div>
-                <h4 class="font-extrabold text-slate-900 dark:text-white text-sm">Gran Gala de Cierre, Conteo de Puntos & Entrega de Bolsa $10,000 MXN</h4>
-                <p class="text-xs text-slate-600 dark:text-slate-300">
-                  10:00 AM — Rally Final de Prospección en Huamantla. 04:00 PM — Cena de Gala Ejecutiva. 06:00 PM — Ceremonia de premiación al equipo ganador de la Bolsa de $10,000 MXN en efectivo.
-                </p>
-              </div>
+            <div class="p-5 rounded-2xl bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800">
+              <span class="text-xs font-bold text-purple-700 dark:text-purple-300 uppercase tracking-wider">NPS de Clientes</span>
+              <div class="text-2xl font-extrabold text-purple-900 dark:text-purple-100 mt-1">4.9 / 5.0</div>
+              <p class="text-[11px] text-purple-600 dark:text-purple-400 mt-1">Evaluaciones auditadas</p>
             </div>
           </div>
         </div>
-      </div>
-    </div>
+      </section>
 
-    <!-- SECCIÓN 4: BLINDAJE Y ESTRUCTURA DE VALOR -->
-    <div id="tab-reglas" class="tab-content hidden py-6">
-      <div class="space-y-6">
-        <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-clinical-md transition-colors duration-200">
-          <div class="flex items-center space-x-3 mb-6 border-b border-slate-100 dark:border-slate-800 pb-4">
-            <div class="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-600 dark:text-ea-yellow">
-              <i class="fa-solid fa-shield-halved text-lg" aria-hidden="true"></i>
+      <!-- TAB 4: RADAR MLM -->
+      <section id="tab-radar" class="tab-content hidden space-y-6">
+        <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-clinical-md">
+          <h2 class="font-heading text-lg font-bold text-slate-900 dark:text-white mb-2">
+            Radar de Redes & MLM
+          </h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mb-6">
+            Mapeo de volumen de puntos de equipo, calificación de rango Sherpa y árbol de patrocinio.
+          </p>
+
+          <div class="p-6 rounded-2xl bg-slate-900 text-white space-y-4">
+            <div class="flex justify-between items-center">
+              <div>
+                <span class="text-xs text-slate-400 font-bold uppercase tracking-wider">Rango Actual</span>
+                <div class="text-xl font-extrabold text-yellow-400">Sherpa Diamante Director</div>
+              </div>
+              <div class="text-right">
+                <span class="text-xs text-slate-400 font-bold uppercase tracking-wider">Puntos de Grupo (PG)</span>
+                <div class="text-xl font-extrabold text-emerald-400">48,500 PTS</div>
+              </div>
             </div>
-            <div>
-              <h3 class="font-extrabold text-slate-900 dark:text-white text-base font-display">Blindaje de Garantía & Términos de Bolsa</h3>
-              <p class="text-xs text-slate-600 dark:text-slate-400">Estructura formal de la garantía 100% y criterios de la Bolsa $10,000 MXN</p>
+            <div class="w-full bg-slate-800 h-3 rounded-full overflow-hidden border border-slate-700">
+              <div class="bg-gradient-to-r from-yellow-400 to-emerald-400 h-full w-[82%]"></div>
             </div>
+            <p class="text-xs text-slate-400 text-center font-semibold">
+              Faltan 1,500 PG para calificar a la Gira de Poder Internacional 2026.
+            </p>
           </div>
+        </div>
+      </section>
+
+      <!-- TAB 5: BIOMETRÍA H7 -->
+      <section id="tab-biometria" class="tab-content hidden space-y-6">
+        <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-clinical-md">
+          <h2 class="font-heading text-lg font-bold text-slate-900 dark:text-white mb-2">
+            Evaluador Biométrico H7 & NOM-043
+          </h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mb-6">
+            Ingresa los biomarcadores del cliente para calcular la prescripción celular (33Plus / 34Plus).
+          </p>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="bg-slate-50 dark:bg-slate-950 p-5 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3">
-              <div class="flex items-center space-x-2 text-ea-green font-bold text-sm">
-                <i class="fa-solid fa-box-open text-base" aria-hidden="true"></i>
-                <span>Garantía Reembolso 100% en Producto</span>
+            <div class="space-y-4">
+              <div>
+                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Nivel de Energía percibido (1-10)</label>
+                <input type="number" id="bio-energia" min="1" max="10" value="6" class="w-full px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white text-xs font-bold border border-slate-200 dark:border-slate-600">
               </div>
-              <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                Cada participante de la Gira de Poder recibe la totalidad de su inversión reembolsada inmediatamente en producto de alta rotación (línea 33Plus & 34Plus de Nutrición Celular). Riesgo financiero cero para los líderes convocados.
-              </p>
+              <div>
+                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Calidad de Sueño Rem (Horas)</label>
+                <input type="number" id="bio-sueno" min="1" max="12" value="7" class="w-full px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white text-xs font-bold border border-slate-200 dark:border-slate-600">
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Estrés / Carga Cognitiva</label>
+                <select id="bio-estres" class="w-full px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white text-xs font-bold border border-slate-200 dark:border-slate-600">
+                  <option value="bajo">Bajo - Moderado</option>
+                  <option value="alto" selected>Alto - Estrés Laboral / Mental</option>
+                  <option value="critico">Crítico - Exhaustión Severa</option>
+                </select>
+              </div>
+              <button onclick="calcularDiagnosticoBiometrico()" class="w-full py-3 bg-ea-blue hover:bg-blue-700 text-white font-bold rounded-xl text-xs transition shadow-clinical-sm">
+                Calcular Recomendación de Suplementación
+              </button>
             </div>
 
-            <div class="bg-slate-50 dark:bg-slate-950 p-5 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3">
-              <div class="flex items-center space-x-2 text-amber-600 dark:text-ea-yellow font-bold text-sm">
-                <i class="fa-solid fa-trophy text-base" aria-hidden="true"></i>
-                <span>Criterio de Asignación de Bolsa $10,000 MXN</span>
+            <!-- Resultado Biométrico -->
+            <div id="bio-resultado-box" class="p-5 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 flex flex-col justify-between">
+              <div>
+                <span class="text-xs font-extrabold uppercase text-slate-400 tracking-wider">Diagnóstico Asistido</span>
+                <h3 id="bio-res-titulo" class="font-heading font-bold text-base text-ea-blue dark:text-blue-400 mt-1">
+                  Sugerencia: Modulación 33Plus Adaptógenos
+                </h3>
+                <p id="bio-res-desc" class="text-xs text-slate-600 dark:text-slate-300 mt-2 leading-relaxed">
+                  Basado en la carga de estrés cognitivo alta, se sugiere incluir L-Teanina, Guaraná y L-Tirosina por la mañana para optimizar la concentración sin generar picos glucémicos.
+                </p>
               </div>
-              <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                La bolsa de $10,000 MXN en efectivo se entregará íntegramente al equipo de prospección que acumule la mayor cantidad de registros efectivos con paquete activo durante los 4 días del despliegue Puebla-Tlaxcala.
-              </p>
+              <div class="mt-4 pt-3 border-t border-slate-200 dark:border-slate-700 text-[10px] text-slate-400 font-medium">
+                * Este cálculo es orientativo conforme a NOM-043 y no reemplaza diagnóstico médico.
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </section>
+
+      <!-- TAB 6: SIMULADOR -->
+      <section id="tab-simulador" class="tab-content hidden space-y-6">
+        <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-clinical-md">
+          <h2 class="font-heading text-lg font-bold text-slate-900 dark:text-white mb-2">
+            Simulador de Comisiones & Bonos Sherpa
+          </h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mb-6">
+            Proyecta las ganancias mensuales estimadas de tu organización según el volumen de cajas desplazadas.
+          </p>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="space-y-4">
+              <div>
+                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Cajas Directas (Personal)</label>
+                <input type="number" id="sim-cajas-directas" value="10" oninput="actualizarSimulacion()" class="w-full px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white text-xs font-bold border border-slate-200 dark:border-slate-600">
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Cajas de Equipo (Red Nivel 1 a 3)</label>
+                <input type="number" id="sim-cajas-red" value="80" oninput="actualizarSimulacion()" class="w-full px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white text-xs font-bold border border-slate-200 dark:border-slate-600">
+              </div>
+            </div>
+
+            <div class="md:col-span-2 p-6 rounded-2xl bg-slate-900 text-white flex flex-col justify-between">
+              <div class="space-y-3">
+                <span class="text-xs text-slate-400 font-bold uppercase tracking-wider">Proyección Mensual Estimada</span>
+                <div id="sim-ganancia-total" class="text-3xl font-extrabold text-emerald-400">
+                  $24,500 MXN
+                </div>
+                <div class="text-xs text-slate-300 space-y-1">
+                  <p>• Ganancia Venta Directa: <span id="sim-ganancia-directa" class="font-bold text-white">$4,000 MXN</span></p>
+                  <p>• Bono Residual de Red: <span id="sim-ganancia-residual" class="font-bold text-white">$20,500 MXN</span></p>
+                </div>
+              </div>
+              <div class="mt-4 pt-3 border-t border-slate-800 text-[10px] text-slate-400">
+                Calculado según tabla oficial de compensación Equipo en Acción® 2026.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
     </div>
-
-  </div>
-
-  <!-- Banner de Notificación Persistente con Botón Entendido (Gobernanza & WCAG 2.2 AAA) -->
-  <div id="toast" class="fixed bottom-6 right-6 bg-slate-900 text-white px-5 py-4 rounded-xl font-bold text-xs shadow-2xl transition-all duration-300 transform translate-y-20 opacity-0 flex items-center space-x-3 z-50 border border-slate-700 max-w-md">
-    <i id="toast-icon" class="fa-solid fa-circle-info text-ea-yellow text-lg shrink-0" aria-hidden="true"></i>
-    <span id="toast-message" class="flex-1 leading-snug">Mensaje de notificación</span>
-    <button type="button" onclick="ocultarToast()" class="touch-target bg-ea-yellow text-slate-950 px-3 py-1.5 rounded-lg text-xs font-extrabold hover:bg-yellow-400 transition-all shrink-0 shadow-sm active:scale-95">
-      Entendido
-    </button>
-  </div>
-
-  <!-- Footer Institucional con Clase .ea-hexagon-wave y Grupos SVG Protegidos -->
-  <footer class="w-full bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-6 px-6 mt-16 text-center shadow-clinical-lg transition-colors duration-200">
-    <div class="max-w-7xl mx-auto flex flex-col items-center justify-center space-y-4">
-      
-      <!-- Contenedor con la clase ea-hexagon-wave activa -->
-      <div class="ea-hexagon-wave flex justify-center items-center gap-2">
-        
-        <!-- Hexágono 1: Rojo (#B70E0C) - 180° -->
-        <span>
-          <svg width="30" height="26" viewBox="0 0 576 512" aria-hidden="true">
-            <g transform="rotate(180 288 256)">
-              <path fill="#B70E0C" d="M441.5 39.8C432.9 25.1 417.1 16 400 16H176c-17.1 0-32.9 9.1-41.5 23.8l-112 192c-8.7 14.9-8.7 33.4 0 48.4l112 192c8.6 14.7 24.4 23.8 41.5 23.8h224c17.1 0 32.9-9.1 41.5-23.8l112-192c8.7-14.9 8.7-33.4 0-48.4l-112-192z"/>
-            </g>
-          </svg>
-        </span>
-
-        <!-- Hexágono 2: Rosa (#F29FC5) - 180° -->
-        <span>
-          <svg width="30" height="26" viewBox="0 0 576 512" aria-hidden="true">
-            <g transform="rotate(180 288 256)">
-              <path fill="#F29FC5" d="M441.5 39.8C432.9 25.1 417.1 16 400 16H176c-17.1 0-32.9 9.1-41.5 23.8l-112 192c-8.7 14.9-8.7 33.4 0 48.4l112 192c8.6 14.7 24.4 23.8 41.5 23.8h224c17.1 0 32.9-9.1 41.5-23.8l112-192c8.7-14.9 8.7-33.4 0-48.4l-112-192z"/>
-            </g>
-          </svg>
-        </span>
-
-        <!-- Hexágono 3: Azul Corporativo (#1C75BC) - 90° -->
-        <span>
-          <svg width="30" height="26" viewBox="0 0 576 512" style="overflow: visible;" aria-hidden="true">
-            <g transform="rotate(90 288 256)">
-              <path fill="#1C75BC" d="M441.5 39.8C432.9 25.1 417.1 16 400 16H176c-17.1 0-32.9 9.1-41.5 23.8l-112 192c-8.7 14.9-8.7 33.4 0 48.4l112 192c8.6 14.7 24.4 23.8 41.5 23.8h224c17.1 0 32.9-9.1 41.5-23.8l112-192c8.6 14.7 24.4 23.8 41.5 23.8h224c17.1 0 32.9-9.1 41.5-23.8l112-192c8.7-14.9 8.7-33.4 0-48.4l-112-192z"/>
-            </g>
-          </svg>
-        </span>
-
-        <!-- Hexágono 4: Verde (#3AAA35) - 180° -->
-        <span>
-          <svg width="30" height="26" viewBox="0 0 576 512" aria-hidden="true">
-            <g transform="rotate(180 288 256)">
-              <path fill="#3AAA35" d="M441.5 39.8C432.9 25.1 417.1 16 400 16H176c-17.1 0-32.9 9.1-41.5 23.8l-112 192c8.6 14.7 24.4 23.8 41.5 23.8h224c17.1 0 32.9-9.1 41.5-23.8l112-192c8.7-14.9 8.7-33.4 0-48.4l-112-192z"/>
-            </g>
-          </svg>
-        </span>
-
-        <!-- Hexágono 5: Amarillo Oficial (#FFCC00) - 180° -->
-        <span>
-          <svg width="30" height="26" viewBox="0 0 576 512" aria-hidden="true">
-            <g transform="rotate(180 288 256)">
-              <path fill="#FFCC00" d="M441.5 39.8C432.9 25.1 417.1 16 400 16H176c-17.1 0-32.9 9.1-41.5 23.8l-112 192c-8.7 14.9-8.7 33.4 0 48.4l112 192c8.6 14.7 24.4 23.8 41.5 23.8h224c17.1 0 32.9-9.1 41.5-23.8l112-192c8.7-14.9 8.7-33.4 0-48.4l-112-192z"/>
-            </g>
-          </svg>
-        </span>
-
-      </div>
-
-      <div class="text-xs text-slate-600 dark:text-slate-400 space-y-1 font-sans text-center">
-        <p class="font-bold text-slate-900 dark:text-slate-300">© 2026 Equipo en Acción®. Todos los derechos reservados.</p>
-        <p class="text-[11px] text-slate-600 dark:text-slate-400">Gobernanza Omnicanal T.I.L.O. • WCAG 2.2 AAA • Sistema de Salud y Rendimiento Élite</p>
-      </div>
-    </div>
-  </footer>
   </main>
 
-  <!-- Script Logic -->
-  <script>
-    const fullCopyTemplate = `🔥 *CONVOCATORIA OFICIAL DE LIDERAZGO | EXCLUSIVO POR SELECCIÓN* 🔥
-
-Hola, *{NOMBRE}*. Este mensaje no es masivo: ha sido enviado directamente a ti por tu compromiso, consistencia y liderazgo demostrado en el terreno.
-
-Has sido seleccionado para formar parte del despliegue élite:
-⚡ *GIRA DE PODER: DESPLIEGUE PUEBLA & TLAXCALA 2026* ⚡
-
-📅 *Del Lunes 21 al Jueves 24 de Septiembre*
-
-Durante 4 días consecutivos ejecutaremos una ofensiva total de prospección, conquista de campo y aceleración de volumen con el respaldo directo del equipo directivo de *Equipo en Acción®*.
-
-📍 *TU SEDE ASIGNADA Y RUTA:*
-*{SEDE}*
-
-🏆 *PREMIO EN EFECTIVO DIRECTO:*
-El equipo con mayor aceleración durante la gira se llevará una *Bolsa de $10,000 MXN en Efectivo* entregada al finalizar el despliegue.
-
-🛡️ *GARANTÍA 100% SIN RIESGO:*
-Tu participación está respaldada con el 100% de reembolso en producto oficial de Nutrición Celular Élite.
-
-⚠️ *PLAZAS LIMITADAS:*
-Únicamente *40 lugares* autorizados para toda la ruta Puebla-Tlaxcala.
-
-Responde a este mensaje con la palabra *ACEPTO* para confirmar tu registro y enviarte tu itinerario detallado.
-
-*Equipo en Acción® — Tocando Vidas, Alcanzando Sueños.*`;
-
-    // DATASET DE CALENDARIO OPERATIVO V32
-    const WEEKS_DATA = {
-      semana_38: {
-        label: "Semana 38 (13 al 19 de Septiembre de 2026)",
-        days: [
-          { dayNum: 13, dayName: "DOM", dateStr: "13 SEP", fullLabel: "DOMINGO 13 SEP" },
-          { dayNum: 14, dayName: "LUN", dateStr: "14 SEP", fullLabel: "LUNES 14 SEP" },
-          { dayNum: 15, dayName: "MAR", dateStr: "15 SEP", fullLabel: "MARTES 15 SEP" },
-          { dayNum: 16, dayName: "MIÉ", dateStr: "16 SEP", fullLabel: "MIÉRCOLES 16 SEP" },
-          { dayNum: 17, dayName: "JUE", dateStr: "17 SEP", fullLabel: "JUEVES 17 SEP" },
-          { dayNum: 18, dayName: "VIE", dateStr: "18 SEP", fullLabel: "VIERNES 18 SEP" },
-          { dayNum: 19, dayName: "SÁB", dateStr: "19 SEP", fullLabel: "SÁBADO 19 SEP" }
-        ]
-      },
-      semana_39: {
-        label: "Semana 39 (20 al 26 de Septiembre de 2026)",
-        days: [
-          { dayNum: 20, dayName: "DOM", dateStr: "20 SEP", fullLabel: "DOMINGO 20 SEP" },
-          { dayNum: 21, dayName: "LUN", dateStr: "21 SEP", fullLabel: "LUNES 21 SEP" },
-          { dayNum: 22, dayName: "MAR", dateStr: "22 SEP", fullLabel: "MARTES 22 SEP" },
-          { dayNum: 23, dayName: "MIÉ", dateStr: "23 SEP", fullLabel: "MIÉRCOLES 23 SEP" },
-          { dayNum: 24, dayName: "JUE", dateStr: "24 SEP", fullLabel: "JUEVES 24 SEP" },
-          { dayNum: 25, dayName: "VIE", dateStr: "25 SEP", fullLabel: "VIERNES 25 SEP" },
-          { dayNum: 26, dayName: "SÁB", dateStr: "26 SEP", fullLabel: "SÁBADO 26 SEP" }
-        ]
-      },
-      semana_40: {
-        label: "Semana 40 (27 de Septiembre al 03 de Octubre de 2026)",
-        days: [
-          { dayNum: 27, dayName: "DOM", dateStr: "27 SEP", fullLabel: "DOMINGO 27 SEP" },
-          { dayNum: 28, dayName: "LUN", dateStr: "28 SEP", fullLabel: "LUNES 28 SEP" },
-          { dayNum: 29, dayName: "MAR", dateStr: "29 SEP", fullLabel: "MARTES 29 SEP" },
-          { dayNum: 30, dayName: "MIÉ", dateStr: "30 SEP", fullLabel: "MIÉRCOLES 30 SEP" },
-          { dayNum: 1,  dayName: "JUE", dateStr: "01 OCT", fullLabel: "JUEVES 01 OCT" },
-          { dayNum: 2,  dayName: "VIE", dateStr: "02 OCT", fullLabel: "VIERNES 02 OCT" },
-          { dayNum: 3,  dayName: "SÁB", dateStr: "03 OCT", fullLabel: "SÁBADO 03 OCT" }
-        ]
-      }
-    };
-
-    let activeWeekKey = "semana_39";
-    let activeDayIndex = 1; // Lunes por defecto (índice 1 en semana_39 = 21 SEP)
-
-    function renderWeekNavigation() {
-      const container = document.getElementById('week-day-buttons-container');
-      const heading = document.getElementById('current-day-heading');
-      if (!container || !WEEKS_DATA[activeWeekKey]) return;
-
-      const weekObj = WEEKS_DATA[activeWeekKey];
-      container.innerHTML = '';
-
-      weekObj.days.forEach((day, idx) => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        const isActive = (idx === activeDayIndex);
-
-        btn.className = `touch-target px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1 whitespace-nowrap border ${
-          isActive 
-            ? 'bg-amber-500 dark:bg-ea-yellow text-slate-950 border-amber-500 dark:border-ea-yellow shadow-clinical-sm scale-105' 
-            : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700'
-        }`;
-
-        btn.innerHTML = `<span>${day.dayNum}</span> <span class="text-[10px] opacity-80">${day.dayName}</span>`;
-        btn.onclick = () => selectDay(idx);
-        container.appendChild(btn);
-      });
-
-      const currentDayObj = weekObj.days[activeDayIndex] || weekObj.days[0];
-      if (heading) heading.innerText = currentDayObj.fullLabel;
-    }
-
-    function onWeekChange(newWeekKey) {
-      if (!WEEKS_DATA[newWeekKey]) return;
-      activeWeekKey = newWeekKey;
-      activeDayIndex = 1; // reset a Lunes
-      renderWeekNavigation();
-      showToast(`📅 Semana cambiada a: ${WEEKS_DATA[newWeekKey].label.split(' (')[0]}`, 'info');
-    }
-
-    function selectDay(dayIdx) {
-      activeDayIndex = dayIdx;
-      renderWeekNavigation();
-    }
-
-    function updateCopy() {
-      const nameInput = document.getElementById('input-prospect-name').value.trim() || 'Líder Ejemplo';
-      const sedeSelect = document.getElementById('select-sede').value;
-      
-      let formatted = fullCopyTemplate
-        .replace('{NOMBRE}', nameInput)
-        .replace('{SEDE}', sedeSelect);
-
-      document.getElementById('copy-output').innerText = formatted;
-    }
-
-    function copyToClipboard() {
-      const copyText = document.getElementById('copy-output').innerText;
-      navigator.clipboard.writeText(copyText).then(() => {
-        showToast('📋 ¡Copywriting copiado al portapapeles!', 'success');
-      }).catch(() => {
-        showToast('⚠️ Error al copiar el texto automáticamente.', 'error');
-      });
-    }
-
-    function openWhatsAppDirect() {
-      const copyText = document.getElementById('copy-output').innerText;
-      const encoded = encodeURIComponent(copyText);
-      window.open(`https://web.whatsapp.com/send?text=${encoded}`, '_blank');
-    }
-
-    function showToast(msg, type = 'info') {
-      const toast = document.getElementById('toast');
-      const msgEl = document.getElementById('toast-message');
-      const iconEl = document.getElementById('toast-icon');
-      if (!toast || !msgEl) return;
-
-      msgEl.innerText = msg;
-      if (type === 'success') {
-        if (iconEl) iconEl.className = "fa-solid fa-circle-check text-ea-green text-lg shrink-0";
-      } else if (type === 'error') {
-        if (iconEl) iconEl.className = "fa-solid fa-triangle-exclamation text-ea-red text-lg shrink-0";
-      } else {
-        if (iconEl) iconEl.className = "fa-solid fa-circle-info text-ea-yellow text-lg shrink-0";
-      }
-
-      toast.classList.remove('translate-y-20', 'opacity-0');
-      toast.classList.add('translate-y-0', 'opacity-100');
-      // REGLA DE GOBERNANZA: Sin desaparición automática. El usuario cierra con 'Entendido'.
-    }
-
-    function ocultarToast() {
-      const toast = document.getElementById('toast');
-      if (toast) {
-        toast.classList.remove('translate-y-0', 'opacity-100');
-        toast.classList.add('translate-y-20', 'opacity-0');
-      }
-    }
-
-    function switchTab(tabId) {
-      const contents = document.querySelectorAll('.tab-content');
-      contents.forEach(el => el.classList.add('hidden'));
-
-      const btns = document.querySelectorAll('.tab-btn');
-      btns.forEach(btn => {
-        btn.classList.remove('text-amber-600', 'dark:text-ea-yellow', 'border-amber-500', 'dark:border-ea-yellow');
-        btn.classList.add('text-slate-600', 'dark:text-slate-400', 'border-transparent');
-      });
-
-      const targetContent = document.getElementById(tabId);
-      if (targetContent) targetContent.classList.remove('hidden');
-
-      const targetBtn = document.getElementById(`btn-${tabId}`);
-      if (targetBtn) {
-        targetBtn.classList.remove('text-slate-600', 'dark:text-slate-400', 'border-transparent');
-        targetBtn.classList.add('text-amber-600', 'dark:text-ea-yellow', 'border-amber-500', 'dark:border-ea-yellow');
-      }
-    }
-
-    function toggleTheme() {
-      const isDark = document.documentElement.classList.toggle('dark');
-      localStorage.setItem('theme', isDark ? 'dark' : 'light');
-    }
-
-    function initTheme() {
-      const savedTheme = localStorage.getItem('theme');
-      if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
-    }
-    initTheme();
-
-    function updateOnlineStatus() {
-      const pill = document.getElementById('net-status-pill');
-      const text = document.getElementById('net-status-text');
-      if (!pill || !text) return;
-
-      if (navigator.onLine) {
-        pill.className = "inline-flex items-center space-x-1.5 bg-emerald-950/80 text-emerald-300 border border-emerald-700/60 px-2.5 py-0.5 rounded-full font-bold";
-        text.innerText = "Operación En Vivo (Online)";
-      } else {
-        pill.className = "inline-flex items-center space-x-1.5 bg-amber-950/80 text-amber-300 border border-amber-700/60 px-2.5 py-0.5 rounded-full font-bold";
-        text.innerText = "Modo Offline Autónomo";
-      }
-    }
-
-    // --- AUTENTICACIÓN SHERPA API ---
-    function abrirModalLogin() {
-      const modal = document.getElementById('modal-login');
-      if (modal) {
-        modal.classList.remove('hidden');
-        document.getElementById('login-error-msg').classList.add('hidden');
-        initNetworkCanvas();
-      }
-    }
-
-    function cerrarModalLogin() {
-      const token = localStorage.getItem('sherpa_token') || localStorage.getItem('ea_token');
-      if (!token) {
-        showToast("Debes iniciar sesión para acceder al CRM.", "error");
-        abrirModalLogin();
-        return;
-      }
-      const modal = document.getElementById('modal-login');
-      if (modal) modal.classList.add('hidden');
-    }
-
-    async function ejecutarLoginSherpa(e) {
-      if (e) e.preventDefault();
-      const u = document.getElementById('login-usuario').value.trim();
-      const p = document.getElementById('login-password').value.trim();
-      const errorBox = document.getElementById('login-error-msg');
-      const submitBtn = document.getElementById('btn-submit-login');
-      
-      errorBox.classList.add('hidden');
-      submitBtn.disabled = true;
-      submitBtn.innerText = "Verificando y Autenticando...";
-
-      let authenticated = false;
-      let userData = null;
-      let errorMsg = "Contraseña o usuario incorrecto";
-
-      try {
-        // 1. Intentar API Central Directa de Equipo en Acción
-        const remoteUrl = `https://equipoenaccion.net/ea_crm_app.asp?action=USERSINGIN&User=${encodeURIComponent(u)}&Password=${encodeURIComponent(p)}`;
-        try {
-          let remoteRes = await fetch(remoteUrl);
-          if (remoteRes.ok) {
-            let json = await remoteRes.json();
-            if (json && json.dataSet && json.dataSet.length > 0) {
-              const item = json.dataSet[0];
-              if (item.respuesta === "CONTRASENA INVALIDA") {
-                errorMsg = "Contraseña inválida";
-              } else if (item.respuesta === "NO EXISTE EL USUARIO") {
-                errorMsg = "No existe el usuario";
-              } else if (item.custid || item.firstname || item.customerName) {
-                authenticated = true;
-                userData = {
-                  token: item.custid || item.code || '47886D49-0E71-4DA5-84AD-FC3E4A103467',
-                  name: item.customerName || item.firstname || u,
-                  phone: item.phone || '',
-                  custid: item.custid || '102'
-                };
-              }
-            }
-          }
-        } catch (errRemote) {
-          console.warn("Direct remote API failed or blocked by CORS, trying backend proxy...", errRemote);
-        }
-
-        // 2. Si no se autenticó por remoto, intentar Proxy Backend Local (/api/login o /api/auth/login)
-        if (!authenticated && errorMsg === "Contraseña o usuario incorrecto") {
-          try {
-            let res = await fetch('/api/login', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ username: u, password: p })
-            });
-
-            if (!res.ok && res.status === 404) {
-              res = await fetch('/api/auth/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user: u, password: p })
-              });
-            }
-
-            if (res.ok) {
-              const data = await res.json();
-              if (data.ok || data.success) {
-                authenticated = true;
-                userData = data.user || {
-                  token: data.token || '47886D49-0E71-4DA5-84AD-FC3E4A103467',
-                  name: data.sherpa_nombre || data.name || u,
-                  custid: data.custid || '102'
-                };
-              } else {
-                errorMsg = data.message || "Contraseña incorrecta";
-              }
-            }
-          } catch (errProxy) {
-            console.warn("Local backend proxy fetch failed:", errProxy);
-          }
-        }
-
-        // 3. Modo Standalone PWA / GitHub Pages (fallback si no hay servidor backend local)
-        if (!authenticated && errorMsg === "Contraseña o usuario incorrecto") {
-          if (u.length > 0 && p.length > 0) {
-            const mockToken = '47886D49-0E71-4DA5-84AD-FC3E4A103467';
-            authenticated = true;
-            userData = {
-              token: mockToken,
-              legacy_id: '102',
-              name: u.toUpperCase() === 'TEST' ? 'EDGAR ARTURO, FRIEVENTH MONDRAGON' : u.toUpperCase(),
-              phone: '+527223961746'
-            };
-          }
-        }
-
-        if (authenticated && userData) {
-          localStorage.setItem('ea_session', JSON.stringify(userData));
-          localStorage.setItem('ea_token', userData.token);
-          localStorage.setItem('sherpa_token', userData.token);
-          localStorage.setItem('sherpa_nombre', userData.name);
-          localStorage.setItem('sherpa_celular', userData.phone || '');
-          
-          actualizarEstadoSesionSherpa();
-          showToast(`¡Bienvenido Sherpa ${userData.name}!`, 'success');
-        } else {
-          errorBox.innerText = errorMsg;
-          errorBox.className = "w-full max-w-md p-3.5 bg-red-950/90 border border-red-400 rounded text-red-100 text-xs font-bold text-center backdrop-blur-md mb-4";
-          errorBox.classList.remove('hidden');
-        }
-
-      } catch (err) {
-        errorBox.innerText = "Error de conexión con el servidor.";
-        errorBox.className = "w-full max-w-md p-3.5 bg-red-950/90 border border-red-400 rounded text-red-100 text-xs font-bold text-center backdrop-blur-md mb-4";
-        errorBox.classList.remove('hidden');
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.innerText = "Iniciar Sesión";
-      }
-    }
-
-    function cerrarSesionSherpa() {
-      localStorage.removeItem('ea_session');
-      localStorage.removeItem('ea_token');
-      localStorage.removeItem('sherpa_token');
-      localStorage.removeItem('sherpa_nombre');
-      localStorage.removeItem('sherpa_celular');
-      
-      actualizarEstadoSesionSherpa();
-
-      const errorBox = document.getElementById('login-error-msg');
-      if (errorBox) {
-        errorBox.innerText = "Sesión cerrada correctamente. Por favor ingresa tus credenciales para continuar.";
-        errorBox.className = "w-full max-w-md p-3.5 bg-blue-950/90 border border-blue-400 rounded text-blue-100 text-xs font-bold text-center backdrop-blur-md mb-4";
-        errorBox.classList.remove('hidden');
-      }
-
-      showToast("Sesión cerrada correctamente. Ingresa tus credenciales para continuar.", "info");
-    }
-
-    function actualizarEstadoSesionSherpa() {
-      let nombre = localStorage.getItem('sherpa_nombre');
-      const token = localStorage.getItem('sherpa_token') || localStorage.getItem('ea_token');
-      if (!nombre) {
-        const savedSession = localStorage.getItem('ea_session');
-        if (savedSession) {
-          try {
-            const parsed = JSON.parse(savedSession);
-            nombre = parsed.name || parsed.sherpa_nombre || parsed.customerName;
-          } catch (e) {}
-        }
-      }
-      const userDisplay = document.getElementById('sherpa-user-display');
-      const btnLogout = document.getElementById('btn-header-logout');
-      const btnLogin = document.getElementById('btn-header-login');
-      const mainContent = document.getElementById('crm-main-content') || document.querySelector('main');
-
-      if (nombre && token) {
-        const primerNombre = nombre.split(',')[0].trim().split(' ')[0];
-        if (userDisplay) userDisplay.innerText = primerNombre;
-        if (btnLogout) btnLogout.classList.remove('hidden');
-        if (btnLogin) btnLogin.classList.remove('hidden');
-        if (mainContent) mainContent.classList.remove('hidden');
-        const modal = document.getElementById('modal-login');
-        if (modal) modal.classList.add('hidden');
-      } else {
-        if (userDisplay) userDisplay.innerText = "Iniciar Sesión";
-        if (btnLogout) btnLogout.classList.add('hidden');
-        if (btnLogin) btnLogin.classList.remove('hidden');
-        if (mainContent) mainContent.classList.add('hidden');
-        abrirModalLogin();
-      }
-    }
-
-    function initNetworkCanvas() {
-      const canvas = document.getElementById('login-network-canvas');
-      if (!canvas) return;
-      const ctx = canvas.getContext('2d');
-      let width = canvas.width = window.innerWidth;
-      let height = canvas.height = window.innerHeight;
-
-      const handleResize = () => {
-        if (!canvas) return;
-        width = canvas.width = window.innerWidth;
-        height = canvas.height = window.innerHeight;
-      };
-      window.removeEventListener('resize', handleResize);
-      window.addEventListener('resize', handleResize);
-
-      const numPoints = 50;
-      const points = [];
-      for (let i = 0; i < numPoints; i++) {
-        points.push({
-          x: Math.random() * width,
-          y: Math.random() * height,
-          vx: (Math.random() - 0.5) * 0.9,
-          vy: (Math.random() - 0.5) * 0.9,
-          r: Math.random() * 2.5 + 2
-        });
-      }
-
-      function draw() {
-        const modal = document.getElementById('modal-login');
-        if (!canvas || !modal || modal.classList.contains('hidden')) return;
-
-        ctx.clearRect(0, 0, width, height);
-
-        const grad = ctx.createLinearGradient(0, 0, width, height);
-        grad.addColorStop(0, '#060B18');
-        grad.addColorStop(0.35, '#0A142D');
-        grad.addColorStop(0.7, '#070E22');
-        grad.addColorStop(1, '#030612');
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, width, height);
-
-        for (let i = 0; i < numPoints; i++) {
-          const p1 = points[i];
-          p1.x += p1.vx;
-          p1.y += p1.vy;
-
-          if (p1.x < 0 || p1.x > width) p1.vx *= -1;
-          if (p1.y < 0 || p1.y > height) p1.vy *= -1;
-
-          for (let j = i + 1; j < numPoints; j++) {
-            const p2 = points[j];
-            const dx = p1.x - p2.x;
-            const dy = p1.y - p2.y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-
-            if (dist < 190) {
-              ctx.beginPath();
-              ctx.moveTo(p1.x, p1.y);
-              ctx.lineTo(p2.x, p2.y);
-              ctx.strokeStyle = `rgba(255, 255, 255, ${0.5 * (1 - dist / 190)})`;
-              ctx.lineWidth = 1.2;
-              ctx.stroke();
-            }
-          }
-        }
-
-        for (let i = 0; i < numPoints; i++) {
-          const p = points[i];
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
-          ctx.shadowBlur = 8;
-          ctx.shadowColor = '#ffffff';
-          ctx.fill();
-          ctx.shadowBlur = 0;
-        }
-
-        requestAnimationFrame(draw);
-      }
-
-      draw();
-    }
-
-    function abrirModalLogin() {
-      const modal = document.getElementById('modal-login');
-      if (modal) {
-        modal.classList.remove('hidden');
-        document.getElementById('login-error-msg').classList.add('hidden');
-        initNetworkCanvas();
-      }
-    }
-
-    window.addEventListener('online', updateOnlineStatus);
-    window.addEventListener('offline', updateOnlineStatus);
-
-    window.onload = function() {
-      updateCopy();
-      updateOnlineStatus();
-      renderWeekNavigation();
-      actualizarEstadoSesionSherpa();
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('./sw.js').catch(() => {});
-      }
-    };
-  </script>
-
-  <!-- Modal de Login Sherpa (Diseño idéntico a la referencia del usuario) -->
-  <div id="modal-login" class="fixed inset-0 z-50 bg-[#060B18] overflow-hidden flex items-center justify-center p-4">
-    <!-- Canvas de red de constelaciones animadas -->
-    <canvas id="login-network-canvas" class="absolute inset-0 w-full h-full pointer-events-none z-0"></canvas>
-
-    <!-- Botón de Cierre X -->
-    <button onclick="cerrarModalLogin()" class="absolute top-6 right-6 text-white/70 hover:text-white text-2xl z-20 transition-all p-2 rounded-full hover:bg-white/10" aria-label="Cerrar">
-      <i class="fa-solid fa-xmark"></i>
-    </button>
-
-    <!-- Contenedor del Formulario -->
-    <div class="relative z-10 w-full max-w-lg flex flex-col items-center space-y-6 px-4">
-      
-      <form onsubmit="ejecutarLoginSherpa(event)" class="w-full flex flex-col items-center space-y-6">
-        
-        <!-- Campo Usuario -->
-        <div class="w-full max-w-md flex items-center shadow-2xl rounded-sm overflow-hidden">
-          <div class="w-14 h-14 bg-[#080E21] border-y border-l border-slate-700/60 flex items-center justify-center shrink-0">
-            <i class="fa-solid fa-user text-white text-xl" aria-hidden="true"></i>
+  <!-- Modal Iniciar Sesión (Azabache Oscuro con Canvas de Constelaciones) -->
+  <div id="modal-login" class="fixed inset-0 z-50 bg-[#0B0F19] flex items-center justify-center p-4 overflow-hidden hidden">
+    <!-- Canvas animado de constelaciones -->
+    <canvas id="login-canvas"></canvas>
+
+    <div class="relative z-10 w-full max-w-md bg-slate-900/90 border border-slate-700/80 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
+      <div class="text-center space-y-3 mb-6">
+        <div class="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-ea-navy via-ea-blue to-cyan-500 flex items-center justify-center text-white font-heading font-extrabold text-2xl shadow-lg border border-blue-400/30">
+          S
+        </div>
+        <h2 class="font-heading text-xl sm:text-2xl font-extrabold text-white tracking-tight">
+          Sinergix Negocio CRM
+        </h2>
+        <p class="text-xs text-slate-400 font-medium">
+          Acceso Exclusivo Sherpa — Equipo en Acción®
+        </p>
+      </div>
+
+      <form onsubmit="ejecutarLoginSherpa(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">Usuario / Teléfono</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+              <i class="fa-solid fa-user"></i>
+            </span>
+            <input type="text" id="login-user" required placeholder="Ej. 5512345678" class="w-full pl-10 pr-4 py-3 bg-slate-800/90 text-white rounded-xl text-sm font-semibold border border-slate-700 focus:outline-none focus:ring-2 focus:ring-ea-blue transition placeholder-slate-500">
           </div>
-          <input 
-            type="text" 
-            id="login-usuario" 
-            required 
-            placeholder="ANDRES TREJO" 
-            class="w-full h-14 bg-[#E9F1FC] border-y border-r border-slate-300 text-[#0A132B] font-bold px-4 text-base tracking-wide uppercase focus:outline-none focus:bg-white transition-all placeholder:text-slate-500"
-          >
         </div>
 
-        <!-- Campo Contraseña -->
-        <div class="w-full max-w-md flex items-center shadow-2xl rounded-sm overflow-hidden">
-          <div class="w-14 h-14 bg-[#080E21] border-y border-l border-slate-700/60 flex items-center justify-center shrink-0">
-            <i class="fa-solid fa-lock text-white text-xl" aria-hidden="true"></i>
+        <div>
+          <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">Contraseña</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+              <i class="fa-solid fa-lock"></i>
+            </span>
+            <input type="password" id="login-password" required placeholder="••••••••" class="w-full pl-10 pr-4 py-3 bg-slate-800/90 text-white rounded-xl text-sm font-semibold border border-slate-700 focus:outline-none focus:ring-2 focus:ring-ea-blue transition placeholder-slate-500">
           </div>
-          <input 
-            type="password" 
-            id="login-password" 
-            required 
-            placeholder="••••••••" 
-            class="w-full h-14 bg-[#E9F1FC] border-y border-r border-slate-300 text-[#0A132B] font-bold px-4 text-base tracking-wide focus:outline-none focus:bg-white transition-all placeholder:text-slate-500"
-          >
         </div>
 
         <!-- Mensaje de Error / Info -->
@@ -1316,5 +541,270 @@ Responde a este mensaje con la palabra *ACEPTO* para confirmar tu registro y env
     </div>
   </div>
 
+  <!-- Scripts Javascript de Operativa CRM -->
+  <script>
+    // Inicialización al cargar la página
+    document.addEventListener('DOMContentLoaded', () => {
+      initNetworkCanvas();
+      actualizarEstadoSesionSherpa();
+    });
+
+    // Control de Sesión y Autenticación
+    function actualizarEstadoSesionSherpa() {
+      const token = localStorage.getItem('sinergix_token') || localStorage.getItem('ea_session') || localStorage.getItem('sherpa_token');
+      const modal = document.getElementById('modal-login');
+      const mainApp = document.getElementById('main-crm-app');
+      const sessionBar = document.getElementById('sherpa-session-bar');
+      const sherpaName = document.getElementById('sherpa-display-name');
+
+      if (!token) {
+        if (modal) modal.classList.remove('hidden');
+        if (mainApp) mainApp.classList.add('hidden');
+        if (sessionBar) sessionBar.classList.add('hidden');
+      } else {
+        if (modal) modal.classList.add('hidden');
+        if (mainApp) mainApp.classList.remove('hidden');
+        if (sessionBar) sessionBar.classList.remove('hidden');
+        
+        const nombreGuardado = localStorage.getItem('sherpa_nombre') || 'Sherpa Autenticado';
+        if (sherpaName) sherpaName.innerText = nombreGuardado;
+      }
+    }
+
+    async function ejecutarLoginSherpa(event) {
+      event.preventDefault();
+      const user = document.getElementById('login-user').value.trim();
+      const pass = document.getElementById('login-password').value.trim();
+      const errorBox = document.getElementById('login-error-msg');
+
+      if (errorBox) errorBox.classList.add('hidden');
+
+      try {
+        const url = `https://equipoenaccion.net/ea_crm_app.asp?action=USERSINGIN&User=${encodeURIComponent(user)}&Password=${encodeURIComponent(pass)}`;
+        const res = await fetch(url);
+        const text = await res.text();
+
+        if (text.includes("CONTRASENA INVALIDA") || text.includes("NO EXISTE EL USUARIO") || text.includes("ERROR")) {
+          if (errorBox) {
+            errorBox.innerText = "Credenciales incorrectas. Verifica tu usuario y contraseña.";
+            errorBox.className = "w-full max-w-md p-3.5 bg-red-950/90 border border-red-500 rounded text-red-100 text-xs font-bold text-center backdrop-blur-md mb-4";
+            errorBox.classList.remove('hidden');
+          }
+          return;
+        }
+
+        // Login exitoso
+        localStorage.setItem('sinergix_token', 'TOKEN_SHERPA_' + Date.now());
+        localStorage.setItem('ea_session', 'ACTIVE');
+        localStorage.setItem('sherpa_nombre', user);
+
+        showToast("Bienvenido al CRM Gerencial Sinergix", "success");
+        actualizarEstadoSesionSherpa();
+
+      } catch (err) {
+        // Fallback para pruebas offline o cors
+        localStorage.setItem('sinergix_token', 'TOKEN_SHERPA_DEMO');
+        localStorage.setItem('ea_session', 'ACTIVE');
+        localStorage.setItem('sherpa_nombre', user || 'Sherpa Demo');
+        showToast("Sesión iniciada en modo local", "success");
+        actualizarEstadoSesionSherpa();
+      }
+    }
+
+    function salir() {
+      localStorage.removeItem('ea_session');
+      localStorage.removeItem('ea_token');
+      localStorage.removeItem('sherpa_token');
+      localStorage.removeItem('sinergix_token');
+      localStorage.removeItem('sherpa_nombre');
+      localStorage.removeItem('sherpa_celular');
+      
+      actualizarEstadoSesionSherpa();
+
+      const errorBox = document.getElementById('login-error-msg');
+      if (errorBox) {
+        errorBox.innerText = "Sesión cerrada correctamente. Por favor ingresa tus credenciales para continuar.";
+        errorBox.className = "w-full max-w-md p-3.5 bg-blue-950/90 border border-blue-400 rounded text-blue-100 text-xs font-bold text-center backdrop-blur-md mb-4";
+        errorBox.classList.remove('hidden');
+      }
+      
+      showToast('Sesión cerrada correctamente', 'info');
+    }
+
+    // Navegación por Tabs
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('bg-ea-blue', 'text-white', 'shadow-clinical-sm');
+        btn.classList.add('text-slate-600', 'dark:text-slate-300');
+      });
+
+      const selectedTab = document.getElementById(tabId);
+      const selectedBtn = document.getElementById('btn-' + tabId);
+
+      if (selectedTab) selectedTab.classList.remove('hidden');
+      if (selectedBtn) {
+        selectedBtn.classList.add('bg-ea-blue', 'text-white', 'shadow-clinical-sm');
+        selectedBtn.classList.remove('text-slate-600', 'dark:text-slate-300');
+      }
+    }
+
+    // Toggle Modo Oscuro
+    function toggleDarkMode() {
+      document.documentElement.classList.toggle('dark');
+    }
+
+    // Sistema de Toast Persistente (Cumplimiento WCAG 2.2 AAA / NOM-004)
+    function showToast(mensaje, tipo = 'info') {
+      const container = document.getElementById('toast-persistent-container');
+      const content = document.getElementById('toast-persistent-content');
+      const msgSpan = document.getElementById('toast-persistent-message');
+      const icon = document.getElementById('toast-persistent-icon');
+
+      if (!container || !content || !msgSpan) return;
+
+      msgSpan.innerText = mensaje;
+
+      if (tipo === 'success') {
+        content.className = 'w-full px-4 py-3 text-sm font-semibold flex items-center justify-between shadow-md bg-emerald-600 text-white';
+        icon.className = 'fa-solid fa-circle-check';
+      } else if (tipo === 'error') {
+        content.className = 'w-full px-4 py-3 text-sm font-semibold flex items-center justify-between shadow-md bg-red-600 text-white';
+        icon.className = 'fa-solid fa-triangle-exclamation';
+      } else {
+        content.className = 'w-full px-4 py-3 text-sm font-semibold flex items-center justify-between shadow-md bg-ea-blue text-white';
+        icon.className = 'fa-solid fa-circle-info';
+      }
+
+      container.classList.remove('hidden');
+    }
+
+    function dismissPersistentToast() {
+      const container = document.getElementById('toast-persistent-container');
+      if (container) container.classList.add('hidden');
+    }
+
+    // Funciones complementarias
+    function enviarMensajeChat() {
+      const input = document.getElementById('chat-input-text');
+      const container = document.getElementById('chat-messages-container');
+      if (!input || !input.value.trim()) return;
+
+      const texto = input.value.trim();
+      const div = document.createElement('div');
+      div.className = 'bg-slate-200 dark:bg-slate-700 p-3 rounded-xl text-xs text-right font-medium text-slate-800 dark:text-slate-100 ml-8';
+      div.innerText = texto;
+      container.appendChild(div);
+      input.value = '';
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function abrirWhatsAppLead(tel, nombre) {
+      const msg = encodeURIComponent(`Hola ${nombre}, te saluda tu Sherpa de Equipo en Acción. ¿Cómo va tu avance biométrico H7?`);
+      window.open(`https://wa.me/${tel.replace(/[^0-9]/g, '')}?text=${msg}`, '_blank');
+    }
+
+    function calcularDiagnosticoBiometrico() {
+      const estres = document.getElementById('bio-estres').value;
+      const resTitulo = document.getElementById('bio-res-titulo');
+      const resDesc = document.getElementById('bio-res-desc');
+
+      if (estres === 'critico') {
+        resTitulo.innerText = "Sugerencia: Protocolo Recuperación 34Plus Mucosa + Adaptógenos";
+        resDesc.innerText = "Estrés severo detectado. Se sugiere combinar Inulina, Cromo y Spirulina (34Plus) con L-Teanina en dosis divididas para proteger barrera mucosa intestinal.";
+      } else {
+        resTitulo.innerText = "Sugerencia: Modulación 33Plus Adaptógenos";
+        resDesc.innerText = "Carga de estrés manejable. Se indica esquema estándar con Guaraná y L-Tirosina antes del entrenamiento o jornada laboral.";
+      }
+      showToast("Evaluación biométrica calculada", "success");
+    }
+
+    function actualizarSimulacion() {
+      const dir = parseInt(document.getElementById('sim-cajas-directas').value) || 0;
+      const red = parseInt(document.getElementById('sim-cajas-red').value) || 0;
+
+      const ganDirecta = dir * 400;
+      const ganResidual = red * 250;
+      const total = ganDirecta + ganResidual;
+
+      document.getElementById('sim-ganancia-directa').innerText = `$${ganDirecta.toLocaleString()} MXN`;
+      document.getElementById('sim-ganancia-residual').innerText = `$${ganResidual.toLocaleString()} MXN`;
+      document.getElementById('sim-ganancia-total').innerText = `$${total.toLocaleString()} MXN`;
+    }
+
+    // Canvas Animado de Constelaciones para el Modal Login
+    function initNetworkCanvas() {
+      const canvas = document.getElementById('login-canvas');
+      const modal = document.getElementById('modal-login');
+      if (!canvas || !modal || modal.classList.contains('hidden')) return;
+
+      const ctx = canvas.getContext('2d');
+      let width = canvas.width = window.innerWidth;
+      let height = canvas.height = window.innerHeight;
+
+      const points = [];
+      const numPoints = 40;
+
+      for (let i = 0; i < numPoints; i++) {
+        points.push({
+          x: Math.random() * width,
+          y: Math.random() * height,
+          vx: (Math.random() - 0.5) * 0.8,
+          vy: (Math.random() - 0.5) * 0.8
+        });
+      }
+
+      function draw() {
+        if (modal.classList.contains('hidden')) return;
+        ctx.clearRect(0, 0, width, height);
+
+        ctx.fillStyle = 'rgba(59, 130, 246, 0.5)';
+        ctx.strokeStyle = 'rgba(59, 130, 246, 0.15)';
+
+        for (let i = 0; i < points.length; i++) {
+          const p = points[i];
+          p.x += p.vx;
+          p.y += p.vy;
+
+          if (p.x < 0 || p.x > width) p.vx *= -1;
+          if (p.y < 0 || p.y > height) p.vy *= -1;
+
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
+          ctx.fill();
+
+          for (let j = i + 1; j < points.length; j++) {
+            const p2 = points[j];
+            const dist = Math.hypot(p.x - p2.x, p.y - p2.y);
+            if (dist < 120) {
+              ctx.beginPath();
+              ctx.moveTo(p.x, p.y);
+              ctx.lineTo(p2.x, p2.y);
+              ctx.stroke();
+            }
+          }
+        }
+        requestAnimationFrame(draw);
+      }
+
+      window.addEventListener('resize', () => {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+      });
+
+      draw();
+    }
+  </script>
+
+  <!-- Service Worker PWA Register -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(reg => console.log('SW registrado con éxito:', reg.scope))
+          .catch(err => console.error('Error al registrar SW:', err));
+      });
+    }
+  </script>
 </body>
 </html>
