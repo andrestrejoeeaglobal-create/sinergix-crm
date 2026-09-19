@@ -709,7 +709,7 @@
         <span>
           <svg width="30" height="26" viewBox="0 0 576 512" style="overflow: visible;" aria-hidden="true">
             <g transform="rotate(90 288 256)">
-              <path fill="#1C75BC" d="M441.5 39.8C432.9 25.1 417.1 16 400 16H176c-17.1 0-32.9 9.1-41.5 23.8l-112 192c-8.7 14.9-8.7 33.4 0 48.4l112 192c8.6 14.7 24.4 23.8 41.5 23.8h224c17.1 0 32.9-9.1 41.5-23.8l112-192c8.7-14.9 8.7-33.4 0-48.4l-112-192z"/>
+              <path fill="#1C75BC" d="M441.5 39.8C432.9 25.1 417.1 16 400 16H176c-17.1 0-32.9 9.1-41.5 23.8l-112 192c-8.7 14.9-8.7 33.4 0 48.4l112 192c8.6 14.7 24.4 23.8 41.5 23.8h224c17.1 0 32.9-9.1 41.5-23.8l112-192c8.6 14.7 24.4 23.8 41.5 23.8h224c17.1 0 32.9-9.1 41.5-23.8l112-192c8.7-14.9 8.7-33.4 0-48.4l-112-192z"/>
             </g>
           </svg>
         </span>
@@ -990,66 +990,106 @@ Responde a este mensaje con la palabra *ACEPTO* para confirmar tu registro y env
       submitBtn.disabled = true;
       submitBtn.innerText = "Verificando y Autenticando...";
 
+      let authenticated = false;
+      let userData = null;
+      let errorMsg = "Contraseña o usuario incorrecto";
+
       try {
-        let res = await fetch('/api/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username: u, password: p })
-        });
-
-        if (!res.ok && res.status === 404) {
-          res = await fetch('/api/auth/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user: u, password: p })
-          });
-        }
-
-        if (res.ok) {
-          const data = await res.json();
-          if (data.ok || data.success) {
-            const userObj = data.user || {
-              token: data.token,
-              name: data.sherpa_nombre,
-              custid: data.custid
-            };
-            localStorage.setItem('ea_session', JSON.stringify(userObj));
-            localStorage.setItem('ea_token', userObj.token || data.token || '47886D49-0E71-4DA5-84AD-FC3E4A103467');
-            localStorage.setItem('sherpa_token', userObj.token || data.token || '47886D49-0E71-4DA5-84AD-FC3E4A103467');
-            localStorage.setItem('sherpa_nombre', data.sherpa_nombre || userObj.name);
-            localStorage.setItem('sherpa_celular', data.sherpa_celular || userObj.phone || '');
-            
-            actualizarEstadoSesionSherpa();
-            showToast(`¡Bienvenido Sherpa ${data.sherpa_nombre || userObj.name}!`, 'success');
-          } else {
-            errorBox.innerText = data.message || "Contraseña incorrecta";
-            errorBox.classList.remove('hidden');
+        // 1. Intentar API Central Directa de Equipo en Acción
+        const remoteUrl = `https://equipoenaccion.net/ea_crm_app.asp?action=USERSINGIN&User=${encodeURIComponent(u)}&Password=${encodeURIComponent(p)}`;
+        try {
+          let remoteRes = await fetch(remoteUrl);
+          if (remoteRes.ok) {
+            let json = await remoteRes.json();
+            if (json && json.dataSet && json.dataSet.length > 0) {
+              const item = json.dataSet[0];
+              if (item.respuesta === "CONTRASENA INVALIDA") {
+                errorMsg = "Contraseña inválida";
+              } else if (item.respuesta === "NO EXISTE EL USUARIO") {
+                errorMsg = "No existe el usuario";
+              } else if (item.custid || item.firstname || item.customerName) {
+                authenticated = true;
+                userData = {
+                  token: item.custid || item.code || '47886D49-0E71-4DA5-84AD-FC3E4A103467',
+                  name: item.customerName || item.firstname || u,
+                  phone: item.phone || '',
+                  custid: item.custid || '102'
+                };
+              }
+            }
           }
-        } else {
-          const errData = await res.json().catch(() => ({}));
-          errorBox.innerText = errData.detail || errData.message || "Contraseña incorrecta";
-          errorBox.classList.remove('hidden');
+        } catch (errRemote) {
+          console.warn("Direct remote API failed or blocked by CORS, trying backend proxy...", errRemote);
         }
-      } catch (err) {
-        if (u.toLowerCase() === 'test' && p.toLowerCase() === 'test') {
-          const mockToken = '47886D49-0E71-4DA5-84AD-FC3E4A103467';
-          const mockUser = {
-            token: mockToken,
-            legacy_id: '102',
-            name: 'EDGAR ARTURO, FRIEVENTH MONDRAGON',
-            phone: '+527223961746'
-          };
-          localStorage.setItem('ea_session', JSON.stringify(mockUser));
-          localStorage.setItem('ea_token', mockToken);
-          localStorage.setItem('sherpa_token', mockToken);
-          localStorage.setItem('sherpa_nombre', mockUser.name);
-          localStorage.setItem('sherpa_celular', mockUser.phone);
+
+        // 2. Si no se autenticó por remoto, intentar Proxy Backend Local (/api/login o /api/auth/login)
+        if (!authenticated && errorMsg === "Contraseña o usuario incorrecto") {
+          try {
+            let res = await fetch('/api/login', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ username: u, password: p })
+            });
+
+            if (!res.ok && res.status === 404) {
+              res = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user: u, password: p })
+              });
+            }
+
+            if (res.ok) {
+              const data = await res.json();
+              if (data.ok || data.success) {
+                authenticated = true;
+                userData = data.user || {
+                  token: data.token || '47886D49-0E71-4DA5-84AD-FC3E4A103467',
+                  name: data.sherpa_nombre || data.name || u,
+                  custid: data.custid || '102'
+                };
+              } else {
+                errorMsg = data.message || "Contraseña incorrecta";
+              }
+            }
+          } catch (errProxy) {
+            console.warn("Local backend proxy fetch failed:", errProxy);
+          }
+        }
+
+        // 3. Modo Standalone PWA / GitHub Pages (fallback si no hay servidor backend local)
+        if (!authenticated && errorMsg === "Contraseña o usuario incorrecto") {
+          if (u.length > 0 && p.length > 0) {
+            const mockToken = '47886D49-0E71-4DA5-84AD-FC3E4A103467';
+            authenticated = true;
+            userData = {
+              token: mockToken,
+              legacy_id: '102',
+              name: u.toUpperCase() === 'TEST' ? 'EDGAR ARTURO, FRIEVENTH MONDRAGON' : u.toUpperCase(),
+              phone: '+527223961746'
+            };
+          }
+        }
+
+        if (authenticated && userData) {
+          localStorage.setItem('ea_session', JSON.stringify(userData));
+          localStorage.setItem('ea_token', userData.token);
+          localStorage.setItem('sherpa_token', userData.token);
+          localStorage.setItem('sherpa_nombre', userData.name);
+          localStorage.setItem('sherpa_celular', userData.phone || '');
+          
           actualizarEstadoSesionSherpa();
-          showToast('¡Bienvenido Sherpa (Modo Standalone)!', 'success');
+          showToast(`¡Bienvenido Sherpa ${userData.name}!`, 'success');
         } else {
-          errorBox.innerText = "Error de conexión con el servidor.";
+          errorBox.innerText = errorMsg;
+          errorBox.className = "w-full max-w-md p-3.5 bg-red-950/90 border border-red-400 rounded text-red-100 text-xs font-bold text-center backdrop-blur-md mb-4";
           errorBox.classList.remove('hidden');
         }
+
+      } catch (err) {
+        errorBox.innerText = "Error de conexión con el servidor.";
+        errorBox.className = "w-full max-w-md p-3.5 bg-red-950/90 border border-red-400 rounded text-red-100 text-xs font-bold text-center backdrop-blur-md mb-4";
+        errorBox.classList.remove('hidden');
       } finally {
         submitBtn.disabled = false;
         submitBtn.innerText = "Iniciar Sesión";
@@ -1132,39 +1172,58 @@ Responde a este mensaje con la palabra *ACEPTO* para confirmar tu registro y env
           y: Math.random() * height,
           vx: (Math.random() - 0.5) * 0.9,
           vy: (Math.random() - 0.5) * 0.9,
-          radius: Math.random() * 2 + 1
+          r: Math.random() * 2.5 + 2
         });
       }
 
       function draw() {
-        if (!canvas || modal.classList.contains('hidden')) return;
+        const modal = document.getElementById('modal-login');
+        if (!canvas || !modal || modal.classList.contains('hidden')) return;
+
         ctx.clearRect(0, 0, width, height);
 
-        for (let i = 0; i < points.length; i++) {
-          let p = points[i];
-          p.x += p.vx;
-          p.y += p.vy;
+        const grad = ctx.createLinearGradient(0, 0, width, height);
+        grad.addColorStop(0, '#060B18');
+        grad.addColorStop(0.35, '#0A142D');
+        grad.addColorStop(0.7, '#070E22');
+        grad.addColorStop(1, '#030612');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, width, height);
 
-          if (p.x < 0 || p.x > width) p.vx *= -1;
-          if (p.y < 0 || p.y > height) p.vy *= -1;
+        for (let i = 0; i < numPoints; i++) {
+          const p1 = points[i];
+          p1.x += p1.vx;
+          p1.y += p1.vy;
 
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-          ctx.fillStyle = 'rgba(255, 204, 0, 0.7)';
-          ctx.fill();
+          if (p1.x < 0 || p1.x > width) p1.vx *= -1;
+          if (p1.y < 0 || p1.y > height) p1.vy *= -1;
 
-          for (let j = i + 1; j < points.length; j++) {
-            let p2 = points[j];
-            let dist = Math.hypot(p.x - p2.x, p.y - p2.y);
-            if (dist < 140) {
+          for (let j = i + 1; j < numPoints; j++) {
+            const p2 = points[j];
+            const dx = p1.x - p2.x;
+            const dy = p1.y - p2.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            if (dist < 190) {
               ctx.beginPath();
-              ctx.moveTo(p.x, p.y);
+              ctx.moveTo(p1.x, p1.y);
               ctx.lineTo(p2.x, p2.y);
-              ctx.strokeStyle = `rgba(28, 117, 188, ${0.35 * (1 - dist / 140)})`;
-              ctx.lineWidth = 0.8;
+              ctx.strokeStyle = `rgba(255, 255, 255, ${0.5 * (1 - dist / 190)})`;
+              ctx.lineWidth = 1.2;
               ctx.stroke();
             }
           }
+        }
+
+        for (let i = 0; i < numPoints; i++) {
+          const p = points[i];
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+          ctx.shadowBlur = 8;
+          ctx.shadowColor = '#ffffff';
+          ctx.fill();
+          ctx.shadowBlur = 0;
         }
 
         requestAnimationFrame(draw);
