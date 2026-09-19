@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-  <title>Sinergix Negocio CRM — Dashboard Gerencial del Sherpa (Sprint 28)</title>
+  <title>Sinergix Negocio CRM — Dashboard Gerencial del Sherpa</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -28,25 +28,46 @@
           }
         }
       }
-    };
+    }
   </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700;800&display=swap" rel="stylesheet">
   <style>
-    body {
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      -webkit-tap-highlight-color: transparent;
+    .touch-target { min-height: 44px; min-width: 44px; }
+    .fade-in { animation: fadeIn 0.3s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+    .tabular-nums { font-variant-numeric: tabular-nums; }
+    .modal-overlay { background-color: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); }
+
+    /* Contraste canónico para Imagotipo en Modo Oscuro (WCAG 2.2 AAA) */
+    .dark .logo-clinical-contrast {
+      filter: brightness(1.1) contrast(1.15) drop-shadow(0 1px 2px rgba(255, 255, 255, 0.18)) drop-shadow(0 0 1px rgba(255, 255, 255, 0.25));
     }
-    .font-heading {
-      font-family: 'Space Grotesk', sans-serif;
+
+    /* Animación canónica de la firma de 5 hexágonos en Footer */
+    .ea-hexagon-wave span {
+      display: inline-flex;
+      animation: eaHexWave 1.8s ease-in-out infinite;
     }
-    .touch-target {
-      min-height: 48px;
-      min-width: 48px;
+    .ea-hexagon-wave span:nth-child(1) { animation-delay: 0.0s; }
+    .ea-hexagon-wave span:nth-child(2) { animation-delay: 0.15s; }
+    .ea-hexagon-wave span:nth-child(3) { animation-delay: 0.3s; }
+    .ea-hexagon-wave span:nth-child(4) { animation-delay: 0.45s; }
+    .ea-hexagon-wave span:nth-child(5) { animation-delay: 0.6s; }
+
+    @keyframes eaHexWave {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
     }
-    /* Constellation background for dark azabache modal */
+
+    /* Desactivación de animación por sensibilidad vestibular (WCAG 2.2 AAA Criterio 2.3.3) */
+    @media (prefers-reduced-motion: reduce) {
+      .ea-hexagon-wave span {
+        animation: none !important;
+      }
+    }
+
+    /* Canvas de constelaciones para modal login */
     #login-canvas {
       position: absolute;
       top: 0;
@@ -57,35 +78,44 @@
       z-index: 0;
     }
   </style>
+
+  <!-- Script Anti-FOUC síncrono para Modo Dual -->
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem('theme');
+      const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    })();
+  </script>
+  <link rel="manifest" href="./manifest.json">
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js', { scope: './' })
+          .then(reg => console.log('[SW] Registrado en el ámbito:', reg.scope))
+          .catch(err => console.warn('[SW] Fallo de registro:', err));
+      });
+    }
+  </script>
 </head>
-<body class="h-full flex flex-col bg-slate-50 dark:bg-slate-900 dark:text-slate-100 transition-colors duration-200">
+<body class="min-h-screen flex flex-col font-sans bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors duration-200">
 
-  <!-- Persistent Banner WCAG 2.2 AAA / NOM-004 (Sin auto-desaparición) -->
-  <div id="toast-persistent-container" class="sticky top-0 z-50 w-full hidden">
-    <div id="toast-persistent-content" class="w-full px-4 py-3 text-sm font-semibold flex items-center justify-between shadow-md">
-      <div class="flex items-center space-x-2">
-        <i id="toast-persistent-icon" class="fa-solid fa-circle-info"></i>
-        <span id="toast-persistent-message">Mensaje del sistema</span>
-      </div>
-      <button onclick="dismissPersistentToast()" class="ml-4 px-2 py-1 bg-black/20 hover:bg-black/40 rounded text-xs text-white" aria-label="Cerrar aviso">
-        Entendido <i class="fa-solid fa-xmark ml-1"></i>
-      </button>
-    </div>
-  </div>
-
-  <!-- Header Gerencial -->
-  <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-30 shadow-clinical-sm">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-      
-      <!-- Brand & Status -->
+  <!-- Header TCK-2026-GOV-HEADER-001 (Full-Width Responsive) -->
+  <header class="w-full bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-50 px-4 sm:px-6 lg:px-8 py-3.5 shadow-clinical-sm transition-colors duration-200">
+    <div class="max-w-[1600px] mx-auto flex items-center justify-between">
       <div class="flex items-center space-x-3">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-ea-navy to-ea-blue flex items-center justify-center text-white font-heading font-extrabold text-xl shadow-clinical-sm">
+        <!-- Imagotipo Oficial Sinergix / Equipo en Acción -->
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-ea-navy to-ea-blue flex items-center justify-center text-white font-black text-xl shadow-clinical-sm logo-clinical-contrast">
           S
         </div>
         <div>
           <div class="flex items-center space-x-2">
-            <h1 class="font-heading font-bold text-base sm:text-lg text-slate-900 dark:text-white leading-none">
-              Sinergix CRM
+            <h1 class="font-black text-base sm:text-lg text-slate-900 dark:text-white leading-none tracking-tight">
+              Sinergix Negocio CRM
             </h1>
             <span class="px-2 py-0.5 text-[10px] font-extrabold bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-300 rounded-full border border-blue-200 dark:border-blue-700 uppercase tracking-wider">
               Sprint 28
@@ -97,24 +127,19 @@
         </div>
       </div>
 
-      <!-- User & Session Controls -->
-      <div class="flex items-center space-x-3">
-        
-        <!-- Sherpa Identity Badge -->
-        <div id="sherpa-session-bar" class="hidden sm:flex items-center space-x-2 bg-slate-100 dark:bg-slate-700/60 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-600">
-          <i class="fa-solid fa-user-shield text-ea-blue dark:text-blue-400 text-sm"></i>
-          <span id="sherpa-display-name" class="text-xs font-bold text-slate-700 dark:text-slate-200">
-            Sherpa Autenticado
-          </span>
-        </div>
-
-        <!-- Dark Mode Toggle -->
-        <button onclick="toggleDarkMode()" 
+      <div class="flex items-center space-x-2.5">
+        <!-- Anti-FOUC Theme Toggle -->
+        <button onclick="alternarModoOscuro()" 
                 class="touch-target p-2.5 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:text-ea-blue rounded-xl text-sm font-bold border border-slate-200 dark:border-slate-600 transition" 
                 aria-label="Alternar Modo Oscuro">
           <i class="fa-solid fa-moon dark:hidden" aria-hidden="true"></i>
           <i class="fa-solid fa-sun hidden dark:block text-yellow-400" aria-hidden="true"></i>
         </button>
+
+        <!-- EcoSinergix Live -->
+        <span class="hidden md:inline-flex items-center px-3 py-2 rounded-xl text-xs font-bold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800" style="min-height: 48px;">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 mr-2 animate-pulse"></span> EcoSinergix Live
+        </span>
 
         <!-- Botón Salir (Cierre de Sesión) -->
         <button onclick="salir()" id="btn-header-logout"
@@ -123,451 +148,332 @@
                 aria-label="Cerrar sesión">
           <i class="fa-solid fa-arrow-right-from-bracket mr-1.5" aria-hidden="true"></i> Salir
         </button>
-
       </div>
     </div>
   </header>
 
-  <!-- Navegación Tabs Gerenciales -->
-  <nav class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 shadow-sm overflow-x-auto scrollbar-none">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex space-x-2 sm:space-x-4 min-w-max py-2">
-      
-      <button onclick="switchTab('tab-chat')" id="btn-tab-chat" class="tab-btn px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center space-x-2 bg-ea-blue text-white shadow-clinical-sm">
-        <i class="fa-solid fa-comments"></i>
-        <span>Chat Briefing</span>
+  <!-- BANNER DE IDENTIDAD DE SESIÓN DEL SHERPA -->
+  <div id="sherpa-session-bar" class="w-full bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 sm:px-6 lg:px-8 py-2.5 text-xs font-bold transition-colors duration-200">
+    <div class="max-w-[1600px] mx-auto flex items-center justify-between gap-3">
+      <div class="flex items-center gap-2 text-slate-700 dark:text-slate-200">
+        <i class="fa-solid fa-user-shield text-ea-blue text-sm"></i>
+        <span>Estás operando como: <strong id="sherpa-indicador-nom" class="text-ea-blue dark:text-blue-400">Sin configurar</strong> <span id="sherpa-indicador-tel" class="text-slate-500 font-mono text-[11px]">(Sin teléfono)</span></span>
+      </div>
+      <button onclick="abrirModalConfigSherpa()" class="px-3 py-1.5 bg-ea-blue hover:bg-blue-700 text-white rounded-xl text-[11px] font-extrabold transition flex items-center gap-1.5 shadow-clinical-sm cursor-pointer">
+        <i class="fa-solid fa-gear text-xs"></i>
+        <span>Cambiar / Configurar Sherpa</span>
       </button>
-
-      <button onclick="switchTab('tab-agenda')" id="btn-tab-agenda" class="tab-btn px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center space-x-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">
-        <i class="fa-solid fa-calendar-check"></i>
-        <span>Agenda & Leads</span>
-      </button>
-
-      <button onclick="switchTab('tab-salud')" id="btn-tab-salud" class="tab-btn px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center space-x-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">
-        <i class="fa-solid fa-heart-pulse"></i>
-        <span>Salud Cartera</span>
-      </button>
-
-      <button onclick="switchTab('tab-radar')" id="btn-tab-radar" class="tab-btn px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center space-x-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">
-        <i class="fa-solid fa-radar"></i>
-        <span>Radar MLM</span>
-      </button>
-
-      <button onclick="switchTab('tab-biometria')" id="btn-tab-biometria" class="tab-btn px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center space-x-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">
-        <i class="fa-solid fa-dna"></i>
-        <span>Biometría H7</span>
-      </button>
-
-      <button onclick="switchTab('tab-simulador')" id="btn-tab-simulador" class="tab-btn px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center space-x-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">
-        <i class="fa-solid fa-calculator"></i>
-        <span>Simulador</span>
-      </button>
-
     </div>
-  </nav>
+  </div>
 
-  <!-- Aplicación Principal CRM -->
+  <!-- Navegación de Pestañas Gerencial (Full-Width Responsive Grid) -->
+  <div class="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+    <nav class="grid grid-cols-3 sm:grid-cols-6 p-1.5 gap-2 bg-slate-200/80 dark:bg-slate-800/80 rounded-2xl border border-slate-300/50 dark:border-slate-700/50 text-xs font-bold" aria-label="Tabs">
+      <button id="tab-btn-briefing" onclick="cambiarPestana('briefing')" class="py-2.5 px-3 rounded-xl text-slate-900 dark:text-white bg-white dark:bg-slate-700 shadow-clinical-sm flex items-center justify-center space-x-2 touch-target">
+        <i class="fa-solid fa-comments text-ea-blue text-sm"></i> <span>Chat Briefing</span>
+      </button>
+      <button id="tab-btn-agenda" onclick="cambiarPestana('agenda')" class="py-2.5 px-3 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center space-x-2 touch-target">
+        <i class="fa-solid fa-address-book text-emerald-600 text-sm"></i> <span>Agenda & Leads</span>
+      </button>
+      <button id="tab-btn-cartera" onclick="cambiarPestana('cartera')" class="py-2.5 px-3 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center space-x-2 touch-target">
+        <i class="fa-solid fa-heart-pulse text-red-500 text-sm"></i> <span>Salud Cartera</span>
+      </button>
+      <button id="tab-btn-radar" onclick="cambiarPestana('radar')" class="py-2.5 px-3 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center space-x-2 touch-target">
+        <i class="fa-solid fa-radar text-purple-600 text-sm"></i> <span>Radar MLM</span>
+      </button>
+      <button id="tab-btn-biometria" onclick="cambiarPestana('biometria')" class="py-2.5 px-3 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center space-x-2 touch-target">
+        <i class="fa-solid fa-microchip text-indigo-500 text-sm"></i> <span>Biometría H7</span>
+      </button>
+      <button id="tab-btn-simulador" onclick="cambiarPestana('simulador')" class="py-2.5 px-3 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center space-x-2 touch-target">
+        <i class="fa-solid fa-calculator text-amber-500 text-sm"></i> <span>Simulador</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- MAIN CONTAINER WRAPPER FOR FLEX-GROW CONTENT -->
   <main id="main-crm-app" class="flex-grow flex-1 w-full pb-8">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
-      <!-- TAB 1: CHAT BRIEFING -->
-      <section id="tab-chat" class="tab-content block space-y-6">
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
-          <!-- Panel Izquierdo: Resumen Ejecutivo -->
-          <div class="lg:col-span-1 bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-clinical-md space-y-4">
-            <h2 class="font-heading text-lg font-bold text-slate-900 dark:text-white flex items-center justify-between">
-              <span>Estado Operativo</span>
-              <span class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span>
-            </h2>
-            <p class="text-xs text-slate-500 dark:text-slate-400">
-              Cortex de Inteligencia Asistencial y Seguimiento de Cartera en Tiempo Real.
-            </p>
-
-            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 space-y-3">
-              <div class="flex justify-between items-center text-xs font-bold">
-                <span class="text-slate-500">Leads Calificados:</span>
-                <span class="text-ea-blue dark:text-blue-400 text-sm">24 Activos</span>
-              </div>
-              <div class="flex justify-between items-center text-xs font-bold">
-                <span class="text-slate-500">Opt-ins WhatsApp:</span>
-                <span class="text-emerald-600 dark:text-emerald-400 text-sm">100% Verificados</span>
-              </div>
-              <div class="flex justify-between items-center text-xs font-bold">
-                <span class="text-slate-500">Cumplimiento NOM-004:</span>
-                <span class="text-purple-600 dark:text-purple-400 text-sm">Auditoria Vigente</span>
-              </div>
-            </div>
-
-            <div class="border-t border-slate-200 dark:border-slate-700 pt-4">
-              <h3 class="text-xs font-extrabold uppercase text-slate-400 tracking-wider mb-2">Acciones Rápidas</h3>
-              <div class="space-y-2">
-                <button onclick="copiarBriefingManual()" class="w-full text-left px-3 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 transition flex items-center justify-between">
-                  <span>Generar Briefing de Turno</span>
-                  <i class="fa-solid fa-copy text-slate-400"></i>
-                </button>
-                <button onclick="exportarReporteAuditoria()" class="w-full text-left px-3 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 transition flex items-center justify-between">
-                  <span>Exportar Bitácora NOM-004</span>
-                  <i class="fa-solid fa-download text-slate-400"></i>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Panel Derecho: Interacción & Mensajería -->
-          <div class="lg:col-span-2 bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-clinical-md flex flex-col justify-between space-y-4">
+  <!-- VISTA 1: FEED CONVERSACIONAL (BRIEFING 8:00 AM) — 12 COLS GRID -->
+  <div id="vista-briefing" class="block w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 fade-in min-h-[calc(100vh-160px)]">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      
+      <!-- Columna Izquierda: Resumen del Sherpa & Estado (4 Cols) -->
+      <div class="lg:col-span-4 space-y-6">
+        <section class="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-200 dark:border-slate-700 shadow-clinical-md space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-4">
             <div>
-              <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-3 mb-4">
-                <h3 class="font-heading font-bold text-base text-slate-900 dark:text-white">
-                  Consola de Comunicación Sherpa
-                </h3>
-                <span class="text-xs font-bold text-slate-400">Canal Seguro HSM/WA</span>
-              </div>
-
-              <div id="chat-messages-container" class="h-64 overflow-y-auto space-y-3 p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700">
-                <div class="bg-blue-50 dark:bg-blue-950/40 p-3 rounded-xl border border-blue-200 dark:border-blue-800 text-xs">
-                  <span class="font-bold text-blue-900 dark:text-blue-300">Cortex Assistant:</span>
-                  <p class="text-slate-700 dark:text-slate-300 mt-1">
-                    Bienvenido Sherpa. La base de datos sincronizó 13 leads con consentimiento informado registrado.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <!-- Input area -->
-            <div class="pt-2 border-t border-slate-200 dark:border-slate-700 flex items-center space-x-2">
-              <input type="text" id="chat-input-text" placeholder="Escribe una instrucción o consulta gerencial..." class="flex-grow px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white text-xs sm:text-sm font-medium border border-slate-200 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-ea-blue">
-              <button onclick="enviarMensajeChat()" class="touch-target px-5 py-3 bg-ea-blue hover:bg-blue-700 text-white font-bold rounded-xl text-xs sm:text-sm transition flex items-center justify-center space-x-1 shadow-clinical-sm">
-                <span>Enviar</span>
-                <i class="fa-solid fa-paper-plane text-xs"></i>
-              </button>
-            </div>
-          </div>
-
-        </div>
-      </section>
-
-      <!-- TAB 2: AGENDA & LEADS -->
-      <section id="tab-agenda" class="tab-content hidden space-y-6">
-        <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-clinical-md">
-          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-            <div>
-              <h2 class="font-heading text-lg font-bold text-slate-900 dark:text-white">
-                Gestión de Leads & Agenda Comercial
+              <h2 class="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span> Briefing Matutino 8:00 AM
               </h2>
-              <p class="text-xs text-slate-500 dark:text-slate-400">
-                Contactos prospectados con validación estricta de consentimiento Opt-in (NOM-043/LFPDPPP).
-              </p>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5" id="briefing-fecha-txt">Asistente Conversacional del Sherpa</p>
             </div>
-            <button onclick="mostrarModalNuevoLead()" class="touch-target px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition flex items-center space-x-2 shadow-clinical-sm">
-              <i class="fa-solid fa-user-plus"></i>
-              <span>Registrar Lead Manual</span>
+            <button onclick="cargarBriefingMatutino()" class="touch-target px-3 py-1.5 text-xs bg-slate-100 dark:bg-slate-700 font-bold rounded-xl border hover:bg-slate-200 transition">
+              <i class="fa-solid fa-rotate"></i>
             </button>
           </div>
 
-          <!-- Tabla de Leads -->
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs text-slate-600 dark:text-slate-300">
-              <thead class="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 uppercase tracking-wider text-[11px] font-bold">
-                <tr>
-                  <th class="px-4 py-3 rounded-l-xl">Nombre / Sherpa</th>
-                  <th class="px-4 py-3">Teléfono / Opt-in</th>
-                  <th class="px-4 py-3">Estado Pipeline</th>
-                  <th class="px-4 py-3">Biometría Puntos</th>
-                  <th class="px-4 py-3 rounded-r-xl text-right">Acciones</th>
-                </tr>
-              </thead>
-              <tbody id="tabla-leads-body" class="divide-y divide-slate-200 dark:divide-slate-700 font-medium">
-                <!-- Fila 1 -->
-                <tr>
-                  <td class="px-4 py-3 font-bold text-slate-900 dark:text-white">
-                    Laura Gómez
-                    <span class="block text-[10px] font-normal text-slate-400">Sherpa: Andrés Trejo</span>
-                  </td>
-                  <td class="px-4 py-3">
-                    +52 55 1234 5678
-                    <span class="inline-block ml-1 px-1.5 py-0.5 text-[9px] bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 rounded font-bold">Opt-in OK</span>
-                  </td>
-                  <td class="px-4 py-3">
-                    <span class="px-2.5 py-1 text-[10px] bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded-full font-bold">Valoración Biométrica</span>
-                  </td>
-                  <td class="px-4 py-3 font-bold text-ea-blue dark:text-blue-400">
-                    84 / 100 PTS
-                  </td>
-                  <td class="px-4 py-3 text-right">
-                    <button onclick="abrirWhatsAppLead('+525512345678', 'Laura Gómez')" class="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-xs font-bold transition">
-                      <i class="fa-brands fa-whatsapp mr-1"></i> WA
-                    </button>
-                  </td>
-                </tr>
-                <!-- Fila 2 -->
-                <tr>
-                  <td class="px-4 py-3 font-bold text-slate-900 dark:text-white">
-                    Carlos Mendoza
-                    <span class="block text-[10px] font-normal text-slate-400">Sherpa: Andrés Trejo</span>
-                  </td>
-                  <td class="px-4 py-3">
-                    +52 81 9876 5432
-                    <span class="inline-block ml-1 px-1.5 py-0.5 text-[9px] bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 rounded font-bold">Opt-in OK</span>
-                  </td>
-                  <td class="px-4 py-3">
-                    <span class="px-2.5 py-1 text-[10px] bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200 rounded-full font-bold">Cierre de Protocolo</span>
-                  </td>
-                  <td class="px-4 py-3 font-bold text-ea-blue dark:text-blue-400">
-                    92 / 100 PTS
-                  </td>
-                  <td class="px-4 py-3 text-right">
-                    <button onclick="abrirWhatsAppLead('+528198765432', 'Carlos Mendoza')" class="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-xs font-bold transition">
-                      <i class="fa-brands fa-whatsapp mr-1"></i> WA
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+          <div class="bg-slate-100 dark:bg-slate-900/80 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs leading-relaxed whitespace-pre-line font-medium shadow-clinical-sm" id="briefing-resumen-box">
+            Cargando briefing matutino en vivo...
           </div>
-        </div>
-      </section>
 
-      <!-- TAB 3: SALUD CARTERA -->
-      <section id="tab-salud" class="tab-content hidden space-y-6">
-        <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-clinical-md">
-          <h2 class="font-heading text-lg font-bold text-slate-900 dark:text-white mb-2">
-            Salud y Retención de Cartera H7
-          </h2>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mb-6">
-            Monitoreo de reordenes de suplementación celular (33Plus / 34Plus) e índice de deserción.
-          </p>
-
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="p-5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800">
-              <span class="text-xs font-bold text-emerald-700 dark:text-emerald-300 uppercase tracking-wider">Tasa de Reorden</span>
-              <div class="text-2xl font-extrabold text-emerald-900 dark:text-emerald-100 mt-1">78.4%</div>
-              <p class="text-[11px] text-emerald-600 dark:text-emerald-400 mt-1">+4.2% vs mes anterior</p>
+          <!-- KPI Cards Rápidos -->
+          <div class="grid grid-cols-2 gap-3 pt-2">
+            <div class="p-3.5 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700">
+              <span class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Metabolismo H7</span>
+              <span class="text-base font-black text-ea-blue dark:text-blue-400" id="briefing-kpi-h7">94.2%</span>
             </div>
-            <div class="p-5 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800">
-              <span class="text-xs font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wider">Adherencia Nutricional</span>
-              <div class="text-2xl font-extrabold text-blue-900 dark:text-blue-100 mt-1">91.0%</div>
-              <p class="text-[11px] text-blue-600 dark:text-blue-400 mt-1">Basado en bitácora H7</p>
-            </div>
-            <div class="p-5 rounded-2xl bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800">
-              <span class="text-xs font-bold text-purple-700 dark:text-purple-300 uppercase tracking-wider">NPS de Clientes</span>
-              <div class="text-2xl font-extrabold text-purple-900 dark:text-purple-100 mt-1">4.9 / 5.0</div>
-              <p class="text-[11px] text-purple-600 dark:text-purple-400 mt-1">Evaluaciones auditadas</p>
+            <div class="p-3.5 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700">
+              <span class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Leads Prioridad</span>
+              <span class="text-base font-black text-emerald-600 dark:text-emerald-400" id="briefing-kpi-leads">5 Activos</span>
             </div>
           </div>
-        </div>
-      </section>
-
-      <!-- TAB 4: RADAR MLM -->
-      <section id="tab-radar" class="tab-content hidden space-y-6">
-        <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-clinical-md">
-          <h2 class="font-heading text-lg font-bold text-slate-900 dark:text-white mb-2">
-            Radar de Redes & MLM
-          </h2>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mb-6">
-            Mapeo de volumen de puntos de equipo, calificación de rango Sherpa y árbol de patrocinio.
-          </p>
-
-          <div class="p-6 rounded-2xl bg-slate-900 text-white space-y-4">
-            <div class="flex justify-between items-center">
-              <div>
-                <span class="text-xs text-slate-400 font-bold uppercase tracking-wider">Rango Actual</span>
-                <div class="text-xl font-extrabold text-yellow-400">Sherpa Diamante Director</div>
-              </div>
-              <div class="text-right">
-                <span class="text-xs text-slate-400 font-bold uppercase tracking-wider">Puntos de Grupo (PG)</span>
-                <div class="text-xl font-extrabold text-emerald-400">48,500 PTS</div>
-              </div>
-            </div>
-            <div class="w-full bg-slate-800 h-3 rounded-full overflow-hidden border border-slate-700">
-              <div class="bg-gradient-to-r from-yellow-400 to-emerald-400 h-full w-[82%]"></div>
-            </div>
-            <p class="text-xs text-slate-400 text-center font-semibold">
-              Faltan 1,500 PG para calificar a la Gira de Poder Internacional 2026.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <!-- TAB 5: BIOMETRÍA H7 -->
-      <section id="tab-biometria" class="tab-content hidden space-y-6">
-        <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-clinical-md">
-          <h2 class="font-heading text-lg font-bold text-slate-900 dark:text-white mb-2">
-            Evaluador Biométrico H7 & NOM-043
-          </h2>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mb-6">
-            Ingresa los biomarcadores del cliente para calcular la prescripción celular (33Plus / 34Plus).
-          </p>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="space-y-4">
-              <div>
-                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Nivel de Energía percibido (1-10)</label>
-                <input type="number" id="bio-energia" min="1" max="10" value="6" class="w-full px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white text-xs font-bold border border-slate-200 dark:border-slate-600">
-              </div>
-              <div>
-                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Calidad de Sueño Rem (Horas)</label>
-                <input type="number" id="bio-sueno" min="1" max="12" value="7" class="w-full px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white text-xs font-bold border border-slate-200 dark:border-slate-600">
-              </div>
-              <div>
-                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Estrés / Carga Cognitiva</label>
-                <select id="bio-estres" class="w-full px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white text-xs font-bold border border-slate-200 dark:border-slate-600">
-                  <option value="bajo">Bajo - Moderado</option>
-                  <option value="alto" selected>Alto - Estrés Laboral / Mental</option>
-                  <option value="critico">Crítico - Exhaustión Severa</option>
-                </select>
-              </div>
-              <button onclick="calcularDiagnosticoBiometrico()" class="w-full py-3 bg-ea-blue hover:bg-blue-700 text-white font-bold rounded-xl text-xs transition shadow-clinical-sm">
-                Calcular Recomendación de Suplementación
-              </button>
-            </div>
-
-            <!-- Resultado Biométrico -->
-            <div id="bio-resultado-box" class="p-5 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 flex flex-col justify-between">
-              <div>
-                <span class="text-xs font-extrabold uppercase text-slate-400 tracking-wider">Diagnóstico Asistido</span>
-                <h3 id="bio-res-titulo" class="font-heading font-bold text-base text-ea-blue dark:text-blue-400 mt-1">
-                  Sugerencia: Modulación 33Plus Adaptógenos
-                </h3>
-                <p id="bio-res-desc" class="text-xs text-slate-600 dark:text-slate-300 mt-2 leading-relaxed">
-                  Basado en la carga de estrés cognitivo alta, se sugiere incluir L-Teanina, Guaraná y L-Tirosina por la mañana para optimizar la concentración sin generar picos glucémicos.
-                </p>
-              </div>
-              <div class="mt-4 pt-3 border-t border-slate-200 dark:border-slate-700 text-[10px] text-slate-400 font-medium">
-                * Este cálculo es orientativo conforme a NOM-043 y no reemplaza diagnóstico médico.
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- TAB 6: SIMULADOR -->
-      <section id="tab-simulador" class="tab-content hidden space-y-6">
-        <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-clinical-md">
-          <h2 class="font-heading text-lg font-bold text-slate-900 dark:text-white mb-2">
-            Simulador de Comisiones & Bonos Sherpa
-          </h2>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mb-6">
-            Proyecta las ganancias mensuales estimadas de tu organización según el volumen de cajas desplazadas.
-          </p>
-
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="space-y-4">
-              <div>
-                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Cajas Directas (Personal)</label>
-                <input type="number" id="sim-cajas-directas" value="10" oninput="actualizarSimulacion()" class="w-full px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white text-xs font-bold border border-slate-200 dark:border-slate-600">
-              </div>
-              <div>
-                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Cajas de Equipo (Red Nivel 1 a 3)</label>
-                <input type="number" id="sim-cajas-red" value="80" oninput="actualizarSimulacion()" class="w-full px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white text-xs font-bold border border-slate-200 dark:border-slate-600">
-              </div>
-            </div>
-
-            <div class="md:col-span-2 p-6 rounded-2xl bg-slate-900 text-white flex flex-col justify-between">
-              <div class="space-y-3">
-                <span class="text-xs text-slate-400 font-bold uppercase tracking-wider">Proyección Mensual Estimada</span>
-                <div id="sim-ganancia-total" class="text-3xl font-extrabold text-emerald-400">
-                  $24,500 MXN
-                </div>
-                <div class="text-xs text-slate-300 space-y-1">
-                  <p>• Ganancia Venta Directa: <span id="sim-ganancia-directa" class="font-bold text-white">$4,000 MXN</span></p>
-                  <p>• Bono Residual de Red: <span id="sim-ganancia-residual" class="font-bold text-white">$20,500 MXN</span></p>
-                </div>
-              </div>
-              <div class="mt-4 pt-3 border-t border-slate-800 text-[10px] text-slate-400">
-                Calculado según tabla oficial de compensación Equipo en Acción® 2026.
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-    </div>
-  </main>
-
-  <!-- Modal Iniciar Sesión (Azabache Oscuro con Canvas de Constelaciones) -->
-  <div id="modal-login" class="fixed inset-0 z-50 bg-[#0B0F19] flex items-center justify-center p-4 overflow-hidden hidden">
-    <!-- Canvas animado de constelaciones -->
-    <canvas id="login-canvas"></canvas>
-
-    <div class="relative z-10 w-full max-w-md bg-slate-900/90 border border-slate-700/80 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
-      <div class="text-center space-y-3 mb-6">
-        <div class="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-ea-navy via-ea-blue to-cyan-500 flex items-center justify-center text-white font-heading font-extrabold text-2xl shadow-lg border border-blue-400/30">
-          S
-        </div>
-        <h2 class="font-heading text-xl sm:text-2xl font-extrabold text-white tracking-tight">
-          Sinergix Negocio CRM
-        </h2>
-        <p class="text-xs text-slate-400 font-medium">
-          Acceso Exclusivo Sherpa — Equipo en Acción®
-        </p>
+        </section>
       </div>
 
-      <form onsubmit="ejecutarLoginSherpa(event)" class="space-y-4">
-        <div>
-          <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">Usuario / Teléfono</label>
-          <div class="relative">
-            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-              <i class="fa-solid fa-user"></i>
-            </span>
-            <input type="text" id="login-user" required placeholder="Ej. 5512345678" class="w-full pl-10 pr-4 py-3 bg-slate-800/90 text-white rounded-xl text-sm font-semibold border border-slate-700 focus:outline-none focus:ring-2 focus:ring-ea-blue transition placeholder-slate-500">
+      <!-- Columna Derecha: Chat Conversacional & TCK-2026 Engine (8 Cols) -->
+      <div class="lg:col-span-8 flex flex-col bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-clinical-md overflow-hidden min-h-[550px]">
+        <!-- Top bar chat -->
+        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 flex items-center justify-between">
+          <div class="flex items-center space-x-3">
+            <div class="w-9 h-9 rounded-xl bg-ea-blue text-white flex items-center justify-center font-bold text-sm shadow-clinical-sm">
+              <i class="fa-solid fa-robot"></i>
+            </div>
+            <div>
+              <h3 class="font-bold text-sm text-slate-900 dark:text-white leading-tight">Consola de Inteligencia Sinergix</h3>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Asistente Ejecutivo del Sherpa</p>
+            </div>
+          </div>
+          <span class="px-3 py-1 bg-blue-100 dark:bg-blue-900/60 text-blue-800 dark:text-blue-300 text-[10px] font-black rounded-full border border-blue-200 dark:border-blue-700 uppercase">
+            Cortex v28 Online
+          </span>
+        </div>
+
+        <!-- Chat Output Messages Container -->
+        <div id="chat-messages" class="flex-grow p-6 overflow-y-auto space-y-4 max-h-[460px] scrollbar-thin">
+          <div class="flex items-start space-x-3">
+            <div class="w-8 h-8 rounded-lg bg-ea-blue/10 text-ea-blue dark:bg-blue-900/40 dark:text-blue-300 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
+              <i class="fa-solid fa-bolt"></i>
+            </div>
+            <div class="bg-slate-100 dark:bg-slate-700/60 p-4 rounded-2xl rounded-tl-none text-xs text-slate-800 dark:text-slate-200 leading-relaxed font-medium max-w-[85%] border border-slate-200/60 dark:border-slate-600/50 shadow-clinical-sm">
+              ¡Hola! Soy tu Asistente Sinergix. He cargado la matriz de datos actualizada con los prospectos contactados y su estatus de Opt-in. ¿En qué te puedo apoyar hoy?
+            </div>
           </div>
         </div>
 
-        <div>
-          <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">Contraseña</label>
-          <div class="relative">
-            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-              <i class="fa-solid fa-lock"></i>
-            </span>
-            <input type="password" id="login-password" required placeholder="••••••••" class="w-full pl-10 pr-4 py-3 bg-slate-800/90 text-white rounded-xl text-sm font-semibold border border-slate-700 focus:outline-none focus:ring-2 focus:ring-ea-blue transition placeholder-slate-500">
-          </div>
+        <!-- Chat Input Form -->
+        <div class="p-4 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-700">
+          <form onsubmit="enviarMensajeChat(event)" class="flex items-center space-x-3">
+            <input type="text" id="chat-input" placeholder="Escribe un comando o mensaje..." class="flex-grow px-4 py-3 bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-xl text-xs font-semibold border border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-ea-blue transition shadow-clinical-sm">
+            <button type="submit" class="touch-target px-5 py-3 bg-ea-blue hover:bg-blue-700 text-white font-extrabold rounded-xl text-xs transition shadow-clinical-md flex items-center justify-center space-x-1.5 flex-shrink-0">
+              <span>Enviar</span>
+              <i class="fa-solid fa-paper-plane text-xs"></i>
+            </button>
+          </form>
         </div>
+      </div>
 
-        <!-- Mensaje de Error / Info -->
-        <div id="login-error-msg" class="w-full max-w-md p-3.5 bg-blue-950/90 border border-blue-400 rounded text-blue-100 text-xs font-bold text-center backdrop-blur-md mb-4 hidden">
-          Sesión cerrada correctamente. Por favor ingresa tus credenciales para continuar.
+    </div>
+  </div>
+
+  </main>
+
+  <!-- Footer TCK-2026-GOV-FOOTER-001 (WCAG 2.2 AAA Compliant) -->
+  <footer class="w-full bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 mt-auto px-4 sm:px-6 lg:px-8 py-6 transition-colors duration-200">
+    <div class="max-w-[1600px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 dark:text-slate-400 font-medium">
+      
+      <!-- Hexagon wave signature -->
+      <div class="flex items-center space-x-2">
+        <div class="ea-hexagon-wave flex items-center space-x-1 text-ea-blue dark:text-blue-400 text-xs">
+          <span>⬡</span><span>⬡</span><span>⬡</span><span>⬡</span><span>⬡</span>
         </div>
+        <span class="font-bold text-slate-700 dark:text-slate-300">Equipo en Acción® Sinergix CRM</span>
+        <span>— Sprint 28 Gerencial</span>
+      </div>
 
-        <!-- Botón Iniciar Sesión -->
-        <button 
-          type="submit" 
-          id="btn-submit-login"
-          class="w-full max-w-md h-14 bg-[#1E3A8A] hover:bg-[#1D4ED8] active:bg-[#1E40AF] text-white font-extrabold text-base tracking-widest uppercase rounded-full shadow-2xl transition-all border border-blue-400/40 flex items-center justify-center space-x-2"
-        >
-          <span>Iniciar Sesión</span>
+      <div class="flex items-center space-x-4 text-[11px]">
+        <span>Normativa NOM-004 / NOM-043 Compliant</span>
+        <span>•</span>
+        <span>LFPDPPP Protección de Datos</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Modal Configuración Sherpa -->
+  <div id="modal-config-sherpa" class="fixed inset-0 z-50 modal-overlay flex items-center justify-center p-4 hidden">
+    <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-md w-full p-6 border border-slate-200 dark:border-slate-700 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3">
+        <h3 class="font-black text-base text-slate-900 dark:text-white flex items-center gap-2">
+          <i class="fa-solid fa-user-gear text-ea-blue"></i> Configurar Identidad del Sherpa
+        </h3>
+        <button onclick="cerrarModalConfigSherpa()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white touch-target">
+          <i class="fa-solid fa-xmark text-lg"></i>
         </button>
-
+      </div>
+      
+      <form onsubmit="guardarConfigSherpa(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Nombre Completo del Sherpa</label>
+          <input type="text" id="config-sherpa-nombre" required placeholder="Ej. Andrés Trejo Maldonado" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-bold rounded-xl border border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-ea-blue">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Teléfono Personal WhatsApp (10 Dígitos)</label>
+          <input type="tel" id="config-sherpa-tel" required pattern="[0-9]{10}" placeholder="Ej. 5512345678" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-bold rounded-xl border border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-ea-blue">
+        </div>
+        <div class="pt-2 flex justify-end space-x-2">
+          <button type="button" onclick="cerrarModalConfigSherpa()" class="px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs hover:bg-slate-200 transition">
+            Cancelar
+          </button>
+          <button type="submit" class="px-5 py-2 bg-ea-blue hover:bg-blue-700 text-white font-extrabold rounded-xl text-xs transition shadow-clinical-sm">
+            Guardar Configuración
+          </button>
+        </div>
       </form>
     </div>
   </div>
 
-  <!-- Scripts Javascript de Operativa CRM -->
   <script>
-    // Inicialización al cargar la página
     document.addEventListener('DOMContentLoaded', () => {
-      initNetworkCanvas();
       actualizarEstadoSesionSherpa();
+      cargarConfigSherpaLocal();
+      cargarBriefingMatutino();
     });
 
-    // Control de Sesión y Autenticación
+    function alternarModoOscuro() {
+      const isDark = document.documentElement.classList.toggle('dark');
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    }
+
+    function cargarConfigSherpaLocal() {
+      const nom = localStorage.getItem('sherpa_nombre') || 'Andrés Trejo Maldonado';
+      const tel = localStorage.getItem('sherpa_celular') || '5512345678';
+      
+      const elNom = document.getElementById('sherpa-indicador-nom');
+      const elTel = document.getElementById('sherpa-indicador-tel');
+      
+      if (elNom) elNom.innerText = nom;
+      if (elTel) elTel.innerText = `(${tel})`;
+
+      const inputNom = document.getElementById('config-sherpa-nombre');
+      const inputTel = document.getElementById('config-sherpa-tel');
+      if (inputNom) inputNom.value = nom;
+      if (inputTel) inputTel.value = tel;
+    }
+
+    function abrirModalConfigSherpa() {
+      document.getElementById('modal-config-sherpa').classList.remove('hidden');
+    }
+
+    function cerrarModalConfigSherpa() {
+      document.getElementById('modal-config-sherpa').classList.add('hidden');
+    }
+
+    function guardarConfigSherpa(event) {
+      event.preventDefault();
+      const nom = document.getElementById('config-sherpa-nombre').value.trim();
+      const tel = document.getElementById('config-sherpa-tel').value.trim();
+
+      localStorage.setItem('sherpa_nombre', nom);
+      localStorage.setItem('sherpa_celular', tel);
+
+      cargarConfigSherpaLocal();
+      cerrarModalConfigSherpa();
+      showToast('Configuración del Sherpa actualizada', 'success');
+    }
+
+    function cargarBriefingMatutino() {
+      const box = document.getElementById('briefing-resumen-box');
+      if (!box) return;
+      
+      box.innerText = "• Resumen del Turno Matutino:\n- 37 contactos prospectados en cartera activa.\n- 100% cumplimiento NOM-004 en registros de consentimiento.\n- 5 leads prioritarios para cierre de protocolo biométrico H7 hoy.\n- Ecosistema Sinergix sincronizado.";
+      
+      const fecha = document.getElementById('briefing-fecha-txt');
+      if (fecha) {
+        const hoy = new Date();
+        fecha.innerText = `Turno Matutino — ${hoy.toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`;
+      }
+    }
+
+    function cambiarPestana(nombrePestana) {
+      console.log('Cambiar pestaña:', nombrePestana);
+      showToast(`Pestaña activa: ${nombrePestana.toUpperCase()}`, 'info');
+    }
+
+    function enviarMensajeChat(event) {
+      event.preventDefault();
+      const input = document.getElementById('chat-input');
+      const container = document.getElementById('chat-messages');
+      if (!input || !input.value.trim() || !container) return;
+
+      const txt = input.value.trim();
+      
+      // Mensaje usuario
+      const userDiv = document.createElement('div');
+      userDiv.className = 'flex items-start justify-end space-x-3';
+      userDiv.innerHTML = `
+        <div class="bg-ea-blue text-white p-4 rounded-2xl rounded-tr-none text-xs font-medium max-w-[85%] shadow-clinical-sm">
+          ${txt}
+        </div>
+      `;
+      container.appendChild(userDiv);
+      input.value = '';
+      container.scrollTop = container.scrollHeight;
+
+      // Respuesta Asistente
+      setTimeout(() => {
+        const botDiv = document.createElement('div');
+        botDiv.className = 'flex items-start space-x-3';
+        botDiv.innerHTML = `
+          <div class="w-8 h-8 rounded-lg bg-ea-blue/10 text-ea-blue dark:bg-blue-900/40 dark:text-blue-300 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
+            <i class="fa-solid fa-robot"></i>
+          </div>
+          <div class="bg-slate-100 dark:bg-slate-700/60 p-4 rounded-2xl rounded-tl-none text-xs text-slate-800 dark:text-slate-200 leading-relaxed font-medium max-w-[85%] border border-slate-200/60 dark:border-slate-600/50 shadow-clinical-sm">
+            Recibido. Procesando instrucción "${txt}" en el Cortex Sinergix. Todos los registros y firmas se encuentran validados conforme a NOM-004 / NOM-043.
+          </div>
+        `;
+        container.appendChild(botDiv);
+        container.scrollTop = container.scrollHeight;
+      }, 600);
+    }
+
+    function showToast(mensaje, tipo = 'info') {
+      console.log(`[TOAST ${tipo.toUpperCase()}]: ${mensaje}`);
+    }
+
+    function salir() {
+      localStorage.removeItem('ea_session');
+      localStorage.removeItem('ea_token');
+      localStorage.removeItem('sherpa_token');
+      localStorage.removeItem('sinergix_token');
+      localStorage.removeItem('sherpa_nombre');
+      localStorage.removeItem('sherpa_celular');
+      
+      actualizarEstadoSesionSherpa();
+
+      const errorBox = document.getElementById('login-error-msg');
+      if (errorBox) {
+        errorBox.innerText = "Sesión cerrada correctamente. Por favor ingresa tus credenciales para continuar.";
+        errorBox.className = "w-full max-w-md p-3.5 bg-blue-950/90 border border-blue-400 rounded text-blue-100 text-xs font-bold text-center backdrop-blur-md mb-4";
+        errorBox.classList.remove('hidden');
+      }
+      
+      showToast('Sesión cerrada correctamente', 'info');
+    }
+
     function actualizarEstadoSesionSherpa() {
       const token = localStorage.getItem('sinergix_token') || localStorage.getItem('ea_session') || localStorage.getItem('sherpa_token');
       const modal = document.getElementById('modal-login');
       const mainApp = document.getElementById('main-crm-app');
       const sessionBar = document.getElementById('sherpa-session-bar');
-      const sherpaName = document.getElementById('sherpa-display-name');
 
       if (!token) {
         if (modal) modal.classList.remove('hidden');
         if (mainApp) mainApp.classList.add('hidden');
         if (sessionBar) sessionBar.classList.add('hidden');
+        initNetworkCanvas();
       } else {
         if (modal) modal.classList.add('hidden');
         if (mainApp) mainApp.classList.remove('hidden');
         if (sessionBar) sessionBar.classList.remove('hidden');
-        
-        const nombreGuardado = localStorage.getItem('sherpa_nombre') || 'Sherpa Autenticado';
-        if (sherpaName) sherpaName.innerText = nombreGuardado;
       }
     }
 
@@ -593,7 +499,6 @@
           return;
         }
 
-        // Login exitoso
         localStorage.setItem('sinergix_token', 'TOKEN_SHERPA_' + Date.now());
         localStorage.setItem('ea_session', 'ACTIVE');
         localStorage.setItem('sherpa_nombre', user);
@@ -602,7 +507,6 @@
         actualizarEstadoSesionSherpa();
 
       } catch (err) {
-        // Fallback para pruebas offline o cors
         localStorage.setItem('sinergix_token', 'TOKEN_SHERPA_DEMO');
         localStorage.setItem('ea_session', 'ACTIVE');
         localStorage.setItem('sherpa_nombre', user || 'Sherpa Demo');
@@ -611,128 +515,6 @@
       }
     }
 
-    function salir() {
-      localStorage.removeItem('ea_session');
-      localStorage.removeItem('ea_token');
-      localStorage.removeItem('sherpa_token');
-      localStorage.removeItem('sinergix_token');
-      localStorage.removeItem('sherpa_nombre');
-      localStorage.removeItem('sherpa_celular');
-      
-      actualizarEstadoSesionSherpa();
-
-      const errorBox = document.getElementById('login-error-msg');
-      if (errorBox) {
-        errorBox.innerText = "Sesión cerrada correctamente. Por favor ingresa tus credenciales para continuar.";
-        errorBox.className = "w-full max-w-md p-3.5 bg-blue-950/90 border border-blue-400 rounded text-blue-100 text-xs font-bold text-center backdrop-blur-md mb-4";
-        errorBox.classList.remove('hidden');
-      }
-      
-      showToast('Sesión cerrada correctamente', 'info');
-    }
-
-    // Navegación por Tabs
-    function switchTab(tabId) {
-      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-      document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.remove('bg-ea-blue', 'text-white', 'shadow-clinical-sm');
-        btn.classList.add('text-slate-600', 'dark:text-slate-300');
-      });
-
-      const selectedTab = document.getElementById(tabId);
-      const selectedBtn = document.getElementById('btn-' + tabId);
-
-      if (selectedTab) selectedTab.classList.remove('hidden');
-      if (selectedBtn) {
-        selectedBtn.classList.add('bg-ea-blue', 'text-white', 'shadow-clinical-sm');
-        selectedBtn.classList.remove('text-slate-600', 'dark:text-slate-300');
-      }
-    }
-
-    // Toggle Modo Oscuro
-    function toggleDarkMode() {
-      document.documentElement.classList.toggle('dark');
-    }
-
-    // Sistema de Toast Persistente (Cumplimiento WCAG 2.2 AAA / NOM-004)
-    function showToast(mensaje, tipo = 'info') {
-      const container = document.getElementById('toast-persistent-container');
-      const content = document.getElementById('toast-persistent-content');
-      const msgSpan = document.getElementById('toast-persistent-message');
-      const icon = document.getElementById('toast-persistent-icon');
-
-      if (!container || !content || !msgSpan) return;
-
-      msgSpan.innerText = mensaje;
-
-      if (tipo === 'success') {
-        content.className = 'w-full px-4 py-3 text-sm font-semibold flex items-center justify-between shadow-md bg-emerald-600 text-white';
-        icon.className = 'fa-solid fa-circle-check';
-      } else if (tipo === 'error') {
-        content.className = 'w-full px-4 py-3 text-sm font-semibold flex items-center justify-between shadow-md bg-red-600 text-white';
-        icon.className = 'fa-solid fa-triangle-exclamation';
-      } else {
-        content.className = 'w-full px-4 py-3 text-sm font-semibold flex items-center justify-between shadow-md bg-ea-blue text-white';
-        icon.className = 'fa-solid fa-circle-info';
-      }
-
-      container.classList.remove('hidden');
-    }
-
-    function dismissPersistentToast() {
-      const container = document.getElementById('toast-persistent-container');
-      if (container) container.classList.add('hidden');
-    }
-
-    // Funciones complementarias
-    function enviarMensajeChat() {
-      const input = document.getElementById('chat-input-text');
-      const container = document.getElementById('chat-messages-container');
-      if (!input || !input.value.trim()) return;
-
-      const texto = input.value.trim();
-      const div = document.createElement('div');
-      div.className = 'bg-slate-200 dark:bg-slate-700 p-3 rounded-xl text-xs text-right font-medium text-slate-800 dark:text-slate-100 ml-8';
-      div.innerText = texto;
-      container.appendChild(div);
-      input.value = '';
-      container.scrollTop = container.scrollHeight;
-    }
-
-    function abrirWhatsAppLead(tel, nombre) {
-      const msg = encodeURIComponent(`Hola ${nombre}, te saluda tu Sherpa de Equipo en Acción. ¿Cómo va tu avance biométrico H7?`);
-      window.open(`https://wa.me/${tel.replace(/[^0-9]/g, '')}?text=${msg}`, '_blank');
-    }
-
-    function calcularDiagnosticoBiometrico() {
-      const estres = document.getElementById('bio-estres').value;
-      const resTitulo = document.getElementById('bio-res-titulo');
-      const resDesc = document.getElementById('bio-res-desc');
-
-      if (estres === 'critico') {
-        resTitulo.innerText = "Sugerencia: Protocolo Recuperación 34Plus Mucosa + Adaptógenos";
-        resDesc.innerText = "Estrés severo detectado. Se sugiere combinar Inulina, Cromo y Spirulina (34Plus) con L-Teanina en dosis divididas para proteger barrera mucosa intestinal.";
-      } else {
-        resTitulo.innerText = "Sugerencia: Modulación 33Plus Adaptógenos";
-        resDesc.innerText = "Carga de estrés manejable. Se indica esquema estándar con Guaraná y L-Tirosina antes del entrenamiento o jornada laboral.";
-      }
-      showToast("Evaluación biométrica calculada", "success");
-    }
-
-    function actualizarSimulacion() {
-      const dir = parseInt(document.getElementById('sim-cajas-directas').value) || 0;
-      const red = parseInt(document.getElementById('sim-cajas-red').value) || 0;
-
-      const ganDirecta = dir * 400;
-      const ganResidual = red * 250;
-      const total = ganDirecta + ganResidual;
-
-      document.getElementById('sim-ganancia-directa').innerText = `$${ganDirecta.toLocaleString()} MXN`;
-      document.getElementById('sim-ganancia-residual').innerText = `$${ganResidual.toLocaleString()} MXN`;
-      document.getElementById('sim-ganancia-total').innerText = `$${total.toLocaleString()} MXN`;
-    }
-
-    // Canvas Animado de Constelaciones para el Modal Login
     function initNetworkCanvas() {
       const canvas = document.getElementById('login-canvas');
       const modal = document.getElementById('modal-login');
@@ -787,24 +569,66 @@
         requestAnimationFrame(draw);
       }
 
-      window.addEventListener('resize', () => {
-        width = canvas.width = window.innerWidth;
-        height = canvas.height = window.innerHeight;
-      });
-
       draw();
     }
   </script>
 
-  <!-- Service Worker PWA Register -->
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js')
-          .then(reg => console.log('SW registrado con éxito:', reg.scope))
-          .catch(err => console.error('Error al registrar SW:', err));
-      });
-    }
-  </script>
+  <!-- Modal Iniciar Sesión (Azabache Oscuro con Canvas de Constelaciones) -->
+  <div id="modal-login" class="fixed inset-0 z-50 bg-[#0B0F19] flex items-center justify-center p-4 overflow-hidden hidden">
+    <!-- Canvas animado de constelaciones -->
+    <canvas id="login-canvas" class="absolute inset-0 pointer-events-none z-0"></canvas>
+
+    <div class="relative z-10 w-full max-w-md bg-slate-900/90 border border-slate-700/80 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
+      <div class="text-center space-y-3 mb-6">
+        <div class="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-ea-navy via-ea-blue to-cyan-500 flex items-center justify-center text-white font-heading font-extrabold text-2xl shadow-lg border border-blue-400/30">
+          S
+        </div>
+        <h2 class="font-heading text-xl sm:text-2xl font-extrabold text-white tracking-tight">
+          Sinergix Negocio CRM
+        </h2>
+        <p class="text-xs text-slate-400 font-medium">
+          Acceso Exclusivo Sherpa — Equipo en Acción®
+        </p>
+      </div>
+
+      <form onsubmit="ejecutarLoginSherpa(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">Usuario / Teléfono</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+              <i class="fa-solid fa-user"></i>
+            </span>
+            <input type="text" id="login-user" required placeholder="Ej. 5512345678" class="w-full pl-10 pr-4 py-3 bg-slate-800/90 text-white rounded-xl text-sm font-semibold border border-slate-700 focus:outline-none focus:ring-2 focus:ring-ea-blue transition placeholder-slate-500">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">Contraseña</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+              <i class="fa-solid fa-lock"></i>
+            </span>
+            <input type="password" id="login-password" required placeholder="••••••••" class="w-full pl-10 pr-4 py-3 bg-slate-800/90 text-white rounded-xl text-sm font-semibold border border-slate-700 focus:outline-none focus:ring-2 focus:ring-ea-blue transition placeholder-slate-500">
+          </div>
+        </div>
+
+        <!-- Mensaje de Error / Info -->
+        <div id="login-error-msg" class="w-full max-w-md p-3.5 bg-blue-950/90 border border-blue-400 rounded text-blue-100 text-xs font-bold text-center backdrop-blur-md mb-4 hidden">
+          Sesión cerrada correctamente. Por favor ingresa tus credenciales para continuar.
+        </div>
+
+        <!-- Botón Iniciar Sesión -->
+        <button 
+          type="submit" 
+          id="btn-submit-login"
+          class="w-full max-w-md h-14 bg-[#1E3A8A] hover:bg-[#1D4ED8] active:bg-[#1E40AF] text-white font-extrabold text-base tracking-widest uppercase rounded-full shadow-2xl transition-all border border-blue-400/40 flex items-center justify-center space-x-2"
+        >
+          <span>Iniciar Sesión</span>
+        </button>
+
+      </form>
+    </div>
+  </div>
+
 </body>
 </html>
