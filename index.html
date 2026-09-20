@@ -1550,7 +1550,7 @@
         async function cargarBriefingMatutino() {
       try {
         const activeUser = (typeof obtenerSherpaIdActivo === 'function') ? obtenerSherpaIdActivo() : (localStorage.getItem('sherpa_id_activo') || 'sherpa_edgar');
-        const sherpaNom = localStorage.getItem('sherpa_nombre') || (activeUser === 'sherpa_edgar' ? 'Edgar' : activeUser);
+        const sherpaNom = localStorage.getItem('sherpa_nombre') || (activeUser === '101' ? 'Sherpa 101' : (activeUser === '102' || activeUser === 'sherpa_edgar' ? 'Edgar' : ('Sherpa ' + activeUser)));
         const elFecha = document.getElementById('briefing-fecha-txt');
         const elResumen = document.getElementById('briefing-resumen-box');
         const elKpiPend = document.getElementById('briefing-kpi-pendientes');
@@ -2115,10 +2115,10 @@ Tienes ${userLeads.length} prospecto(s) en tu cartera (${pendCount} pendiente(s)
       let rawCelular = (localStorage.getItem('sherpa_celular') || '').replace(/\D/g, '');
 
       if (!nombre && activeUser) {
-        if (activeUser === '101' || activeUser === 'sherpa_edgar') {
+        if (activeUser === '101') {
+          nombre = 'Sherpa 101';
+        } else if (activeUser === '102' || activeUser === 'sherpa_edgar') {
           nombre = 'Sherpa Edgar';
-        } else if (activeUser === '102') {
-          nombre = 'Sherpa 102';
         } else {
           nombre = 'Sherpa ' + activeUser;
         }
@@ -2126,7 +2126,7 @@ Tienes ${userLeads.length} prospecto(s) en tu cartera (${pendCount} pendiente(s)
       }
 
       if (!rawCelular && activeUser) {
-        rawCelular = activeUser.length === 10 ? activeUser : '5512345678';
+        rawCelular = activeUser.length === 10 ? activeUser : ('5512345' + activeUser.padStart(3, '0'));
         localStorage.setItem('sherpa_celular', '521' + rawCelular);
       }
 
@@ -2157,7 +2157,7 @@ Tienes ${userLeads.length} prospecto(s) en tu cartera (${pendCount} pendiente(s)
 
       if (sesion.valido) {
         if (elNom) {
-          elNom.textContent = sesion.nombre;
+          elNom.textContent = sesion.nombre + ' (ID: ' + sesion.userId + ')';
           elNom.className = 'text-emerald-600 dark:text-emerald-400 font-extrabold';
         }
         if (elTel) {
@@ -2165,7 +2165,8 @@ Tienes ${userLeads.length} prospecto(s) en tu cartera (${pendCount} pendiente(s)
           elTel.textContent = `(+52 1 ${celDisplay})`;
           elTel.className = 'text-slate-600 dark:text-slate-300 font-mono text-xs font-bold';
         }
-        if (elSpanHeader) elSpanHeader.textContent = `• Sherpa ${sesion.nombre}`;
+        const labelHeader = sesion.nombre.startsWith('Sherpa') ? sesion.nombre : ('Sherpa ' + sesion.nombre);
+        if (elSpanHeader) elSpanHeader.textContent = `• ${labelHeader} (ID: ${sesion.userId})`;
       } else {
         if (elNom) {
           elNom.textContent = 'Sin configurar';
@@ -2743,9 +2744,11 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
           localStorage.setItem('sherpa_celular', '5215512345678');
         }
 
-        if (user === '101' || user === 'sherpa_edgar') {
+        if (user === '101') {
+          localStorage.setItem('sherpa_nombre', 'Sherpa 101');
+        } else if (user === '102' || user === 'sherpa_edgar') {
           localStorage.setItem('sherpa_nombre', 'Sherpa Edgar');
-        } else if (!localStorage.getItem('sherpa_nombre')) {
+        } else {
           localStorage.setItem('sherpa_nombre', 'Sherpa ' + user);
         }
 
@@ -3385,7 +3388,7 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js?v=55').then(reg => {
+      navigator.serviceWorker.register('./sw.js?v=56').then(reg => {
         reg.update();
         console.log('[PWA v40] Service Worker registrado y actualizado.');
       }).catch(err => {
