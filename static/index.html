@@ -926,8 +926,11 @@
           if (!last10 || existingPhones.has(last10)) {
             duplicates++;
           } else {
+            const activeOwner = obtenerSherpaIdActivo();
             const newLead = {
               id: 'lead_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+              sherpa_user: activeOwner,
+              sherpa_id: activeOwner,
               nombre: c.nombre,
               telefono: c.telefono,
               etapa_pipeline: 'Lead',
@@ -946,8 +949,11 @@
 
       if (url.includes('/api/leads/capture') && bodyData.nombre) {
         let currentLeads = await CortexStorageEngine.getAllLeads();
+        const activeOwner = obtenerSherpaIdActivo();
         const newLead = {
           id: 'lead_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+          sherpa_user: activeOwner,
+          sherpa_id: activeOwner,
           nombre: bodyData.nombre,
           telefono: bodyData.telefono,
           etapa_pipeline: 'Lead',
@@ -960,9 +966,10 @@
         return new Response(JSON.stringify({ ok: true, _id: newLead.id, lead: newLead }), { status: 200, headers: { 'Content-Type': 'application/json' } });
       }
 
-      if (url === '/api/leads') {
-        const leads = await CortexStorageEngine.getAllLeads();
-        return new Response(JSON.stringify(leads), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      if (url.startsWith('/api/leads')) {
+        const activeUser = obtenerSherpaIdActivo();
+        const userLeads = await CortexStorageEngine.getLeadsForSherpa(activeUser);
+        return new Response(JSON.stringify(userLeads), { status: 200, headers: { 'Content-Type': 'application/json' } });
       }
 
       return new Response(JSON.stringify({ ok: true, status: 'success' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
@@ -1461,8 +1468,11 @@
           const data = await res.json();
           let currentLeads = await CortexStorageEngine.getAllLeads();
           newContacts.forEach(c => {
+            const activeOwner = obtenerSherpaIdActivo();
             const newLead = {
               id: 'lead_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+              sherpa_user: activeOwner,
+              sherpa_id: activeOwner,
               nombre: c.nombre,
               telefono: c.telefono,
               etapa_pipeline: 'Lead',
@@ -1986,6 +1996,14 @@
       const currentScrollY = window.scrollY;
       if (typeof renderizarLista === 'function') renderizarLista();
       requestAnimationFrame(() => window.scrollTo(0, currentScrollY));
+    }
+
+    
+    function obtenerSherpaIdActivo() {
+      return localStorage.getItem('sinergix_active_user') || 
+             localStorage.getItem('sherpa_celular') || 
+             localStorage.getItem('sherpa_nombre') || 
+             'demo';
     }
 
     function obtenerSherpaSesion() {
@@ -2533,8 +2551,11 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
       localStorage.removeItem('ea_token');
       localStorage.removeItem('sherpa_token');
       localStorage.removeItem('sinergix_token');
+      localStorage.removeItem('sinergix_active_user');
       localStorage.removeItem('sherpa_nombre');
       localStorage.removeItem('sherpa_celular');
+      todosLosLeads = [];
+      if (typeof renderizarLista === 'function') renderizarLista();
       
       actualizarEstadoSesionSherpa();
 
@@ -2589,6 +2610,7 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
         }
 
         localStorage.setItem('sinergix_token', 'TOKEN_SHERPA_' + Date.now());
+        localStorage.setItem('sinergix_active_user', user);
         localStorage.setItem('ea_session', 'ACTIVE');
 
         const digits = user.replace(/\D/g, '');
@@ -2614,6 +2636,7 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
 
       } catch (err) {
         localStorage.setItem('sinergix_token', 'TOKEN_SHERPA_DEMO');
+        localStorage.setItem('sinergix_active_user', user || 'demo');
         localStorage.setItem('ea_session', 'ACTIVE');
 
         const digitsCatch = (user || '').replace(/\D/g, '');
@@ -2715,16 +2738,28 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
       },
 
       async getAllLeads() {
+        let allLeads = [];
         if (this.db) {
-          return new Promise((resolve) => {
+          allLeads = await new Promise((resolve) => {
             const tx = this.db.transaction('leads', 'readonly');
             const store = tx.objectStore('leads');
             const req = store.getAll();
             req.onsuccess = () => resolve(req.result || []);
             req.onerror = () => resolve(this._getLocalStorageLeads());
           });
+        } else {
+          allLeads = this._getLocalStorageLeads();
         }
-        return this._getLocalStorageLeads();
+        return allLeads;
+      },
+
+      async getLeadsForSherpa(sherpaId = null) {
+        const targetUser = sherpaId || obtenerSherpaIdActivo();
+        const all = await this.getAllLeads();
+        return all.filter(l => {
+          const owner = l.sherpa_user || l.sherpa_id || l.sherpa_nombre || 'demo';
+          return owner === targetUser;
+        });
       },
 
       async saveLead(lead) {
@@ -2874,7 +2909,8 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
         if (navigator.storage && navigator.storage.persist) {
           await navigator.storage.persist();
         }
-        const leadsLocales = await CortexStorageEngine.getAllLeads();
+        const activeUserInit = obtenerSherpaIdActivo();
+        const leadsLocales = await CortexStorageEngine.getLeadsForSherpa(activeUserInit);
         if (leadsLocales && leadsLocales.length > 0) {
           todosLosLeads = leadsLocales;
         }
@@ -3151,7 +3187,7 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js?v=43').then(reg => {
+      navigator.serviceWorker.register('./sw.js?v=44').then(reg => {
         reg.update();
         console.log('[PWA v40] Service Worker registrado y actualizado.');
       }).catch(err => {
