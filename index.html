@@ -1102,10 +1102,6 @@
       } else if (target === 'simulador' && typeof cargarSimuladorFinanciero === 'function') {
         cargarSimuladorFinanciero();
       }
-
-      if (typeof showToast === 'function') {
-        showToast(`Pestaña activa: ${target.toUpperCase()}`, 'info');
-      }
     }
 
     // Modal Control Functions
@@ -5753,7 +5749,7 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js?v=62').then(reg => {
+      navigator.serviceWorker.register('./sw.js?v=63').then(reg => {
         reg.update();
         console.log('[PWA v40] Service Worker registrado y actualizado.');
       }).catch(err => {
