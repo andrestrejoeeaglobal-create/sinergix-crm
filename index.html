@@ -108,32 +108,43 @@
   <header class="w-full bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-50 px-4 sm:px-6 lg:px-8 py-3.5 shadow-clinical-sm transition-colors duration-200">
     <div class="max-w-[1600px] mx-auto flex items-center justify-between">
       <div class="flex items-center space-x-3">
-        <!-- Imagotipo Oficial Sinergix / Equipo en Acción -->
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-ea-navy to-ea-blue flex items-center justify-center text-white font-black text-xl shadow-clinical-sm logo-clinical-contrast">
-          S
+        <!-- Contenedor Imagotipo Oficial Equipo en Acción® -->
+        <div class="h-10 sm:h-12 min-w-[120px] flex items-center shrink-0" style="height: 48px; min-width: 120px;">
+          <img src="./assets/images/logo_ea.png" 
+               onerror="this.onerror=null; this.src='https://equipoenaccion.net/images/logo_ea.png';" 
+               width="160" 
+               height="48" 
+               alt="Equipo en Acción®" 
+               class="h-full w-auto object-contain shrink-0 logo-clinical-contrast" 
+               style="max-height: 48px;" />
         </div>
         <div>
-          <div class="flex items-center space-x-2">
-            <h1 class="font-black text-base sm:text-lg text-slate-900 dark:text-white leading-none tracking-tight">
-              Sinergix Negocio CRM
-            </h1>
-            <span class="px-2 py-0.5 text-[10px] font-extrabold bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-300 rounded-full border border-blue-200 dark:border-blue-700 uppercase tracking-wider">
-              Sprint 28
-            </span>
-          </div>
-          <p class="text-xs text-slate-500 dark:text-slate-400 font-medium hidden sm:block">
-            Dashboard Gerencial del Sherpa
+          <h1 class="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white leading-none tracking-tight">
+            Sinergix Negocio <span id="nombreSherpa" class="text-xs font-semibold text-slate-500 dark:text-slate-400"></span>
+          </h1>
+          <p class="hidden sm:block text-[11px] font-bold text-ea-blue dark:text-blue-400 tracking-wide mt-0.5">
+            EQUIPO EN ACCIÓN® · CRM SPRINT 28
           </p>
         </div>
       </div>
-
+      
       <div class="flex items-center space-x-2.5">
-        <!-- Anti-FOUC Theme Toggle -->
-        <button onclick="alternarModoOscuro()" 
-                class="touch-target p-2.5 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:text-ea-blue rounded-xl text-sm font-bold border border-slate-200 dark:border-slate-600 transition" 
-                aria-label="Alternar Modo Oscuro">
-          <i class="fa-solid fa-moon dark:hidden" aria-hidden="true"></i>
-          <i class="fa-solid fa-sun hidden dark:block text-yellow-400" aria-hidden="true"></i>
+        <!-- Toggle Dual Ergonómico 48px Target Size -->
+        <button onclick="toggleTheme()" 
+                class="touch-target px-3.5 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold border border-slate-200 dark:border-slate-600 hover:bg-slate-200 dark:hover:bg-slate-600 transition inline-flex items-center justify-center" 
+                style="min-width: 48px; min-height: 48px;" 
+                aria-label="Cambiar Tema">
+          <i class="fa-solid fa-moon dark:hidden text-sm mr-1.5 text-slate-600" aria-hidden="true"></i>
+          <i class="fa-solid fa-sun hidden dark:inline text-sm mr-1.5 text-ea-yellow" aria-hidden="true"></i>
+          <span class="dark:hidden text-xs font-bold">Modo Oscuro</span>
+          <span class="hidden dark:inline text-xs font-bold">Modo Claro</span>
+        </button>
+
+        <!-- Google Auth Canónico -->
+        <button onclick="conectarGoogleOAuth()" 
+                class="touch-target inline-flex items-center px-3 py-2 rounded-xl text-xs font-bold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100 transition" 
+                style="min-height: 48px;">
+          <i class="fa-brands fa-google mr-1.5 text-indigo-600 dark:text-indigo-400" aria-hidden="true"></i> Auth
         </button>
 
         <!-- EcoSinergix Live -->
@@ -166,26 +177,27 @@
     </div>
   </div>
 
-  <!-- Navegación de Pestañas Gerencial (Full-Width Responsive Grid) -->
+  <!-- Navegación de Pestañas Gerencial (Full-Width Responsive Grid Píldora / Cápsula) -->
   <div class="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pt-4">
     <nav class="grid grid-cols-3 sm:grid-cols-6 p-1.5 gap-2 bg-slate-200/80 dark:bg-slate-800/80 rounded-2xl border border-slate-300/50 dark:border-slate-700/50 text-xs font-bold" aria-label="Tabs">
       <button id="tab-btn-briefing" onclick="cambiarPestana('briefing')" class="py-2.5 px-3 rounded-xl text-slate-900 dark:text-white bg-white dark:bg-slate-700 shadow-clinical-sm flex items-center justify-center space-x-2 touch-target">
-        <i class="fa-solid fa-comments text-ea-blue text-sm"></i> <span>Chat Briefing</span>
+        <i class="fa-solid fa-comments text-ea-blue text-sm" aria-hidden="true"></i> <span>Chat Briefing</span>
       </button>
       <button id="tab-btn-agenda" onclick="cambiarPestana('agenda')" class="py-2.5 px-3 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center space-x-2 touch-target">
-        <i class="fa-solid fa-address-book text-emerald-600 text-sm"></i> <span>Agenda & Leads</span>
+        <i class="fa-solid fa-address-book text-emerald-600 text-sm" aria-hidden="true"></i> <span>Agenda & Leads</span>
+        <span class="px-1.5 py-0.5 text-[9px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300 rounded-full border border-emerald-300">37</span>
       </button>
       <button id="tab-btn-cartera" onclick="cambiarPestana('cartera')" class="py-2.5 px-3 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center space-x-2 touch-target">
-        <i class="fa-solid fa-heart-pulse text-red-500 text-sm"></i> <span>Salud Cartera</span>
+        <i class="fa-solid fa-heart-pulse text-red-500 text-sm" aria-hidden="true"></i> <span>Salud Cartera</span>
       </button>
       <button id="tab-btn-radar" onclick="cambiarPestana('radar')" class="py-2.5 px-3 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center space-x-2 touch-target">
-        <i class="fa-solid fa-radar text-purple-600 text-sm"></i> <span>Radar MLM</span>
+        <i class="fa-solid fa-radar text-purple-600 text-sm" aria-hidden="true"></i> <span>Radar MLM</span>
       </button>
       <button id="tab-btn-biometria" onclick="cambiarPestana('biometria')" class="py-2.5 px-3 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center space-x-2 touch-target">
-        <i class="fa-solid fa-microchip text-indigo-500 text-sm"></i> <span>Biometría H7</span>
+        <i class="fa-solid fa-microchip text-indigo-500 text-sm" aria-hidden="true"></i> <span>Biometría H7</span>
       </button>
       <button id="tab-btn-simulador" onclick="cambiarPestana('simulador')" class="py-2.5 px-3 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center space-x-2 touch-target">
-        <i class="fa-solid fa-calculator text-amber-500 text-sm"></i> <span>Simulador</span>
+        <i class="fa-solid fa-calculator text-amber-500 text-sm" aria-hidden="true"></i> <span>Simulador</span>
       </button>
     </nav>
   </div>
@@ -278,22 +290,62 @@
   </main>
 
   <!-- Footer TCK-2026-GOV-FOOTER-001 (WCAG 2.2 AAA Compliant) -->
-  <footer class="w-full bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 mt-auto px-4 sm:px-6 lg:px-8 py-6 transition-colors duration-200">
-    <div class="max-w-[1600px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 dark:text-slate-400 font-medium">
+  <footer class="w-full bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-6 px-6 mt-16 text-center shadow-clinical-lg transition-colors duration-200">
+    <div class="max-w-7xl mx-auto flex flex-col items-center justify-center space-y-4">
       
-      <!-- Hexagon wave signature -->
-      <div class="flex items-center space-x-2">
-        <div class="ea-hexagon-wave flex items-center space-x-1 text-ea-blue dark:text-blue-400 text-xs">
-          <span>⬡</span><span>⬡</span><span>⬡</span><span>⬡</span><span>⬡</span>
-        </div>
-        <span class="font-bold text-slate-700 dark:text-slate-300">Equipo en Acción® Sinergix CRM</span>
-        <span>— Sprint 28 Gerencial</span>
+      <!-- Contenedor con la clase ea-hexagon-wave activa -->
+      <div class="ea-hexagon-wave flex justify-center items-center gap-2">
+        
+        <!-- Hexágono 1: Rojo (#B70E0C) - 180° -->
+        <span>
+          <svg width="30" height="26" viewBox="0 0 576 512" aria-hidden="true">
+            <g transform="rotate(180 288 256)">
+              <path fill="#B70E0C" d="M441.5 39.8C432.9 25.1 417.1 16 400 16H176c-17.1 0-32.9 9.1-41.5 23.8l-112 192c-8.7 14.9-8.7 33.4 0 48.4l112 192c8.6 14.7 24.4 23.8 41.5 23.8h224c17.1 0 32.9-9.1 41.5-23.8l112-192c8.7-14.9 8.7-33.4 0-48.4l-112-192z"/>
+            </g>
+          </svg>
+        </span>
+
+        <!-- Hexágono 2: Rosa (#F29FC5) - 180° -->
+        <span>
+          <svg width="30" height="26" viewBox="0 0 576 512" aria-hidden="true">
+            <g transform="rotate(180 288 256)">
+              <path fill="#F29FC5" d="M441.5 39.8C432.9 25.1 417.1 16 400 16H176c-17.1 0-32.9 9.1-41.5 23.8l-112 192c-8.7 14.9-8.7 33.4 0 48.4l112 192c8.6 14.7 24.4 23.8 41.5 23.8h224c17.1 0 32.9-9.1 41.5-23.8l112-192c8.7-14.9 8.7-33.4 0-48.4l-112-192z"/>
+            </g>
+          </svg>
+        </span>
+
+        <!-- Hexágono 3: Azul Corporativo (#1C75BC) - 90° -->
+        <span>
+          <svg width="30" height="26" viewBox="0 0 576 512" style="overflow: visible;" aria-hidden="true">
+            <g transform="rotate(90 288 256)">
+              <path fill="#1C75BC" d="M441.5 39.8C432.9 25.1 417.1 16 400 16H176c-17.1 0-32.9 9.1-41.5 23.8l-112 192c-8.7 14.9-8.7 33.4 0 48.4l112 192c8.6 14.7 24.4 23.8 41.5 23.8h224c17.1 0 32.9-9.1 41.5-23.8l112-192c8.7-14.9 8.7-33.4 0-48.4l-112-192z"/>
+            </g>
+          </svg>
+        </span>
+
+        <!-- Hexágono 4: Verde (#3AAA35) - 180° -->
+        <span>
+          <svg width="30" height="26" viewBox="0 0 576 512" aria-hidden="true">
+            <g transform="rotate(180 288 256)">
+              <path fill="#3AAA35" d="M441.5 39.8C432.9 25.1 417.1 16 400 16H176c-17.1 0-32.9 9.1-41.5 23.8l-112 192c-8.7 14.9-8.7 33.4 0 48.4l112 192c8.6 14.7 24.4 23.8 41.5 23.8h224c17.1 0 32.9-9.1 41.5-23.8l112-192c8.7-14.9 8.7-33.4 0-48.4l-112-192z"/>
+            </g>
+          </svg>
+        </span>
+
+        <!-- Hexágono 5: Amarillo Oficial (#FFCC00) - 180° -->
+        <span>
+          <svg width="30" height="26" viewBox="0 0 576 512" aria-hidden="true">
+            <g transform="rotate(180 288 256)">
+              <path fill="#FFCC00" d="M441.5 39.8C432.9 25.1 417.1 16 400 16H176c-17.1 0-32.9 9.1-41.5 23.8l-112 192c-8.7 14.9-8.7 33.4 0 48.4l112 192c8.6 14.7 24.4 23.8 41.5 23.8h224c17.1 0 32.9-9.1 41.5-23.8l112-192c8.7-14.9 8.7-33.4 0-48.4l-112-192z"/>
+            </g>
+          </svg>
+        </span>
+
       </div>
 
-      <div class="flex items-center space-x-4 text-[11px]">
-        <span>Normativa NOM-004 / NOM-043 Compliant</span>
-        <span>•</span>
-        <span>LFPDPPP Protección de Datos</span>
+      <div class="text-xs text-slate-600 dark:text-slate-400 space-y-1 font-sans text-center">
+        <p class="font-bold text-slate-900 dark:text-slate-300">© 2026 Equipo en Acción®. Todos los derechos reservados.</p>
+        <p class="text-[11px] text-slate-600 dark:text-slate-400">Gobernanza Omnicanal T.I.L.O. · WCAG 2.2 AAA · CRM Sinergix Negocio</p>
       </div>
     </div>
   </footer>
@@ -338,7 +390,7 @@
       cargarBriefingMatutino();
     });
 
-    function alternarModoOscuro() {
+    function toggleTheme() {
       const isDark = document.documentElement.classList.toggle('dark');
       localStorage.setItem('theme', isDark ? 'dark' : 'light');
     }
@@ -384,7 +436,7 @@
       const box = document.getElementById('briefing-resumen-box');
       if (!box) return;
       
-      box.innerText = "• Resumen del Turno Matutino:\n- 37 contactos prospectados en cartera activa.\n- 100% cumplimiento NOM-004 en registros de consentimiento.\n- 5 leads prioritarios para cierre de protocolo biométrico H7 hoy.\n- Ecosistema Sinergix sincronizado.";
+      box.innerText = "• Resumen del Turno Matutino:\\n- 37 contactos prospectados en cartera activa.\\n- 100% cumplimiento NOM-004 en registros de consentimiento.\\n- 5 leads prioritarios para cierre de protocolo biométrico H7 hoy.\\n- Ecosistema Sinergix sincronizado.";
       
       const fecha = document.getElementById('briefing-fecha-txt');
       if (fecha) {
