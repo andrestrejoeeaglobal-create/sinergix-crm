@@ -2102,19 +2102,21 @@ Tienes ${userLeads.length} prospecto(s) en tu cartera (${pendCount} pendiente(s)
     function obtenerSherpaIdActivo() {
       return localStorage.getItem('sinergix_active_user') || 
              localStorage.getItem('sherpa_id_activo') || 
-             localStorage.getItem('sherpa_celular') || 
-             localStorage.getItem('sherpa_nombre') || 
-             '101';
+             '';
     }
 
     function obtenerSherpaSesion() {
       const activeUser = obtenerSherpaIdActivo();
       const token = localStorage.getItem('sinergix_token') || localStorage.getItem('ea_session') || localStorage.getItem('sherpa_token');
       
+      if (!activeUser || !token) {
+        return { valido: false, userId: '', nombre: '', celular: '' };
+      }
+
       let nombre = (localStorage.getItem('sherpa_nombre') || '').trim();
       let rawCelular = (localStorage.getItem('sherpa_celular') || '').replace(/\D/g, '');
 
-      if (!nombre && activeUser) {
+      if (!nombre) {
         if (activeUser === '101') {
           nombre = 'Sherpa 101';
         } else if (activeUser === '102' || activeUser === 'sherpa_edgar') {
@@ -2125,16 +2127,15 @@ Tienes ${userLeads.length} prospecto(s) en tu cartera (${pendCount} pendiente(s)
         localStorage.setItem('sherpa_nombre', nombre);
       }
 
-      if (!rawCelular && activeUser) {
+      if (!rawCelular) {
         rawCelular = activeUser.length === 10 ? activeUser : ('5512345' + activeUser.padStart(3, '0'));
         localStorage.setItem('sherpa_celular', '521' + rawCelular);
       }
 
       const celular = rawCelular ? (rawCelular.length === 10 ? '521' + rawCelular : rawCelular) : '5215512345678';
-      const valido = Boolean(activeUser && activeUser !== 'demo');
 
       return { 
-        valido: valido, 
+        valido: true, 
         userId: activeUser, 
         nombre: nombre || ('Sherpa ' + activeUser), 
         celular: celular 
@@ -2672,25 +2673,30 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
       }
     }
     function salir() {
+      const prevUser = localStorage.getItem('sinergix_active_user') || localStorage.getItem('sherpa_nombre') || 'Sherpa';
+      
       localStorage.removeItem('ea_session');
       localStorage.removeItem('ea_token');
       localStorage.removeItem('sherpa_token');
       localStorage.removeItem('sinergix_token');
       localStorage.removeItem('sinergix_active_user');
+      localStorage.removeItem('sherpa_id_activo');
       localStorage.removeItem('sherpa_nombre');
       localStorage.removeItem('sherpa_celular');
+      
       todosLosLeads = [];
       if (typeof renderizarLista === 'function') renderizarLista();
       
-      cerrarAvisoModal();
       actualizarEstadoSesionSherpa();
 
       const errorBox = document.getElementById('login-error-msg');
       if (errorBox) {
-        errorBox.innerHTML = '<i class="fa-solid fa-circle-info text-ea-blue dark:text-blue-400 text-sm shrink-0"></i><span>Sesión cerrada correctamente. Por favor ingresa tus credenciales para continuar.</span>';
+        errorBox.innerHTML = '<i class="fa-solid fa-circle-info text-ea-blue dark:text-blue-400 text-sm shrink-0"></i><span>La sesión de <strong>' + prevUser + '</strong> se cerró correctamente. Por favor ingresa tus credenciales para continuar.</span>';
         errorBox.className = "w-full p-3.5 bg-blue-50 dark:bg-blue-950/80 border border-blue-200 dark:border-blue-800 rounded-2xl text-blue-900 dark:text-blue-200 text-xs font-bold text-center leading-relaxed backdrop-blur-md flex items-center justify-center gap-2 mb-4";
         errorBox.classList.remove('hidden');
       }
+
+      showToast('Sesión de ' + prevUser + ' cerrada correctamente', 'info');
     }
 
     function actualizarEstadoSesionSherpa() {
@@ -2733,15 +2739,20 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
           return;
         }
 
-        localStorage.setItem('sinergix_token', 'TOKEN_SHERPA_' + Date.now());
+        // Purge any stale user session variables before setting new USER_ID
+        localStorage.removeItem('sherpa_nombre');
+        localStorage.removeItem('sherpa_celular');
+
+        localStorage.setItem('sinergix_token', 'TOKEN_SHERPA_' + user + '_' + Date.now());
         localStorage.setItem('sinergix_active_user', user);
+        localStorage.setItem('sherpa_id_activo', user);
         localStorage.setItem('ea_session', 'ACTIVE');
 
         const digits = user.replace(/\D/g, '');
         if (digits.length === 10) {
           localStorage.setItem('sherpa_celular', '521' + digits);
-        } else if (!localStorage.getItem('sherpa_celular')) {
-          localStorage.setItem('sherpa_celular', '5215512345678');
+        } else {
+          localStorage.setItem('sherpa_celular', '521551234' + user.padStart(3, '0'));
         }
 
         if (user === '101') {
@@ -2752,6 +2763,8 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
           localStorage.setItem('sherpa_nombre', 'Sherpa ' + user);
         }
 
+        todosLosLeads = [];
+
         actualizarEstadoSesionSherpa();
 
         cerrarAvisoModal();
@@ -2759,7 +2772,7 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
         if (!sesion.valido) {
           abrirModalConfigSherpa("¡Bienvenido! Por favor configura tu Nombre de Batalla y tu número de WhatsApp de 10 dígitos para operar en el CRM.");
         } else {
-          showToast("¡Bienvenido al CRM Gerencial Sinergix!", "success");
+          showToast("¡Bienvenido al CRM Gerencial Sinergix! Sesión activa: Sherpa " + user + " (ID: " + user + ")", "success");
         }
 
       } catch (err) {
@@ -2779,7 +2792,7 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
         if (!sesionCatch.valido) {
           abrirModalConfigSherpa("¡Bienvenido! Por favor configura tu Nombre de Batalla y tu número de WhatsApp de 10 dígitos para operar en el CRM.");
         } else {
-          showToast("¡Bienvenido al CRM Gerencial Sinergix!", "success");
+          showToast("¡Bienvenido al CRM Gerencial Sinergix! Sesión activa: Sherpa " + user + " (ID: " + user + ")", "success");
         }
       }
     }
@@ -3388,7 +3401,7 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js?v=56').then(reg => {
+      navigator.serviceWorker.register('./sw.js?v=57').then(reg => {
         reg.update();
         console.log('[PWA v40] Service Worker registrado y actualizado.');
       }).catch(err => {
