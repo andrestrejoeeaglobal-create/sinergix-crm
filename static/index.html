@@ -2101,20 +2101,44 @@ Tienes ${userLeads.length} prospecto(s) en tu cartera (${pendCount} pendiente(s)
     
     function obtenerSherpaIdActivo() {
       return localStorage.getItem('sinergix_active_user') || 
+             localStorage.getItem('sherpa_id_activo') || 
              localStorage.getItem('sherpa_celular') || 
              localStorage.getItem('sherpa_nombre') || 
-             'demo';
+             '101';
     }
 
     function obtenerSherpaSesion() {
-      const nombre = (localStorage.getItem('sherpa_nombre') || (document.getElementById('input-sherpa-nombre')?.value || '').trim()).trim();
-      const rawCelular = (localStorage.getItem('sherpa_celular') || (document.getElementById('input-sherpa-celular')?.value || '').trim()).replace(/\D/g, '');
-      const celular = rawCelular ? (rawCelular.length === 10 ? '521' + rawCelular : rawCelular) : '';
+      const activeUser = obtenerSherpaIdActivo();
+      const token = localStorage.getItem('sinergix_token') || localStorage.getItem('ea_session') || localStorage.getItem('sherpa_token');
       
-      if (!nombre || !celular) {
-        return { valido: false, nombre: '', celular: '' };
+      let nombre = (localStorage.getItem('sherpa_nombre') || '').trim();
+      let rawCelular = (localStorage.getItem('sherpa_celular') || '').replace(/\D/g, '');
+
+      if (!nombre && activeUser) {
+        if (activeUser === '101' || activeUser === 'sherpa_edgar') {
+          nombre = 'Sherpa Edgar';
+        } else if (activeUser === '102') {
+          nombre = 'Sherpa 102';
+        } else {
+          nombre = 'Sherpa ' + activeUser;
+        }
+        localStorage.setItem('sherpa_nombre', nombre);
       }
-      return { valido: true, nombre, celular };
+
+      if (!rawCelular && activeUser) {
+        rawCelular = activeUser.length === 10 ? activeUser : '5512345678';
+        localStorage.setItem('sherpa_celular', '521' + rawCelular);
+      }
+
+      const celular = rawCelular ? (rawCelular.length === 10 ? '521' + rawCelular : rawCelular) : '5215512345678';
+      const valido = Boolean(activeUser && activeUser !== 'demo');
+
+      return { 
+        valido: valido, 
+        userId: activeUser, 
+        nombre: nombre || ('Sherpa ' + activeUser), 
+        celular: celular 
+      };
     }
 
     function actualizarIndicadorSherpa() {
@@ -2715,13 +2739,14 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
         const digits = user.replace(/\D/g, '');
         if (digits.length === 10) {
           localStorage.setItem('sherpa_celular', '521' + digits);
+        } else if (!localStorage.getItem('sherpa_celular')) {
+          localStorage.setItem('sherpa_celular', '5215512345678');
         }
-        
-        const existingNom = localStorage.getItem('sherpa_nombre');
-        if (!existingNom) {
-          if (digits.length !== 10 && user.length > 2 && !/^\d+$/.test(user)) {
-            localStorage.setItem('sherpa_nombre', user);
-          }
+
+        if (user === '101' || user === 'sherpa_edgar') {
+          localStorage.setItem('sherpa_nombre', 'Sherpa Edgar');
+        } else if (!localStorage.getItem('sherpa_nombre')) {
+          localStorage.setItem('sherpa_nombre', 'Sherpa ' + user);
         }
 
         actualizarEstadoSesionSherpa();
@@ -3360,7 +3385,7 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js?v=54').then(reg => {
+      navigator.serviceWorker.register('./sw.js?v=55').then(reg => {
         reg.update();
         console.log('[PWA v40] Service Worker registrado y actualizado.');
       }).catch(err => {
