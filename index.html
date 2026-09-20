@@ -2590,17 +2590,45 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
 
         localStorage.setItem('sinergix_token', 'TOKEN_SHERPA_' + Date.now());
         localStorage.setItem('ea_session', 'ACTIVE');
-        localStorage.setItem('sherpa_nombre', user);
 
-        showToast("Bienvenido al CRM Gerencial Sinergix", "success");
+        const digits = user.replace(/\D/g, '');
+        if (digits.length === 10) {
+          localStorage.setItem('sherpa_celular', '521' + digits);
+        }
+        
+        const existingNom = localStorage.getItem('sherpa_nombre');
+        if (!existingNom) {
+          if (digits.length !== 10 && user.length > 2 && !/^\d+$/.test(user)) {
+            localStorage.setItem('sherpa_nombre', user);
+          }
+        }
+
         actualizarEstadoSesionSherpa();
+
+        const sesion = obtenerSherpaSesion();
+        if (!sesion.valido) {
+          abrirModalConfigSherpa("¡Bienvenido! Por favor configura tu Nombre de Batalla y tu número de WhatsApp de 10 dígitos para operar en el CRM.");
+        } else {
+          showToast("Bienvenido al CRM Gerencial Sinergix", "success");
+        }
 
       } catch (err) {
         localStorage.setItem('sinergix_token', 'TOKEN_SHERPA_DEMO');
         localStorage.setItem('ea_session', 'ACTIVE');
-        localStorage.setItem('sherpa_nombre', user || 'Sherpa Demo');
-        showToast("Sesión iniciada en modo local", "success");
+
+        const digitsCatch = (user || '').replace(/\D/g, '');
+        if (digitsCatch.length === 10) {
+          localStorage.setItem('sherpa_celular', '521' + digitsCatch);
+        }
+
         actualizarEstadoSesionSherpa();
+
+        const sesionCatch = obtenerSherpaSesion();
+        if (!sesionCatch.valido) {
+          abrirModalConfigSherpa("¡Bienvenido! Por favor configura tu Nombre de Batalla y tu número de WhatsApp de 10 dígitos para operar en el CRM.");
+        } else {
+          showToast("Sesión iniciada en modo local", "success");
+        }
       }
     }
 
@@ -2882,6 +2910,14 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
         renderizarLista();
         actualizarMetricas();
         actualizarIndicadorSherpa();
+
+        const tokenDcl = localStorage.getItem('sinergix_token') || localStorage.getItem('ea_session') || localStorage.getItem('sherpa_token');
+        if (tokenDcl) {
+          const sesionDcl = obtenerSherpaSesion();
+          if (!sesionDcl.valido) {
+            abrirModalConfigSherpa("Configura tu Nombre de Batalla y número de WhatsApp de 10 dígitos para que las respuestas de encuestas te lleguen directamente.");
+          }
+        }
       } catch (err) {
         console.warn('Error inicializando almacenamiento:', err);
       }
@@ -3115,7 +3151,7 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js?v=42').then(reg => {
+      navigator.serviceWorker.register('./sw.js?v=43').then(reg => {
         reg.update();
         console.log('[PWA v40] Service Worker registrado y actualizado.');
       }).catch(err => {
