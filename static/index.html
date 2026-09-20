@@ -2982,6 +2982,7 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
         </div>
       </div>
     </div>
+  </div>
   <!-- MODAL: Editar y Borrar Contacto -->
   <div id="modal-editar-lead" class="hidden fixed inset-0 z-[70] modal-overlay flex items-center justify-center p-4 fade-in">
     <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200 dark:border-slate-700 flex flex-col">
@@ -3054,7 +3055,7 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
 
 
   <!-- Modal Iniciar Sesión (Azabache Oscuro con Canvas de Constelaciones) -->
-  <div id="modal-login" class="fixed inset-0 z-50 bg-[#0B0F19] flex items-center justify-center p-4 overflow-hidden hidden">
+  <div id="modal-login" class="fixed inset-0 z-[100] bg-[#0B0F19] flex items-center justify-center p-4 overflow-hidden hidden">
     <!-- Canvas animado de constelaciones -->
     <canvas id="login-canvas" class="absolute inset-0 pointer-events-none z-0"></canvas>
 
@@ -3114,7 +3115,7 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js?v=40').then(reg => {
+      navigator.serviceWorker.register('./sw.js?v=42').then(reg => {
         reg.update();
         console.log('[PWA v40] Service Worker registrado y actualizado.');
       }).catch(err => {
