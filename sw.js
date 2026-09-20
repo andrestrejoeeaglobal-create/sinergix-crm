@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sinergix-crm-v38';
+const CACHE_NAME = 'sinergix-crm-v40';
 const ASSETS_TO_CACHE = [
   'https://cdn.tailwindcss.com',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
@@ -20,6 +20,7 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         cacheNames.map((cache) => {
           if (cache !== CACHE_NAME) {
+            console.log('[SW v40] Purgando caché obsoleta:', cache);
             return caches.delete(cache);
           }
         })
@@ -36,7 +37,7 @@ self.addEventListener('fetch', (event) => {
   // Network-First Strategy for HTML documents & navigation requests
   if (event.request.mode === 'navigate' || url.includes('index.html') || url.endsWith('/sinergix-crm/') || url.endsWith('/')) {
     event.respondWith(
-      fetch(event.request)
+      fetch(event.request, { cache: 'no-store' })
         .then((response) => {
           if (response && response.status === 200) {
             const responseToCache = response.clone();
