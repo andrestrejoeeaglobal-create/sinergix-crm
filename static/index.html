@@ -96,7 +96,7 @@
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js', { scope: './' })
-          .then(reg => console.log('[SW] Registrado en el ámbito:', reg.scope))
+          .then(reg => { console.log('[SW] Registrado en el ámbito:', reg.scope); reg.update(); })
           .catch(err => console.warn('[SW] Fallo de registro:', err));
       });
     }
