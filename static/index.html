@@ -171,7 +171,7 @@
   <div class="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pt-4">
       <!-- Navegación de Pestañas Gerencial (Full-Width Responsive Grid Píldora / Cápsula) -->
   <div class="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pt-4">
-    <nav class="grid grid-cols-2 sm:grid-cols-5 p-1.5 gap-2 bg-slate-200/80 dark:bg-slate-800/80 rounded-2xl border border-slate-300/50 dark:border-slate-700/50 text-xs font-bold" aria-label="Tabs">
+    <nav class="grid grid-cols-2 sm:grid-cols-4 p-1.5 gap-2 bg-slate-200/80 dark:bg-slate-800/80 rounded-2xl border border-slate-300/50 dark:border-slate-700/50 text-xs font-bold" aria-label="Tabs">
       <button id="tab-btn-briefing" onclick="cambiarPestana('briefing')" class="py-2.5 px-3 rounded-xl text-slate-900 dark:text-white bg-white dark:bg-slate-700 shadow-clinical-sm flex items-center justify-center space-x-2 touch-target">
         <i class="fa-solid fa-comments text-ea-blue text-sm" aria-hidden="true"></i> <span>Chat Briefing</span>
       </button>
@@ -182,7 +182,7 @@
       <button id="tab-btn-cartera" onclick="cambiarPestana('cartera')" class="py-2.5 px-3 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center space-x-2 touch-target">
         <i class="fa-solid fa-heart-pulse text-red-500 text-sm" aria-hidden="true"></i> <span>Salud Cartera</span>
       </button>
-      <button id="tab-btn-radar" onclick="cambiarPestana('radar')" class="py-2.5 px-3 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center space-x-2 touch-target">
+      <button id="tab-btn-radar" onclick="cambiarPestana('radar')" class="hidden py-2.5 px-3 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center space-x-2 touch-target">
         <i class="fa-solid fa-radar text-purple-600 text-sm" aria-hidden="true"></i> <span>Radar MLM</span>
       </button>
       <button id="tab-btn-simulador" onclick="cambiarPestana('simulador')" class="py-2.5 px-3 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center space-x-2 touch-target">
@@ -1022,7 +1022,7 @@
       if (nombrePestana === 'salud') target = 'cartera';
             if (nombrePestana === 'sim') target = 'simulador';
 
-      const pestanas = ['briefing', 'agenda', 'cartera', 'radar', 'simulador'];
+      const pestanas = ['briefing', 'agenda', 'cartera', 'simulador'];
       
       pestanas.forEach(p => {
         const contenedor = document.getElementById(`vista-${p}`);
@@ -1053,9 +1053,7 @@
         if (typeof cargarLeadsServidor === 'function') cargarLeadsServidor();
       } else if (target === 'cartera' && typeof cargarSaludCartera === 'function') {
         cargarSaludCartera();
-      } else if (target === 'radar' && typeof cargarRadarYBono === 'function') {
-        cargarRadarYBono();
-      } else if (target === 'simulador' && typeof cargarSimuladorFinanciero === 'function') {
+      /* else if (target === 'radar') { ... } */ else if (target === 'simulador' && typeof cargarSimuladorFinanciero === 'function') {
         cargarSimuladorFinanciero();
       }
 
@@ -1659,33 +1657,38 @@ Tienes ${userLeads.length} prospecto(s) en tu cartera (${pendCount} pendiente(s)
       }
     }
 
-    async function cargarRadarYBono() {
+        async function cargarRadarYBono() {
       try {
         const resBono = await apiFetch('/api/reports/bono-retiro');
         if (resBono.ok) {
           const b = await resBono.json();
-          document.getElementById('txt-bono-personal').innerText = (b.avance_personal || 0) + ' / 50';
-          document.getElementById('bar-bono-personal').style.width = (b.porcentaje_personal || 0) + '%';
-          document.getElementById('bono-faltantes-badge').innerText = 'Faltan ' + (b.faltantes || 50);
+          const elTxtBono = document.getElementById('txt-bono-personal');
+          const elBarBono = document.getElementById('bar-bono-personal');
+          const elBadgeBono = document.getElementById('bono-faltantes-badge');
+          if (elTxtBono) elTxtBono.innerText = (b.avance_personal || 0) + ' / 50';
+          if (elBarBono) elBarBono.style.width = (b.porcentaje_personal || 0) + '%';
+          if (elBadgeBono) elBadgeBono.innerText = 'Faltan ' + (b.faltantes || 50);
 
           const list = document.getElementById('bono-lideres-list');
-          list.innerHTML = '';
-          if (!b.lideres_directos || b.lideres_directos.length === 0) {
-            list.innerHTML = `<p class="text-xs text-slate-400 dark:text-slate-500 font-medium">A la espera de registros para generar analítica.</p>`;
-          } else {
-            b.lideres_directos.forEach(l => {
-              const item = document.createElement('div');
-              item.innerHTML = `
-                <div class="flex justify-between text-xs font-bold">
-                  <span class="text-slate-600 dark:text-slate-400">${l.nombre}</span>
-                  <span class="tabular-nums font-extrabold text-slate-800 dark:text-slate-200">${l.activos_actuales} / 50</span>
-                </div>
-                <div class="w-full bg-slate-100 dark:bg-slate-700 h-2.5 rounded-full overflow-hidden mt-1">
-                  <div class="bg-indigo-500 h-full rounded-full" style="width: ${l.porcentaje}%;"></div>
-                </div>
-              `;
-              list.appendChild(item);
-            });
+          if (list) {
+            list.innerHTML = '';
+            if (!b.lideres_directos || b.lideres_directos.length === 0) {
+              list.innerHTML = `<p class="text-xs text-slate-400 dark:text-slate-500 font-medium">A la espera de registros para generar analítica.</p>`;
+            } else {
+              b.lideres_directos.forEach(l => {
+                const item = document.createElement('div');
+                item.innerHTML = `
+                  <div class="flex justify-between text-xs font-bold">
+                    <span class="text-slate-600 dark:text-slate-400">${l.nombre}</span>
+                    <span class="tabular-nums font-extrabold text-slate-800 dark:text-slate-200">${l.activos_actuales} / 50</span>
+                  </div>
+                  <div class="w-full bg-slate-100 dark:bg-slate-700 h-2.5 rounded-full overflow-hidden mt-1">
+                    <div class="bg-indigo-500 h-full rounded-full" style="width: ${l.porcentaje}%;"></div>
+                  </div>
+                `;
+                list.appendChild(item);
+              });
+            }
           }
         }
 
@@ -1693,24 +1696,26 @@ Tienes ${userLeads.length} prospecto(s) en tu cartera (${pendCount} pendiente(s)
         if (resRadar.ok) {
           const r = await resRadar.json();
           const list = document.getElementById('radar-lideres-list');
-          list.innerHTML = '';
-          if (!r.lideres_emergentes || r.lideres_emergentes.length === 0) {
-            list.innerHTML = `<div class="p-6 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 text-slate-400 dark:text-slate-500 font-medium text-xs text-center">A la espera de registros para generar analítica de multiplicadores.</div>`;
-          } else {
-            r.lideres_emergentes.forEach(l => {
-              const card = document.createElement('div');
-              card.className = 'p-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 flex items-center justify-between shadow-clinical-sm';
-              card.innerHTML = `
-                <div>
-                  <h4 class="font-bold text-slate-900 dark:text-white text-sm">${l.nombre} <span class="text-xs text-slate-400 font-normal">(Nivel ${l.nivel})</span></h4>
-                  <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">${l.reclutas_ultimos_14_dias} reclutas en 14 días</p>
-                </div>
-                <span class="px-3 py-1 rounded-xl text-xs font-black bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
-                  ${l.insignia}
-                </span>
-              `;
-              list.appendChild(card);
-            });
+          if (list) {
+            list.innerHTML = '';
+            if (!r.lideres_emergentes || r.lideres_emergentes.length === 0) {
+              list.innerHTML = `<div class="p-6 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 text-slate-400 dark:text-slate-500 font-medium text-xs text-center">A la espera de registros para generar analítica de multiplicadores.</div>`;
+            } else {
+              r.lideres_emergentes.forEach(l => {
+                const card = document.createElement('div');
+                card.className = 'p-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 flex items-center justify-between shadow-clinical-sm';
+                card.innerHTML = `
+                  <div>
+                    <h4 class="font-bold text-slate-900 dark:text-white text-sm">${l.nombre} <span class="text-xs text-slate-400 font-normal">(Nivel ${l.nivel})</span></h4>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">${l.reclutas_ultimos_14_dias} reclutas en 14 días</p>
+                  </div>
+                  <span class="px-3 py-1 rounded-xl text-xs font-black bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                    ${l.insignia}
+                  </span>
+                `;
+                list.appendChild(card);
+              });
+            }
           }
         }
       } catch (err) {
@@ -3280,7 +3285,7 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js?v=48').then(reg => {
+      navigator.serviceWorker.register('./sw.js?v=49').then(reg => {
         reg.update();
         console.log('[PWA v40] Service Worker registrado y actualizado.');
       }).catch(err => {
