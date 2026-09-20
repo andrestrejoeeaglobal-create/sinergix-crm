@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sinergix-crm-v45';
+const CACHE_NAME = 'sinergix-crm-v46';
 const ASSETS_TO_CACHE = [
   'https://cdn.tailwindcss.com',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
@@ -20,7 +20,7 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         cacheNames.map((cache) => {
           if (cache !== CACHE_NAME) {
-            console.log('[SW v45] Purgando caché obsoleta:', cache);
+            console.log('[SW v46] Purgando caché obsoleta:', cache);
             return caches.delete(cache);
           }
         })

@@ -177,7 +177,7 @@
       </button>
       <button id="tab-btn-agenda" onclick="cambiarPestana('agenda')" class="py-2.5 px-3 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center space-x-2 touch-target">
         <i class="fa-solid fa-address-book text-emerald-600 text-sm" aria-hidden="true"></i> <span>Agenda & Leads</span>
-        <span class="px-1.5 py-0.5 text-[9px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300 rounded-full border border-emerald-300">37</span>
+        <span id="nav-badge-agenda" class="hidden px-1.5 py-0.5 text-[9px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300 rounded-full border border-emerald-300">0</span>
       </button>
       <button id="tab-btn-cartera" onclick="cambiarPestana('cartera')" class="py-2.5 px-3 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center space-x-2 touch-target">
         <i class="fa-solid fa-heart-pulse text-red-500 text-sm" aria-hidden="true"></i> <span>Salud Cartera</span>
@@ -199,23 +199,23 @@
   <div id="vista-briefing" class="block w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 fade-in min-h-[calc(100vh-160px)]">
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
       
-      <!-- Columna Izquierda: Resumen del Sherpa & Estado (4 Cols) -->
+      <!-- Columna Izquierda: Briefing Matutino & Métricas (4 Cols) -->
       <div class="lg:col-span-4 space-y-6">
         <section class="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-200 dark:border-slate-700 shadow-clinical-md space-y-4">
           <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-4">
             <div>
-              <h2 class="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
-                <span class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span> Briefing Matutino 8:00 AM
+              <h2 class="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span> Briefing Matutino 8:00 AM
               </h2>
-              <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5" id="briefing-fecha-txt">Asistente Conversacional del Sherpa</p>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5" id="briefing-fecha-txt">Asistente Conversacional del Sherpa</p>
             </div>
-            <button onclick="cargarBriefingMatutino()" class="touch-target px-3 py-1.5 text-xs bg-slate-100 dark:bg-slate-700 font-bold rounded-xl border hover:bg-slate-200 transition">
-              <i class="fa-solid fa-rotate"></i>
+            <button onclick="cargarBriefingMatutino()" class="touch-target px-3 py-1.5 text-xs bg-slate-100 dark:bg-slate-700 font-bold rounded-xl border hover:bg-slate-200 transition" title="Actualizar briefing">
+              <i class="fa-solid fa-rotate text-slate-600 dark:text-slate-300"></i>
             </button>
           </div>
 
-          <div class="bg-slate-100 dark:bg-slate-900/80 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs leading-relaxed whitespace-pre-line font-medium shadow-clinical-sm" id="briefing-resumen-box">
-            Cargando briefing matutino en vivo...
+          <div class="bg-slate-50 dark:bg-slate-900/80 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs leading-relaxed whitespace-pre-line font-medium shadow-clinical-sm min-h-[100px]" id="briefing-resumen-box">
+            Cargando briefing matutino...
           </div>
 
           <!-- KPI Cards Rápidos -->
@@ -232,10 +232,43 @@
         </section>
       </div>
 
-      <!-- Columna Derecha: Feed Interactivo de Acciones Prioritarias (8 Cols) -->
+      <!-- Columna Derecha: Consola Conversacional Chat & Acciones Prioritarias (8 Cols) -->
       <div class="lg:col-span-8 space-y-6">
+        
+        <!-- Consola Interactiva del Chat Asistente -->
         <section class="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-200 dark:border-slate-700 shadow-clinical-md space-y-4">
-          <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-4">
+          <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3">
+            <h3 class="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+              <i class="fa-solid fa-comments text-ea-blue"></i> Chat Asistente Conversacional Sinergix
+            </h3>
+            <span class="text-xs text-slate-400 font-semibold">Cortex AI Assistant</span>
+          </div>
+
+          <!-- Feed de Mensajes -->
+          <div id="chat-feed-container" class="h-[260px] overflow-y-auto p-4 space-y-3 bg-slate-50 dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-inner">
+            <div class="flex gap-3 items-start">
+              <div class="w-8 h-8 rounded-2xl bg-ea-blue text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-clinical-sm">
+                <i class="fa-solid fa-robot"></i>
+              </div>
+              <div class="bg-white dark:bg-slate-800 p-3.5 rounded-2xl rounded-tl-none border border-slate-200 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-200 shadow-clinical-sm max-w-[88%] space-y-1.5">
+                <p class="font-bold text-ea-blue dark:text-blue-400">Asistente Clínico Equipo en Acción</p>
+                <p id="chat-welcome-text">¡Hola! ☀️ Bienvenido a Sinergix Negocio CRM. Soy tu asistente gerencial. Puedes escribirme consultas como "Agregar prospecto", "Ver métricas" o "Ver agenda".</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Barra Inferior de Entrada de Comandos -->
+          <form onsubmit="enviarMensajeChat(event)" class="flex gap-2 pt-1">
+            <input type="text" id="chat-input-text" placeholder="Escribe un comando o consulta para el asistente..." class="flex-grow px-4 py-3 bg-slate-100 dark:bg-slate-900/80 border border-slate-300 dark:border-slate-600 rounded-2xl text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-ea-blue shadow-clinical-sm" />
+            <button type="submit" class="px-5 py-3 bg-ea-blue hover:bg-blue-700 text-white font-bold rounded-2xl text-xs transition flex items-center gap-1.5 shadow-clinical-md cursor-pointer">
+              <i class="fa-solid fa-paper-plane"></i> <span>Enviar</span>
+            </button>
+          </form>
+        </section>
+
+        <!-- Acciones Prioritarias Recomendadas -->
+        <section class="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-200 dark:border-slate-700 shadow-clinical-md space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3">
             <h3 class="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
               <i class="fa-solid fa-list-check text-ea-blue"></i> Acciones Prioritarias Recomendadas
             </h3>
@@ -917,6 +950,44 @@
         await CortexStorageEngine.saveAllLeads(currentLeads);
         todosLosLeads = currentLeads;
         return new Response(JSON.stringify({ ok: true, _id: newLead.id, lead: newLead }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
+
+      if (url.includes('/api/sherpa/briefing')) {
+        const activeUser = obtenerSherpaIdActivo();
+        const userLeads = await CortexStorageEngine.getLeadsForSherpa(activeUser);
+        const sherpaNom = localStorage.getItem('sherpa_nombre') || activeUser || 'Sherpa';
+
+        let resumen = '';
+        let pendientes = userLeads.filter(l => !l.respondio).length;
+
+        if (userLeads.length === 0) {
+          resumen = `¡Buenos días, ${sherpaNom}! ☀️\n\nNo tienes seguimientos ni tareas pendientes para hoy. Tu base de datos está limpia y lista para la captura de leads.`;
+        } else {
+          resumen = `¡Buenos días, ${sherpaNom}! ☀️\n\nTienes ${userLeads.length} prospecto(s) en tu cartera (${pendientes} pendiente(s) por responder encuesta de 3 preguntas).`;
+        }
+
+        const acciones = [];
+        if (userLeads.length > 0) {
+          const sinEncuesta = userLeads.filter(l => !l.respondio).slice(0, 4);
+          sinEncuesta.forEach(l => {
+            acciones.push({
+              lead_id: l.id || l._id,
+              nombre: l.nombre,
+              tipo: 'pendiente',
+              mensaje: `Enviar invitación a la encuesta de 3 preguntas a ${l.nombre} (${l.telefono}).`,
+              boton_label: 'Enviar WhatsApp'
+            });
+          });
+        }
+
+        return new Response(JSON.stringify({
+          ok: true,
+          fecha: new Date().toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
+          resumen_texto: resumen,
+          contactos_seguimiento: pendientes,
+          sprints_por_vencer: 0,
+          acciones_prioritarias: acciones
+        }), { status: 200, headers: { 'Content-Type': 'application/json' } });
       }
 
       if (url.startsWith('/api/leads')) {
@@ -1751,7 +1822,115 @@
       renderAccionesPrioritarias();
     }
 
+    
+    function enviarMensajeChat(evt) {
+      if (evt) evt.preventDefault();
+      const input = document.getElementById('chat-input-text');
+      const feed = document.getElementById('chat-feed-container');
+      if (!input || !feed) return;
+      const text = (input.value || '').trim();
+      if (!text) return;
+
+      // Append user bubble
+      const userBubble = document.createElement('div');
+      userBubble.className = 'flex gap-3 items-start justify-end';
+      userBubble.innerHTML = `
+        <div class="bg-ea-blue text-white p-3.5 rounded-2xl rounded-tr-none text-xs shadow-clinical-sm max-w-[85%]">
+          <p class="font-bold text-[11px] text-blue-200">Tú (Sherpa)</p>
+          <p>${text}</p>
+        </div>
+        <div class="w-8 h-8 rounded-2xl bg-slate-700 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-clinical-sm">
+          <i class="fa-solid fa-user"></i>
+        </div>
+      `;
+      feed.appendChild(userBubble);
+      input.value = '';
+
+      // Generate bot response
+      setTimeout(() => {
+        const sherpaNom = localStorage.getItem('sherpa_nombre') || 'Sherpa';
+        const lower = text.toLowerCase();
+        let reply = '';
+
+        if (lower.includes('hola') || lower.includes('buenos')) {
+          reply = `¡Hola, ${sherpaNom}! ☀️ ¿En qué te puedo apoyar el día de hoy con tu cartera?`;
+        } else if (lower.includes('agenda') || lower.includes('prospecto') || lower.includes('contacto') || lower.includes('agregar')) {
+          reply = `Entendido, ${sherpaNom}. Cambiando a la pestaña **Agenda & Leads** para gestionar tus contactos.`;
+          cambiarPestana('agenda');
+        } else if (lower.includes('métrica') || lower.includes('cartera') || lower.includes('salud')) {
+          reply = `Abriendo la pestaña **Salud Cartera** para revisar las métricas de tus clientes.`;
+          cambiarPestana('cartera');
+        } else {
+          reply = `He recibido tu instrucción: "${text}". ¿Deseas agregar un nuevo prospecto o importar un archivo CSV a tu agenda?`;
+        }
+
+        const botBubble = document.createElement('div');
+        botBubble.className = 'flex gap-3 items-start';
+        botBubble.innerHTML = `
+          <div class="w-8 h-8 rounded-2xl bg-ea-blue text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-clinical-sm">
+            <i class="fa-solid fa-robot"></i>
+          </div>
+          <div class="bg-white dark:bg-slate-800 p-3.5 rounded-2xl rounded-tl-none border border-slate-200 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-200 shadow-clinical-sm max-w-[85%] space-y-1">
+            <p class="font-bold text-ea-blue dark:text-blue-400">Asistente Clínico Equipo en Acción</p>
+            <p>${reply}</p>
+          </div>
+        `;
+        feed.appendChild(botBubble);
+        feed.scrollTop = feed.scrollHeight;
+      }, 400);
+    }
+
     function renderAccionesPrioritarias() {
+      const list = document.getElementById('briefing-acciones-list');
+      if (!list) return;
+      const leads = Array.isArray(todosLosLeads) ? todosLosLeads : [];
+      
+      if (leads.length === 0) {
+        list.innerHTML = `
+          <div class="col-span-full p-6 text-center bg-slate-50 dark:bg-slate-900/40 rounded-3xl border border-slate-200 dark:border-slate-700 space-y-3">
+            <div class="w-12 h-12 mx-auto rounded-2xl bg-indigo-100 dark:bg-indigo-950/60 flex items-center justify-center text-indigo-600 dark:text-indigo-400 text-xl font-bold shadow-clinical-sm">
+              <i class="fa-solid fa-user-plus"></i>
+            </div>
+            <h4 class="font-extrabold text-slate-900 dark:text-white text-base">Aún no tienes prospectos registrados</h4>
+            <p class="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">Ve a la pestaña <strong>Agenda & Leads</strong> para agregar tu primer contacto manualmente o importar una lista en formato CSV / VCF / Google Contacts.</p>
+            <button onclick="cambiarPestana('agenda')" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition inline-flex items-center gap-2 shadow-clinical-sm cursor-pointer">
+              <i class="fa-solid fa-address-book"></i> Ir a Agenda & Leads
+            </button>
+          </div>
+        `;
+      } else {
+        const sinEncuesta = leads.filter(l => !l.respondio).slice(0, 4);
+        if (sinEncuesta.length === 0) {
+          list.innerHTML = `
+            <div class="col-span-full p-6 text-center bg-emerald-50 dark:bg-emerald-950/40 rounded-3xl border border-emerald-200 dark:border-emerald-800 space-y-2">
+              <i class="fa-solid fa-circle-check text-emerald-500 text-2xl"></i>
+              <h4 class="font-extrabold text-slate-900 dark:text-white text-sm">¡Excelente trabajo!</h4>
+              <p class="text-xs text-slate-600 dark:text-slate-300">Todos tus prospectos registrados ya respondieron su encuesta de 3 preguntas.</p>
+            </div>
+          `;
+        } else {
+          list.innerHTML = '';
+          sinEncuesta.forEach(a => {
+            const card = document.createElement('div');
+            card.className = 'p-4 rounded-2xl border bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 shadow-clinical-sm flex flex-col justify-between space-y-3';
+            card.innerHTML = `
+              <div class="space-y-1.5">
+                <div class="flex items-center justify-between">
+                  <span class="font-extrabold text-xs text-slate-900 dark:text-white">${a.nombre}</span>
+                  <span class="text-[9px] px-2 py-0.5 rounded-md font-black uppercase bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">Pendiente</span>
+                </div>
+                <p class="text-xs text-slate-600 dark:text-slate-300 font-medium">${a.telefono}</p>
+              </div>
+              <button onclick="abrirWaLinkDirecto('${a.id || a._id}')" class="touch-target px-3.5 py-2 bg-ea-blue text-white rounded-xl text-xs font-bold self-start hover:bg-blue-700 transition shadow-clinical-sm flex items-center gap-1.5">
+                <i class="fa-brands fa-whatsapp"></i> Enviar Encuesta
+              </button>
+            `;
+            list.appendChild(card);
+          });
+        }
+      }
+    }
+
       const contenedor = document.getElementById('contenedor-acciones-prioritarias') || 
                          document.getElementById('briefing-acciones-list') ||
                          document.querySelector('#acciones-prioritarias-box');
@@ -3139,7 +3318,7 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js?v=45').then(reg => {
+      navigator.serviceWorker.register('./sw.js?v=46').then(reg => {
         reg.update();
         console.log('[PWA v40] Service Worker registrado y actualizado.');
       }).catch(err => {
