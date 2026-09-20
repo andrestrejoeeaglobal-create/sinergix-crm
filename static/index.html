@@ -1045,7 +1045,7 @@
         }
       });
 
-      // Ejecutar rutinas de carga de datos según la pestaña activa
+            // Ejecutar rutinas de carga de datos según la pestaña activa
       if (target === 'briefing' && typeof cargarBriefingMatutino === 'function') {
         cargarBriefingMatutino();
       } else if (target === 'agenda') {
@@ -1053,7 +1053,7 @@
         if (typeof cargarLeadsServidor === 'function') cargarLeadsServidor();
       } else if (target === 'cartera' && typeof cargarSaludCartera === 'function') {
         cargarSaludCartera();
-      /* else if (target === 'radar') { ... } */ else if (target === 'simulador' && typeof cargarSimuladorFinanciero === 'function') {
+      } else if (target === 'simulador' && typeof cargarSimuladorFinanciero === 'function') {
         cargarSimuladorFinanciero();
       }
 
@@ -3287,7 +3287,7 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js?v=51').then(reg => {
+      navigator.serviceWorker.register('./sw.js?v=52').then(reg => {
         reg.update();
         console.log('[PWA v40] Service Worker registrado y actualizado.');
       }).catch(err => {
