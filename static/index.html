@@ -2657,16 +2657,15 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
       todosLosLeads = [];
       if (typeof renderizarLista === 'function') renderizarLista();
       
+      cerrarAvisoModal();
       actualizarEstadoSesionSherpa();
 
       const errorBox = document.getElementById('login-error-msg');
       if (errorBox) {
-        errorBox.innerText = "Sesión cerrada correctamente. Por favor ingresa tus credenciales para continuar.";
-        errorBox.className = "w-full max-w-md p-3.5 bg-blue-950/90 border border-blue-400 rounded text-blue-100 text-xs font-bold text-center backdrop-blur-md mb-4";
+        errorBox.innerHTML = '<i class="fa-solid fa-circle-info text-ea-blue dark:text-blue-400 text-sm shrink-0"></i><span>Sesión cerrada correctamente. Por favor ingresa tus credenciales para continuar.</span>';
+        errorBox.className = "w-full p-3.5 bg-blue-50 dark:bg-blue-950/80 border border-blue-200 dark:border-blue-800 rounded-2xl text-blue-900 dark:text-blue-200 text-xs font-bold text-center leading-relaxed backdrop-blur-md flex items-center justify-center gap-2 mb-4";
         errorBox.classList.remove('hidden');
       }
-      
-      showToast('Sesión cerrada correctamente', 'info');
     }
 
     function actualizarEstadoSesionSherpa() {
@@ -2727,11 +2726,12 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
 
         actualizarEstadoSesionSherpa();
 
+        cerrarAvisoModal();
         const sesion = obtenerSherpaSesion();
         if (!sesion.valido) {
           abrirModalConfigSherpa("¡Bienvenido! Por favor configura tu Nombre de Batalla y tu número de WhatsApp de 10 dígitos para operar en el CRM.");
         } else {
-          showToast("Bienvenido al CRM Gerencial Sinergix", "success");
+          showToast("¡Bienvenido al CRM Gerencial Sinergix!", "success");
         }
 
       } catch (err) {
@@ -2744,13 +2744,14 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
           localStorage.setItem('sherpa_celular', '521' + digitsCatch);
         }
 
+        cerrarAvisoModal();
         actualizarEstadoSesionSherpa();
 
         const sesionCatch = obtenerSherpaSesion();
         if (!sesionCatch.valido) {
           abrirModalConfigSherpa("¡Bienvenido! Por favor configura tu Nombre de Batalla y tu número de WhatsApp de 10 dígitos para operar en el CRM.");
         } else {
-          showToast("Sesión iniciada en modo local", "success");
+          showToast("¡Bienvenido al CRM Gerencial Sinergix!", "success");
         }
       }
     }
@@ -3359,7 +3360,7 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js?v=53').then(reg => {
+      navigator.serviceWorker.register('./sw.js?v=54').then(reg => {
         reg.update();
         console.log('[PWA v40] Service Worker registrado y actualizado.');
       }).catch(err => {
