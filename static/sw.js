@@ -1,15 +1,17 @@
-const CACHE_NAME = 'sinergix-crm-v47';
+const CACHE_NAME = 'sinergix-crm-v48';
 const ASSETS_TO_CACHE = [
-  'https://cdn.tailwindcss.com',
-  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
-  'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700;800&display=swap'
+  './',
+  './index.html',
+  './manifest.json'
 ];
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
+      return cache.addAll(ASSETS_TO_CACHE).catch((err) => {
+        console.warn('[SW v48] Cache addAll warning:', err);
+      });
     })
   );
 });
@@ -20,7 +22,7 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         cacheNames.map((cache) => {
           if (cache !== CACHE_NAME) {
-            console.log('[SW v47] Purgando caché obsoleta:', cache);
+            console.log('[SW v48] Purgando caché obsoleta:', cache);
             return caches.delete(cache);
           }
         })
@@ -46,13 +48,20 @@ self.addEventListener('fetch', (event) => {
           return response;
         })
         .catch(() => {
-          return caches.match(event.request);
+          return caches.match(event.request).then(res => res || caches.match('./index.html'));
         })
     );
     return;
   }
 
-  // Cache-First for static CDN assets
+  // Handle external assets gracefully
+  if (!url.startsWith(self.location.origin)) {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
@@ -67,6 +76,8 @@ self.addEventListener('fetch', (event) => {
           cache.put(event.request, responseToCache);
         });
         return response;
+      }).catch(() => {
+        return caches.match('./index.html');
       });
     })
   );

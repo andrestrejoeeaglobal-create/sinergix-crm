@@ -1547,52 +1547,77 @@
       }
     }
 
-    async function cargarBriefingMatutino() {
+        async function cargarBriefingMatutino() {
       try {
-        const res = await apiFetch('/api/sherpa/briefing');
-        if (res.ok) {
-          const data = await res.json();
-          const elFecha = document.getElementById('briefing-fecha-txt');
-          const elResumen = document.getElementById('briefing-resumen-box');
-          const elKpiPend = document.getElementById('briefing-kpi-pendientes');
-          const elKpiCrit = document.getElementById('briefing-kpi-criticos');
+        const activeUser = (typeof obtenerSherpaIdActivo === 'function') ? obtenerSherpaIdActivo() : (localStorage.getItem('sherpa_id_activo') || 'sherpa_edgar');
+        const sherpaNom = localStorage.getItem('sherpa_nombre') || (activeUser === 'sherpa_edgar' ? 'Edgar' : activeUser);
+        const elFecha = document.getElementById('briefing-fecha-txt');
+        const elResumen = document.getElementById('briefing-resumen-box');
+        const elKpiPend = document.getElementById('briefing-kpi-pendientes');
+        const elKpiCrit = document.getElementById('briefing-kpi-criticos');
 
-          if (elFecha) elFecha.innerText = 'Resumen de hoy (' + (data.fecha || new Date().toLocaleDateString()) + ')';
-          if (elResumen) elResumen.innerText = data.resumen_texto || 'Corte diario del pipeline gerencial.';
+        const fechaStr = new Date().toLocaleDateString('es-MX', { weekday: 'short', month: 'short', day: 'numeric' });
+        if (elFecha) elFecha.innerText = 'Resumen de hoy (' + fechaStr + ')';
 
-          if (elKpiPend) elKpiPend.innerText = data.contactos_seguimiento || 0;
-          if (elKpiCrit) elKpiCrit.innerText = data.sprints_por_vencer || 0;
+        let data = null;
+        try {
+          const res = await apiFetch('/api/sherpa/briefing');
+          if (res && res.ok) {
+            data = await res.json();
+          }
+        } catch (e) {
+          console.warn('Briefing API fetch warning:', e);
+        }
 
+        const userLeads = (typeof CortexStorageEngine !== 'undefined' && CortexStorageEngine.getLeadsForSherpa)
+          ? await CortexStorageEngine.getLeadsForSherpa(activeUser)
+          : [];
+
+        let resumenTexto = data && data.resumen_texto ? data.resumen_texto : '';
+        if (!resumenTexto) {
+          if (userLeads.length === 0) {
+            resumenTexto = `¡Buenos días, ${sherpaNom}! ☀️
+
+No tienes seguimientos ni tareas pendientes para hoy. Tu base de datos está limpia y lista para la captura de leads.`;
+          } else {
+            const pendCount = userLeads.filter(l => !l.respondio && !l.is_cancelled).length;
+            resumenTexto = `¡Buenos días, ${sherpaNom}! ☀️
+
+Tienes ${userLeads.length} prospecto(s) en tu cartera (${pendCount} pendiente(s) por responder encuesta).`;
+          }
+        }
+
+        if (elResumen) elResumen.innerText = resumenTexto;
+        if (elKpiPend) elKpiPend.innerText = userLeads.filter(l => !l.respondio && !l.is_cancelled).length;
+        if (elKpiCrit) elKpiCrit.innerText = 0;
+
+        if (data && data.acciones_prioritarias && data.acciones_prioritarias.length > 0) {
           const list = document.getElementById('briefing-acciones-list');
           if (list) {
-            if (data.acciones_prioritarias && data.acciones_prioritarias.length > 0) {
-              list.innerHTML = '';
-              data.acciones_prioritarias.forEach(a => {
-                const card = document.createElement('div');
-                card.className = 'p-4 rounded-2xl border flex flex-col justify-between space-y-3 ' + (a.tipo === 'critico' ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 shadow-clinical-sm');
-                card.innerHTML = `
-                  <div class="space-y-2">
-                    <div class="flex items-center justify-between">
-                      <span class="font-extrabold text-xs ${a.tipo === 'critico' ? 'text-amber-800 dark:text-amber-300' : 'text-slate-800 dark:text-slate-200'}">${a.nombre}</span>
-                      <span class="text-[9px] px-2 py-0.5 rounded-md font-black uppercase ${a.tipo === 'critico' ? 'bg-amber-200 text-amber-900' : 'bg-slate-200 text-slate-800'}">${a.tipo}</span>
-                    </div>
-                    <p class="text-xs text-slate-600 dark:text-slate-300 font-medium leading-relaxed">${a.mensaje}</p>
+            list.innerHTML = '';
+            data.acciones_prioritarias.forEach(a => {
+              const card = document.createElement('div');
+              card.className = 'p-4 rounded-2xl border flex flex-col justify-between space-y-3 ' + (a.tipo === 'critico' ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 shadow-clinical-sm');
+              card.innerHTML = `
+                <div class="space-y-2">
+                  <div class="flex items-center justify-between">
+                    <span class="font-extrabold text-xs ${a.tipo === 'critico' ? 'text-amber-800 dark:text-amber-300' : 'text-slate-800 dark:text-slate-200'}">${a.nombre}</span>
+                    <span class="text-[9px] px-2 py-0.5 rounded-md font-black uppercase ${a.tipo === 'critico' ? 'bg-amber-200 text-amber-900' : 'bg-slate-200 text-slate-800'}">${a.tipo}</span>
                   </div>
-                  <button onclick="abrirWaLinkDirecto('${a.lead_id}')" class="touch-target px-3.5 py-2 bg-ea-blue text-white rounded-xl text-xs font-bold self-start hover:bg-blue-700 transition shadow-clinical-sm">
-                    <i class="fa-brands fa-whatsapp mr-1.5"></i> ${a.boton_label}
-                  </button>
-                `;
-                list.appendChild(card);
-              });
-            } else {
-              renderAccionesPrioritarias();
-            }
+                  <p class="text-xs text-slate-600 dark:text-slate-300 font-medium leading-relaxed">${a.mensaje}</p>
+                </div>
+                <button onclick="abrirWaLinkDirecto('${a.lead_id}')" class="touch-target px-3.5 py-2 bg-ea-blue text-white rounded-xl text-xs font-bold self-start hover:bg-blue-700 transition shadow-clinical-sm">
+                  <i class="fa-brands fa-whatsapp mr-1.5"></i> ${a.boton_label}
+                </button>
+              `;
+              list.appendChild(card);
+            });
           }
         } else {
           renderAccionesPrioritarias();
         }
       } catch (err) {
-        console.warn('Briefing error, ejecutando renderAccionesPrioritarias local:', err);
+        console.warn('Briefing main catch:', err);
         renderAccionesPrioritarias();
       }
     }
@@ -3255,7 +3280,7 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js?v=47').then(reg => {
+      navigator.serviceWorker.register('./sw.js?v=48').then(reg => {
         reg.update();
         console.log('[PWA v40] Service Worker registrado y actualizado.');
       }).catch(err => {
