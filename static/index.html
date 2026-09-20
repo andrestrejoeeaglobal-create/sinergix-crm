@@ -952,6 +952,51 @@
         return new Response(JSON.stringify({ ok: true, _id: newLead.id, lead: newLead }), { status: 200, headers: { 'Content-Type': 'application/json' } });
       }
 
+            if (url.includes('USERSINGIN') || url.includes('/api/auth/login') || url.includes('/api/login')) {
+        const uParam = (new URLSearchParams(url.split('?')[1] || '').get('User') || '').trim();
+        const pParam = (new URLSearchParams(url.split('?')[1] || '').get('Password') || '').trim();
+
+        if (pParam === 'wrong' || pParam === 'incorrect') {
+          return new Response(JSON.stringify({
+            response: { code: 0, message: "ok" },
+            dataSet: [{ respuesta: "CONTRASENA INVALIDA", usuario: 0, status: 1 }]
+          }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+        }
+
+        if (uParam === '102' || uParam === 'sherpa_edgar' || uParam.toLowerCase() === 'edgar' || uParam === 'Test') {
+          return new Response(JSON.stringify({
+            response: { code: 0, message: "ok" },
+            dataSet: [{
+              custid: "102",
+              customerName: "EDGAR ARTURO, FRIEVENTH MONDRAGON",
+              firstname: "EDGAR",
+              mail: "holadenuevo@gmail.com",
+              languageid: 1,
+              phone: "7223961746",
+              nickname: "EDG102",
+              nip: "0",
+              code: "0"
+            }]
+          }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+        } else if (uParam) {
+          const cleanDigits = uParam.replace(/\D/g, '');
+          return new Response(JSON.stringify({
+            response: { code: 0, message: "ok" },
+            dataSet: [{
+              custid: uParam,
+              customerName: "Sherpa " + uParam,
+              firstname: uParam,
+              mail: uParam + "@equipoenaccion.net",
+              languageid: 1,
+              phone: cleanDigits.length === 10 ? cleanDigits : ("5512345" + uParam.padStart(3, '0')),
+              nickname: "SHERPA" + uParam,
+              nip: "0",
+              code: "0"
+            }]
+          }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+        }
+      }
+
       if (url.includes('/api/sherpa/briefing')) {
         const activeUser = obtenerSherpaIdActivo();
         const userLeads = await CortexStorageEngine.getLeadsForSherpa(activeUser);
@@ -2142,43 +2187,62 @@ Tienes ${userLeads.length} prospecto(s) en tu cartera (${pendCount} pendiente(s)
       };
     }
 
-    function actualizarIndicadorSherpa() {
-      const sesion = obtenerSherpaSesion();
-      const elNom = document.getElementById('sherpa-indicador-nom');
-      const elTel = document.getElementById('sherpa-indicador-tel');
-      const elInputNom = document.getElementById('input-sherpa-nombre');
-      const elInputTel = document.getElementById('input-sherpa-celular');
-      const elSpanHeader = document.getElementById('nombreSherpa');
-
-      if (elInputNom && localStorage.getItem('sherpa_nombre')) elInputNom.value = localStorage.getItem('sherpa_nombre');
-      if (elInputTel && localStorage.getItem('sherpa_celular')) {
-        const celClean = localStorage.getItem('sherpa_celular').replace(/^521/, '').replace(/^52/, '');
-        elInputTel.value = celClean;
+        function actualizarHeaderSherpa(sesionInput = null) {
+      let sherpaSesion = sesionInput;
+      if (!sherpaSesion) {
+        try {
+          const raw = localStorage.getItem('sinergix_sherpa_activo');
+          if (raw) sherpaSesion = JSON.parse(raw);
+        } catch(e) {}
       }
 
-      if (sesion.valido) {
+      if (!sherpaSesion) {
+        const sesionNav = obtenerSherpaSesion();
+        if (sesionNav.valido) {
+          sherpaSesion = {
+            id: sesionNav.userId,
+            custid: sesionNav.userId,
+            nombre: sesionNav.nombre,
+            primer_nombre: sesionNav.nombre.split(',')[0].trim().split(' ')[0],
+            telefono: sesionNav.celular ? ('+52 ' + sesionNav.celular.replace(/^521/, '').replace(/^52/, '')) : ''
+          };
+        }
+      }
+
+      const elNom = document.getElementById('sherpa-indicador-nom');
+      const elTel = document.getElementById('sherpa-indicador-tel');
+      const elSpanHeader = document.getElementById('nombreSherpa');
+
+      if (sherpaSesion && sherpaSesion.nombre) {
         if (elNom) {
-          elNom.textContent = sesion.nombre + ' (ID: ' + sesion.userId + ')';
+          elNom.textContent = sherpaSesion.nombre;
           elNom.className = 'text-emerald-600 dark:text-emerald-400 font-extrabold';
         }
         if (elTel) {
-          const celDisplay = sesion.celular.replace(/^521/, '').replace(/^52/, '');
-          elTel.textContent = `(+52 1 ${celDisplay})`;
+          elTel.textContent = sherpaSesion.telefono ? `(${sherpaSesion.telefono})` : '';
           elTel.className = 'text-slate-600 dark:text-slate-300 font-mono text-xs font-bold';
         }
-        const labelHeader = sesion.nombre.startsWith('Sherpa') ? sesion.nombre : ('Sherpa ' + sesion.nombre);
-        if (elSpanHeader) elSpanHeader.textContent = `• ${labelHeader} (ID: ${sesion.userId})`;
+        if (elSpanHeader) {
+          const pNombre = sherpaSesion.primer_nombre || sherpaSesion.nombre.split(',')[0].trim().split(' ')[0];
+          elSpanHeader.textContent = `• Sherpa ${pNombre} (ID: ${sherpaSesion.custid || sherpaSesion.id})`;
+        }
       } else {
         if (elNom) {
           elNom.textContent = 'Sin configurar';
           elNom.className = 'text-red-500 font-bold animate-pulse';
         }
         if (elTel) {
-          elTel.textContent = '(Configura tu WhatsApp)';
+          elTel.textContent = '(Sin teléfono)';
           elTel.className = 'text-red-400 font-mono text-xs';
         }
-        if (elSpanHeader) elSpanHeader.textContent = '• Sherpa no configurado';
+        if (elSpanHeader) {
+          elSpanHeader.textContent = '';
+        }
       }
+    }
+
+    function actualizarIndicadorSherpa() {
+      actualizarHeaderSherpa();
     }
 
     function guardarNombreSherpa(val) {
@@ -2679,6 +2743,7 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
       localStorage.removeItem('ea_token');
       localStorage.removeItem('sherpa_token');
       localStorage.removeItem('sinergix_token');
+      localStorage.removeItem('sinergix_sherpa_activo');
       localStorage.removeItem('sinergix_active_user');
       localStorage.removeItem('sherpa_id_activo');
       localStorage.removeItem('sherpa_nombre');
@@ -2717,84 +2782,163 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
       }
     }
 
-    async function ejecutarLoginSherpa(event) {
-      event.preventDefault();
+        async function ejecutarLoginSherpa(event) {
+      if (event) event.preventDefault();
+      
       const user = document.getElementById('login-user').value.trim();
       const pass = document.getElementById('login-password').value.trim();
       const errorBox = document.getElementById('login-error-msg');
+      const submitBtn = document.getElementById('btn-submit-login');
 
       if (errorBox) errorBox.classList.add('hidden');
 
+      if (!user || !pass) {
+        if (errorBox) {
+          errorBox.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-amber-500 text-sm shrink-0"></i><span>Por favor ingresa usuario y contraseña.</span>';
+          errorBox.className = "w-full p-3.5 bg-amber-50 dark:bg-amber-950/80 border border-amber-300 dark:border-amber-800 rounded-2xl text-amber-900 dark:text-amber-200 text-xs font-bold text-center backdrop-blur-md mb-4 flex items-center justify-center gap-2";
+          errorBox.classList.remove('hidden');
+        }
+        return;
+      }
+
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Validando...';
+      }
+
       try {
         const url = `https://equipoenaccion.net/ea_crm_app.asp?action=USERSINGIN&User=${encodeURIComponent(user)}&Password=${encodeURIComponent(pass)}`;
-        const res = await fetch(url);
-        const text = await res.text();
+        
+        let res = null;
+        let data = null;
+        let resultado = null;
 
-        if (text.includes("CONTRASENA INVALIDA") || text.includes("NO EXISTE EL USUARIO") || text.includes("ERROR")) {
+        try {
+          res = await fetch(url);
+          if (res && res.ok) {
+            const rawText = await res.text();
+            try {
+              data = JSON.parse(rawText);
+            } catch (e) {
+              if (rawText.includes("CONTRASENA INVALIDA") || rawText.includes("NO EXISTE EL USUARIO") || rawText.includes("ERROR")) {
+                resultado = { respuesta: "CONTRASENA INVALIDA" };
+              }
+            }
+          }
+        } catch (netErr) {
+          console.warn("Direct fetch to equipoenaccion.net failed or CORS blocked. Fallback parser:", netErr);
+        }
+
+        if (data && data.dataSet && data.dataSet[0]) {
+          resultado = data.dataSet[0];
+        }
+
+        // Error validation rule: if respuesta exists or status is error
+        if (resultado && (resultado.respuesta === 'CONTRASENA INVALIDA' || resultado.respuesta === 'NO EXISTE EL USUARIO' || (resultado.status === 1 && !resultado.customerName && !resultado.custid))) {
           if (errorBox) {
-            errorBox.innerText = "Credenciales incorrectas. Verifica tu usuario y contraseña.";
+            errorBox.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-red-600 dark:text-red-400 text-sm shrink-0"></i><span>Usuario o contraseña incorrectos.</span>';
             errorBox.className = "w-full p-3.5 bg-red-50 dark:bg-red-950/80 border border-red-300 dark:border-red-800 rounded-2xl text-red-800 dark:text-red-200 text-xs font-bold text-center backdrop-blur-md mb-4 flex items-center justify-center gap-2";
             errorBox.classList.remove('hidden');
           }
           return;
         }
 
-        // Purge any stale user session variables before setting new USER_ID
+        // Fallback profile if direct API call was blocked in static client mode
+        if (!resultado || (!resultado.customerName && !resultado.custid)) {
+          if (user === '102' || user === 'sherpa_edgar' || user.toLowerCase() === 'edgar') {
+            resultado = {
+              custid: "102",
+              customerName: "EDGAR ARTURO, FRIEVENTH MONDRAGON",
+              firstname: "EDGAR",
+              mail: "holadenuevo@gmail.com",
+              phone: "7223961746",
+              nickname: "EDG102"
+            };
+          } else if (user === '101') {
+            resultado = {
+              custid: "101",
+              customerName: "Sherpa 101",
+              firstname: "Sherpa",
+              mail: "sherpa101@equipoenaccion.net",
+              phone: "5512345101",
+              nickname: "SHERPA101"
+            };
+          } else {
+            const cleanDigits = user.replace(/\D/g, '');
+            resultado = {
+              custid: user,
+              customerName: 'Sherpa ' + user,
+              firstname: user,
+              mail: user + '@equipoenaccion.net',
+              phone: cleanDigits.length === 10 ? cleanDigits : ('5512345' + user.padStart(3, '0')),
+              nickname: 'SHERPA' + user
+            };
+          }
+        }
+
+        // Build canonical session object (sinergix_sherpa_activo)
+        const custIdReal = resultado.custid || user;
+        const nombreReal = resultado.customerName || ('Sherpa ' + custIdReal);
+        const primerNombreReal = resultado.firstname || (nombreReal.split(',')[0].trim().split(' ')[0]) || nombreReal;
+        const rawPhone = (resultado.phone || '').replace(/\D/g, '');
+        const phoneFormatted = rawPhone ? (rawPhone.startsWith('+') ? rawPhone : (rawPhone.startsWith('52') ? ('+' + rawPhone) : ('+52 ' + rawPhone))) : '+52 5512345678';
+        const celClean = rawPhone.replace(/^521/, '').replace(/^52/, '');
+
+        const sherpaSesion = {
+          id: custIdReal,
+          custid: custIdReal,
+          nombre: nombreReal,
+          primer_nombre: primerNombreReal,
+          email: resultado.mail || '',
+          telefono: phoneFormatted,
+          nickname: resultado.nickname || ('SHERPA' + custIdReal),
+          activo: true,
+          fecha_login: new Date().toISOString()
+        };
+
+        // Purge any stale session data
         localStorage.removeItem('sherpa_nombre');
         localStorage.removeItem('sherpa_celular');
 
-        localStorage.setItem('sinergix_token', 'TOKEN_SHERPA_' + user + '_' + Date.now());
-        localStorage.setItem('sinergix_active_user', user);
-        localStorage.setItem('sherpa_id_activo', user);
+        // Persist session object & primary keys in localStorage
+        localStorage.setItem('sinergix_sherpa_activo', JSON.stringify(sherpaSesion));
+        localStorage.setItem('sinergix_token', 'TOKEN_SHERPA_' + custIdReal + '_' + Date.now());
+        localStorage.setItem('sinergix_active_user', custIdReal);
+        localStorage.setItem('sherpa_id_activo', custIdReal);
+        localStorage.setItem('sherpa_nombre', nombreReal);
+        localStorage.setItem('sherpa_celular', '521' + (celClean || '5512345678'));
         localStorage.setItem('ea_session', 'ACTIVE');
-
-        const digits = user.replace(/\D/g, '');
-        if (digits.length === 10) {
-          localStorage.setItem('sherpa_celular', '521' + digits);
-        } else {
-          localStorage.setItem('sherpa_celular', '521551234' + user.padStart(3, '0'));
-        }
-
-        if (user === '101') {
-          localStorage.setItem('sherpa_nombre', 'Sherpa 101');
-        } else if (user === '102' || user === 'sherpa_edgar') {
-          localStorage.setItem('sherpa_nombre', 'Sherpa Edgar');
-        } else {
-          localStorage.setItem('sherpa_nombre', 'Sherpa ' + user);
-        }
 
         todosLosLeads = [];
 
         actualizarEstadoSesionSherpa();
+        actualizarHeaderSherpa(sherpaSesion);
 
         cerrarAvisoModal();
-        const sesion = obtenerSherpaSesion();
-        if (!sesion.valido) {
-          abrirModalConfigSherpa("¡Bienvenido! Por favor configura tu Nombre de Batalla y tu número de WhatsApp de 10 dígitos para operar en el CRM.");
-        } else {
-          showToast("¡Bienvenido al CRM Gerencial Sinergix! Sesión activa: Sherpa " + user + " (ID: " + user + ")", "success");
+
+        if (typeof cargarBriefingMatutino === 'function') {
+          cargarBriefingMatutino();
         }
+
+        showToast(`¡Bienvenido al CRM Gerencial Sinergix, ${primerNombreReal}!`, 'success');
 
       } catch (err) {
-        localStorage.setItem('sinergix_token', 'TOKEN_SHERPA_DEMO');
-        localStorage.setItem('sinergix_active_user', user || 'demo');
-        localStorage.setItem('ea_session', 'ACTIVE');
-
-        const digitsCatch = (user || '').replace(/\D/g, '');
-        if (digitsCatch.length === 10) {
-          localStorage.setItem('sherpa_celular', '521' + digitsCatch);
+        console.error("Error al validar credenciales en EEA API:", err);
+        if (errorBox) {
+          errorBox.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-amber-500 text-sm shrink-0"></i><span>No se pudo conectar con el servidor de autenticación. Verifica tu conexión.</span>';
+          errorBox.className = "w-full p-3.5 bg-amber-50 dark:bg-amber-950/80 border border-amber-300 dark:border-amber-800 rounded-2xl text-amber-900 dark:text-amber-200 text-xs font-bold text-center backdrop-blur-md mb-4 flex items-center justify-center gap-2";
+          errorBox.classList.remove('hidden');
         }
-
-        cerrarAvisoModal();
-        actualizarEstadoSesionSherpa();
-
-        const sesionCatch = obtenerSherpaSesion();
-        if (!sesionCatch.valido) {
-          abrirModalConfigSherpa("¡Bienvenido! Por favor configura tu Nombre de Batalla y tu número de WhatsApp de 10 dígitos para operar en el CRM.");
-        } else {
-          showToast("¡Bienvenido al CRM Gerencial Sinergix! Sesión activa: Sherpa " + user + " (ID: " + user + ")", "success");
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<i class="fa-solid fa-right-to-bracket text-base mr-2"></i><span>INICIAR SESIÓN</span>';
         }
       }
+    }
+
+    function procesarLoginSherpa(event) {
+      return ejecutarLoginSherpa(event);
     }
 
     function initNetworkCanvas() {
@@ -3401,7 +3545,7 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js?v=57').then(reg => {
+      navigator.serviceWorker.register('./sw.js?v=58').then(reg => {
         reg.update();
         console.log('[PWA v40] Service Worker registrado y actualizado.');
       }).catch(err => {
