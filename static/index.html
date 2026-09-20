@@ -171,7 +171,7 @@
   <div class="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pt-4">
       <!-- Navegación de Pestañas Gerencial (Full-Width Responsive Grid Píldora / Cápsula) -->
   <div class="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pt-4">
-    <nav class="grid grid-cols-3 sm:grid-cols-6 p-1.5 gap-2 bg-slate-200/80 dark:bg-slate-800/80 rounded-2xl border border-slate-300/50 dark:border-slate-700/50 text-xs font-bold" aria-label="Tabs">
+    <nav class="grid grid-cols-2 sm:grid-cols-5 p-1.5 gap-2 bg-slate-200/80 dark:bg-slate-800/80 rounded-2xl border border-slate-300/50 dark:border-slate-700/50 text-xs font-bold" aria-label="Tabs">
       <button id="tab-btn-briefing" onclick="cambiarPestana('briefing')" class="py-2.5 px-3 rounded-xl text-slate-900 dark:text-white bg-white dark:bg-slate-700 shadow-clinical-sm flex items-center justify-center space-x-2 touch-target">
         <i class="fa-solid fa-comments text-ea-blue text-sm" aria-hidden="true"></i> <span>Chat Briefing</span>
       </button>
@@ -184,9 +184,6 @@
       </button>
       <button id="tab-btn-radar" onclick="cambiarPestana('radar')" class="py-2.5 px-3 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center space-x-2 touch-target">
         <i class="fa-solid fa-radar text-purple-600 text-sm" aria-hidden="true"></i> <span>Radar MLM</span>
-      </button>
-      <button id="tab-btn-biometria" onclick="cambiarPestana('biometria')" class="py-2.5 px-3 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center space-x-2 touch-target">
-        <i class="fa-solid fa-microchip text-indigo-500 text-sm" aria-hidden="true"></i> <span>Biometría H7</span>
       </button>
       <button id="tab-btn-simulador" onclick="cambiarPestana('simulador')" class="py-2.5 px-3 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center space-x-2 touch-target">
         <i class="fa-solid fa-calculator text-amber-500 text-sm" aria-hidden="true"></i> <span>Simulador</span>
@@ -482,50 +479,6 @@
       </div>
 
     </div>
-  </div>
-
-  <!-- VISTA 5: TELEMETRÍA H7 & VISIÓN IA PLATOS (4 COLS GRID) -->
-  <div id="vista-biometria" class="hidden w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 fade-in min-h-[calc(100vh-160px)]">
-    <section class="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-200 dark:border-slate-700 shadow-clinical-md space-y-6">
-      <div class="flex items-center justify-between">
-        <div>
-          <h2 class="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
-            <i class="fa-solid fa-microchip text-indigo-500"></i> Telemetría Banda H7 & Visión IA Nutricional
-          </h2>
-          <p class="text-xs text-slate-500 dark:text-slate-400">Monitoreo Biométrico Continuo & Auditoría por Visión por Computadora</p>
-        </div>
-        <span class="px-3 py-1.5 bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 text-xs font-extrabold rounded-xl">IoT Live Feed</span>
-      </div>
-
-      <!-- Grid 4 Tarjetas Biométricas -->
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 text-center">
-        <div class="p-4 bg-slate-50 dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-700">
-          <span class="block text-xs font-extrabold uppercase text-slate-400">HRV (ms)</span>
-          <span class="text-2xl font-black text-indigo-600 dark:text-indigo-400 tabular-nums" id="txt-h7-hrv">0 ms</span>
-        </div>
-        <div class="p-4 bg-slate-50 dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-700">
-          <span class="block text-xs font-extrabold uppercase text-slate-400">FC Reposo (lpm)</span>
-          <span class="text-2xl font-black text-emerald-600 dark:text-emerald-400 tabular-nums" id="txt-h7-fc">0 lpm</span>
-        </div>
-        <div class="p-4 bg-slate-50 dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-700">
-          <span class="block text-xs font-extrabold uppercase text-slate-400">Temp. Basal</span>
-          <span class="text-2xl font-black text-amber-600 dark:text-amber-400 tabular-nums" id="txt-h7-temp">+0.0 °C</span>
-        </div>
-        <div class="p-4 bg-slate-50 dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-700">
-          <span class="block text-xs font-extrabold uppercase text-slate-400">Calidad Sueño</span>
-          <span class="text-2xl font-black text-purple-600 dark:text-purple-400 tabular-nums" id="txt-h7-sueno">0h 0m (0%)</span>
-        </div>
-      </div>
-
-      <!-- Visor de Auditoría de Platos -->
-      <div class="p-5 bg-slate-100 dark:bg-slate-900/80 rounded-3xl border border-slate-200 dark:border-slate-700 space-y-3 text-xs" id="visor-plato-box">
-        <div class="flex justify-between items-center font-bold">
-          <span class="text-slate-800 dark:text-slate-200 text-sm"><i class="fa-solid fa-camera text-ea-blue mr-2"></i> Auditoría de Platos por Visión IA</span>
-          <span class="px-3 py-1 rounded-xl text-xs font-black uppercase bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-300">⚪ Sin Registros</span>
-        </div>
-        <p class="text-slate-600 dark:text-slate-400 text-xs">A la espera de la primera fotografía de plato capturada por el cliente.</p>
-      </div>
-    </section>
   </div>
 
   <!-- VISTA 6: SIMULADOR FINANCIERO & MATCHING BONUS 10% (4 COLS GRID) -->
@@ -996,10 +949,9 @@
       let target = nombrePestana;
       if (nombrePestana === 'chat') target = 'briefing';
       if (nombrePestana === 'salud') target = 'cartera';
-      if (nombrePestana === 'h7') target = 'biometria';
-      if (nombrePestana === 'sim') target = 'simulador';
+            if (nombrePestana === 'sim') target = 'simulador';
 
-      const pestanas = ['briefing', 'agenda', 'cartera', 'radar', 'biometria', 'simulador'];
+      const pestanas = ['briefing', 'agenda', 'cartera', 'radar', 'simulador'];
       
       pestanas.forEach(p => {
         const contenedor = document.getElementById(`vista-${p}`);
@@ -3187,7 +3139,7 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js?v=44').then(reg => {
+      navigator.serviceWorker.register('./sw.js?v=45').then(reg => {
         reg.update();
         console.log('[PWA v40] Service Worker registrado y actualizado.');
       }).catch(err => {
