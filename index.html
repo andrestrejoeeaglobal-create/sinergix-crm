@@ -1931,69 +1931,6 @@
       }
     }
 
-      const contenedor = document.getElementById('contenedor-acciones-prioritarias') || 
-                         document.getElementById('briefing-acciones-list') ||
-                         document.querySelector('#acciones-prioritarias-box');
-      
-      if (!contenedor) return;
-
-      const leads = Array.isArray(todosLosLeads) ? todosLosLeads : [];
-
-      // Criterio Real de Pendiente de Primer Contacto (sin mensaje enviado)
-      const pendientes = leads.filter(l => {
-        if (l.is_cancelled) return false;
-        const noEnviado = !l.mensaje_enviado && !l.contactado;
-        const noHaRespondido = !l.respondio && !l.yaRespondio;
-        return noEnviado && noHaRespondido;
-      });
-
-      const kpiPend = document.getElementById('briefing-kpi-pendientes');
-      if (kpiPend) kpiPend.innerText = pendientes.length;
-
-      if (pendientes.length === 0) {
-        contenedor.innerHTML = `
-          <div class="col-span-full p-6 text-center text-xs text-slate-400 dark:text-slate-500 font-medium bg-slate-50 dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-700">
-            Todos tus prospectos han sido contactados o están al día.
-          </div>`;
-        return;
-      }
-
-      const topPrioritarios = pendientes.slice(0, 6);
-
-      let html = `
-        <div class="col-span-full p-3 bg-blue-50/50 dark:bg-blue-950/20 rounded-2xl border border-blue-100 dark:border-blue-900/40 mb-1 flex items-center justify-between">
-          <span class="text-xs font-bold text-ea-blue dark:text-sky-400 flex items-center gap-1.5">
-            <i class="fa-solid fa-bolt text-amber-500"></i> Tienes ${pendientes.length} prospectos pendientes de primer contacto
-          </span>
-          <span class="text-[11px] font-mono text-slate-500 dark:text-slate-400 font-semibold">Mostrando top ${topPrioritarios.length}</span>
-        </div>
-      `;
-
-      topPrioritarios.forEach(lead => {
-        const telLimpio = String(lead.telefono || lead.celular || '').replace(/\D/g, '');
-        const leadId = lead._id || lead.id || telLimpio;
-
-        html += `
-          <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-clinical-sm flex items-center justify-between gap-3">
-            <div class="truncate">
-              <div class="flex items-center gap-1.5">
-                <span class="text-xs font-extrabold text-slate-900 dark:text-white truncate">${lead.nombre}</span>
-                <span class="px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-blue-100 text-ea-blue dark:bg-blue-950 dark:text-blue-300">LEAD</span>
-              </div>
-              <span class="text-[11px] font-mono text-slate-500 dark:text-slate-400 block mt-0.5">${telLimpio || 'Sin teléfono'}</span>
-            </div>
-            <button onclick="registrarEnvioEnUnClic('${leadId}', 'encuesta')" 
-               class="touch-target bg-ea-blue hover:bg-blue-700 text-white text-xs font-extrabold px-3 py-2 rounded-xl flex items-center gap-1.5 shadow-clinical-sm shrink-0 cursor-pointer">
-              <i class="fa-brands fa-whatsapp text-sm"></i>
-              <span>Contactar</span>
-            </button>
-          </div>
-        `;
-      });
-
-      contenedor.innerHTML = html;
-    }
-
     function marcarComoContactado(leadId) {
       if (typeof registrarEnvioEnUnClic === 'function') {
         registrarEnvioEnUnClic(leadId, 'encuesta');
@@ -3318,7 +3255,7 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js?v=46').then(reg => {
+      navigator.serviceWorker.register('./sw.js?v=47').then(reg => {
         reg.update();
         console.log('[PWA v40] Service Worker registrado y actualizado.');
       }).catch(err => {
