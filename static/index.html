@@ -130,9 +130,9 @@
           <span class="hidden dark:inline text-xs font-bold">Modo Claro</span>
         </button>
 
-        <!-- Google Auth Canónico -->
-        <button onclick="conectarGoogleOAuth()" 
-                class="touch-target inline-flex items-center px-3 py-2 rounded-xl text-xs font-bold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100 transition" 
+        <!-- Google Auth Canónico (Oculto en entorno estático) -->
+        <button id="btn-gauth" onclick="conectarGoogleOAuth()" 
+                class="hidden touch-target inline-flex items-center px-3 py-2 rounded-xl text-xs font-bold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100 transition" 
                 style="min-height: 48px;">
           <i class="fa-brands fa-google mr-1.5 text-indigo-600 dark:text-indigo-400" aria-hidden="true"></i> Auth
         </button>
@@ -1125,18 +1125,20 @@
       showToast('Plantilla CSV en formato estándar de Google Contacts descargada.', 'success');
     }
 
-    async function conectarGoogleOAuth() {
+        async function conectarGoogleOAuth() {
       try {
         const res = await apiFetch('/api/auth/google/login');
-        if (res.ok) {
+        if (res && res.ok) {
           const data = await res.json();
           if (data.authorization_url) {
             window.location.href = data.authorization_url;
             return;
           }
         }
+        showToast('Google OAuth no disponible en el despliegue estático.', 'info');
       } catch (e) {
         console.warn('Google OAuth login check:', e);
+        showToast('Google OAuth no disponible en el despliegue estático.', 'info');
       }
     }
 
@@ -3285,7 +3287,7 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js?v=49').then(reg => {
+      navigator.serviceWorker.register('./sw.js?v=50').then(reg => {
         reg.update();
         console.log('[PWA v40] Service Worker registrado y actualizado.');
       }).catch(err => {

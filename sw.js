@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sinergix-crm-v49';
+const CACHE_NAME = 'sinergix-crm-v50';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -10,7 +10,7 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(ASSETS_TO_CACHE).catch((err) => {
-        console.warn('[SW v49] Cache addAll warning:', err);
+        console.warn('[SW v50] Cache addAll warning:', err);
       });
     })
   );
@@ -22,7 +22,7 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         cacheNames.map((cache) => {
           if (cache !== CACHE_NAME) {
-            console.log('[SW v49] Purgando caché obsoleta:', cache);
+            console.log('[SW v50] Purgando caché obsoleta:', cache);
             return caches.delete(cache);
           }
         })
