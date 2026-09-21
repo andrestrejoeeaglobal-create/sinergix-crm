@@ -5454,6 +5454,18 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
 
 
     // ── CORTEX STORAGE ENGINE (StandAlone PWA Client-Side) ────────────
+    function esContactoSemilla101(lead) {
+      if (!lead) return false;
+      const idStr = String(lead.id || lead._id || '');
+      if (idStr.startsWith('lead_101_')) return true;
+      const owner = String(lead.sherpa_id || lead.sherpa_user || '');
+      if (owner === '101') return true;
+      const nom = (lead.nombre || '').toLowerCase().trim();
+      const seedNames = ['aldair', 'angelina', 'gonzalo', 'martha', 'jose luis', 'margarito', 'javier', 'mauricio', 'ramon', 'elia', 'adela', 'jeronimo', 'alejandro', 'guadalupe', 'yoselin', 'ana velia', 'angela', 'cristina', 'antonio', 'brenda', 'gertrudis', 'fidela', 'carmen', 'enrique', 'fernando', 'dionicio', 'arely', 'emanuel', 'estela', 'catalina', 'maribel', 'fatima', 'felipa', 'emma', 'rosa', 'hermila', 'ignacia', 'crisanta', 'abraham', 'rufina', 'aida', 'amalia', 'balvina', 'juan', 'claudia', 'elena', 'elvia', 'eusebia', 'fidencio', 'laurentino', 'leoba', 'leticia', 'lilian', 'gema', 'jose', 'josefa', 'luz', 'rosario', 'evelia', 'margarito', 'marina', 'ocotlan', 'rene', 'virginia', 'yolanda', 'olga', 'saray', 'soledad', 'yamilet'];
+      if (seedNames.some(sn => nom.includes(sn))) return true;
+      return false;
+    }
+
     const CortexStorageEngine = {
       dbName: 'SinergixCRMDB',
       dbVersion: 1,
@@ -5494,30 +5506,34 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
         return allLeads;
       },
 
-            async getLeadsForSherpa(sherpaId = null) {
+      async getLeadsForSherpa(sherpaId = null) {
         const targetUser = String(sherpaId || obtenerSherpaIdActivo() || '101');
         let all = await this.getAllLeads();
 
+        // Sanitize IndexedDB records: ensure 101 seed contacts are tagged strictly as sherpa_id = '101'
+        let changed = false;
+        all.forEach(l => {
+          if (esContactoSemilla101(l)) {
+            if (l.sherpa_id !== '101' || l.sherpa_user !== '101') {
+              l.sherpa_id = '101';
+              l.sherpa_user = '101';
+              changed = true;
+            }
+          }
+        });
+        if (changed && typeof this.saveAllLeads === 'function') {
+          await this.saveAllLeads(all);
+        }
+
         // STRICT ISOLATION RULE:
         // ONLY User 101 owns the 126 seed contacts.
-        // User 136 (Luis Fernando), User 102 (Edgar Arturo), and all other users start with 0 contacts.
+        // User 102 (Edgar Arturo), User 136 (Luis Fernando), and all other users start with 0 contacts.
         if (targetUser !== '101') {
-          const userLeads = all.filter(l => String(l.sherpa_user || l.sherpa_id || l.sherpa_nombre || '') === targetUser);
-          const cleanAll = all.filter(l => {
-            const isStray101 = String(l.id || '').startsWith('lead_101_') && String(l.sherpa_id || l.sherpa_user || '') !== '101';
-            const isStrayUser = String(l.sherpa_id || l.sherpa_user || '') === targetUser && String(l.id || '').startsWith('lead_101_');
-            return !isStray101 && !isStrayUser;
-          });
-          if (cleanAll.length !== all.length) {
-            await this.saveAllLeads(cleanAll);
-          }
+          const userLeads = all.filter(l => !esContactoSemilla101(l) && (String(l.sherpa_id) === targetUser || String(l.sherpa_user) === targetUser));
           return userLeads;
         }
 
-        let userLeads = all.filter(l => {
-          const owner = String(l.sherpa_user || l.sherpa_id || l.sherpa_nombre || 'demo');
-          return owner === '101';
-        });
+        let userLeads = all.filter(l => esContactoSemilla101(l) || String(l.sherpa_id) === '101' || String(l.sherpa_user) === '101');
 
         if (userLeads.length === 0) {
           const seeded = CARTERA_USER_101_SEED.map((l, idx) => ({
@@ -5527,8 +5543,8 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
             sherpa_id: '101',
             sherpa_user: '101'
           }));
-          const cleanOther101 = all.filter(l => String(l.sherpa_id || l.sherpa_user || '') !== '101' && !String(l.id || '').startsWith('lead_101_'));
-          await this.saveAllLeads([...cleanOther101, ...seeded]);
+          const non101Leads = all.filter(l => !esContactoSemilla101(l));
+          await this.saveAllLeads([...non101Leads, ...seeded]);
           userLeads = seeded;
         }
 
@@ -6015,7 +6031,7 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js?v=73').then(reg => {
+      navigator.serviceWorker.register('./sw.js?v=74').then(reg => {
         reg.update();
         console.log('[PWA v40] Service Worker registrado y actualizado.');
       }).catch(err => {
