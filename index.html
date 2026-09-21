@@ -5423,29 +5423,29 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
       let plantillaRaw = '';
 
       if (tipoGuion === 'paso1_apertura') {
-        plantillaRaw = `Hola, {nombre}, espero que estés muy bien. Soy ${sherpaNombreNorm}.\n\n` +
-          `Te escribo personalmente porque este ${objSede.fechaCompleta} tenemos la Jornada Especial de la Gira de Poder 2026 aquí en ${objSede.nombre}.\n\n` +
-          `Estamos abordando la causa raíz del desgaste biológico y celular frente a la industria del malestar, ayudando a las personas a descartar que el cansancio, la inflamación o la falta de energía sean "síntomas normales".\n\n` +
-          `Voy a estar coordinando las mesas de trabajo y diagnóstico. Tengo asignados solo 2 turnos para mi equipo cercano: a las 3:30 PM y a las 4:30 PM.\n\n` +
-          `¿Cuál de estos dos horarios te queda mejor para apartar tu lugar?`;
+        plantillaRaw = `Hola, {nombre}, espero que estés muy bien.\n\n` +
+          `Te escribo porque este ${objSede.fechaCompleta} tenemos una Jornada Especial aquí en ${objSede.nombre} donde estamos abordando la causa raíz del desgaste biológico y celular frente a la industria del malestar.\n\n` +
+          `Estarán nutriólogos apoyándonos para realizar consultas clínicas ayudando a las personas a conocer la situación actual de su salud a través de un estudio con resultados en tiempo real y evaluando sus resultados.\n\n` +
+          `Voy a estar coordinando las mesas de trabajo y diagnóstico. Tengo asignados solo 2 turnos para mis contactos cercanos: a las 3:30 PM y a las 4:30 PM.\n\n` +
+          `¿Cuál de estos dos horarios te queda mejor para apartarte tu lugar?`;
       } else if (tipoGuion === 'paso2_confirmacion') {
         plantillaRaw = `Excelente, {nombre}. Queda reservado tu espacio a las ${horarioMesa} en ${objSede.nombre}.\n\n` +
-          `📍 Dirección: ${objSede.direccion}\n\n` +
-          `Te pido llegar 5 minutos antes para iniciar puntualmente con tu valoración. Recuerda que si por alguna razón no puedes asistir, me avises con tiempo para liberar el turno a alguien en lista de espera.\n\n` +
-          `Nos vemos allá. ¡Un saludo!`;
+          `Te comparto la Dirección: ${objSede.direccion}\n\n` +
+          `Te pido llegar 5 minutos antes para iniciar puntualmente con tu valoración. Recuerda que, si por alguna razón no puedes asistir, me avises con tiempo para liberar el turno a alguien en lista de espera.\n\n` +
+          `Nos vemos allá. Saludos!`;
       } else if (tipoGuion === 'reactivacion_a') {
-        plantillaRaw = `Hola, {nombre}, espero que estés muy bien. Soy ${sherpaNombreNorm}.\n\n` +
-          `Imagino que andas con la agenda súper apretada hoy, ¡no te preocupes en absoluto, entiendo perfecto!\n\n` +
-          `Te escribo rápido solo para saber si prefieres que libere tu turno de las ${horarioMesa} para asignárselo a alguien en lista de espera de la gira, o si mantenemos tu espacio reservado.\n\n` +
-          `Dime con toda confianza. ¡Un saludo!`;
+        plantillaRaw = `Hola de nuevo {nombre}, espero que estés muy bien.\n\n` +
+          `Me imagino que andas con un montón de cosas hoy, si es así, no te preocupes, entiendo perfectamente.\n\n` +
+          `Te escribo rápido solo para saber si prefieres que mejor libere tu turno de las ${horarioMesa} para asignárselo a alguien de la lista de espera, o si alcanzas a llegar y mantenemos tu espacio reservado.\n\n` +
+          `Dime con toda confianza. Saludos!`;
       } else if (tipoGuion === 'reactivacion_b') {
-        plantillaRaw = `Hola, {nombre}, buenas tardes. Soy ${sherpaNombreNorm}.\n\n` +
-          `Te busco porque sé lo importante que es para ti el cuidado y el rendimiento de tu familia.\n\n` +
+        plantillaRaw = `Hola, {nombre}, buenas tardes.\n\n` +
+          `Te busco porque me has comentado que para ti es importante el cuidado y la salud de tu familia.\n\n` +
           `Seguimos coordinando la jornada de diagnóstico aquí en ${objSede.nombre} y me gustaría asegurar que no te quedes fuera de esta sesión preventiva de salud celular.\n\n` +
-          `¿Crees que logremos vernos hoy a las ${horarioMesa} o prefieres que agendemos un espacio especial más adelante?`;
+          `¿Crees que logremos vernos hoy a las ${horarioMesa} o prefieres que agendemos un espacio más adelante?`;
       } else if (tipoGuion === 'reactivacion_c') {
-        plantillaRaw = `Hola, {nombre}, buenas tardes. Soy ${sherpaNombreNorm}.\n\n` +
-          `¿Confirmamos tu asistencia para las ${horarioMesa} en ${objSede.nombre}? Quedo al pendiente para enviarte el pase.`;
+        plantillaRaw = `Hola, {nombre}, buenas tardes!\n\n` +
+          `Solo para saber si confirmamos tu asistencia a las ${horarioMesa}? Quedo al pendiente para enviarte el pase. Saludos!`;
       } else {
         plantillaRaw = `Hola, {nombre}, soy ${sherpaNombreNorm}. Te escribo para la Jornada Especial de la Gira de Poder 2026 en ${objSede.nombre}. ¿Confirmamos tu lugar?`;
       }
@@ -6040,7 +6040,7 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js?v=78').then(reg => {
+      navigator.serviceWorker.register('./sw.js?v=79').then(reg => {
         reg.update();
         console.log('[PWA v40] Service Worker registrado y actualizado.');
       }).catch(err => {
