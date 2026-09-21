@@ -90,13 +90,13 @@
       });
     }
   </script>
-  <!-- Synchronous Anti-FOUC Auth Guard: Block access if not authenticated -->
+  <!-- Synchronous Anti-FOUC Auth Guard: Clean initial state -->
   <script>
     (function() {
       const token = localStorage.getItem('sinergix_token');
       const sherpaActivo = localStorage.getItem('sinergix_sherpa_activo');
       if (!token || !sherpaActivo) {
-        document.write('<style>#main-crm-app, #sherpa-session-bar { display: none !important; } #modal-login { display: flex !important; }</style>');
+        // App elements start hidden by HTML class
       }
     })();
   </script>
@@ -164,7 +164,7 @@
   </header>
 
   <!-- BANNER DE IDENTIDAD DE SESIÓN DEL SHERPA -->
-  <div id="sherpa-session-bar" class="w-full bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 sm:px-6 lg:px-8 py-2.5 text-xs font-bold transition-colors duration-200">
+  <div id="sherpa-session-bar" class="hidden w-full bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 sm:px-6 lg:px-8 py-2.5 text-xs font-bold transition-colors duration-200">
     <div class="max-w-[1600px] mx-auto flex items-center justify-between gap-3">
       <div class="flex items-center gap-2 text-slate-700 dark:text-slate-200">
         <i class="fa-solid fa-user-shield text-ea-blue text-sm"></i>
@@ -2891,15 +2891,15 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
       if (!token || !sherpaActivo) {
         if (modal) {
           modal.classList.remove('hidden');
-          modal.style.display = 'flex';
+          modal.style.setProperty('display', 'flex', 'important');
         }
         if (mainApp) {
           mainApp.classList.add('hidden');
-          mainApp.style.display = 'none';
+          mainApp.style.setProperty('display', 'none', 'important');
         }
         if (sessionBar) {
           sessionBar.classList.add('hidden');
-          sessionBar.style.display = 'none';
+          sessionBar.style.setProperty('display', 'none', 'important');
         }
         todosLosLeads = [];
         if (typeof initNetworkCanvas === 'function') initNetworkCanvas();
@@ -2907,14 +2907,16 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
       } else {
         if (modal) {
           modal.classList.add('hidden');
-          modal.style.display = 'none';
+          modal.style.setProperty('display', 'none', 'important');
         }
         if (mainApp) {
           mainApp.classList.remove('hidden');
+          mainApp.style.removeProperty('display');
           mainApp.style.display = '';
         }
         if (sessionBar) {
           sessionBar.classList.remove('hidden');
+          sessionBar.style.removeProperty('display');
           sessionBar.style.display = '';
         }
         return true;
@@ -2973,13 +2975,7 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
           if (item.custid || item.customerName) {
             resultado = item;
           } else if (item.respuesta === 'CONTRASENA INVALIDA' || item.respuesta === 'NO EXISTE EL USUARIO') {
-            const passLower = pass.toLowerCase();
-            const userLower = user.toLowerCase();
-            if (passLower === 'test' || passLower === '123456' || passLower === 'admin' || passLower === userLower || ['101', '102', '136', 'edgar', 'luis', 'andres', 'sherpa'].includes(userLower) || pass.length >= 3) {
-              resultado = null; // Enable test/demo profile fallback
-            } else {
-              resultado = item;
-            }
+            resultado = item;
           }
         }
 
@@ -2993,36 +2989,28 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
           return;
         }
 
-        // Fallback profile if direct API call was blocked in static client mode
+        // Demo mode check only if explicitly requested via ?demo=1 URL parameter
+        const isDemoParam = window.location.search.includes('demo=1');
+
         if (!resultado || (!resultado.customerName && !resultado.custid)) {
-          if (user === '102' || user === 'sherpa_edgar' || user.toLowerCase() === 'edgar') {
-            resultado = {
-              custid: "102",
-              customerName: "EDGAR ARTURO, FRIEVENTH MONDRAGON",
-              firstname: "EDGAR",
-              mail: "holadenuevo@gmail.com",
-              phone: "7223961746",
-              nickname: "EDG102"
-            };
-          } else if (user === '101') {
-            resultado = {
-              custid: "101",
-              customerName: "Sherpa 101",
-              firstname: "Sherpa",
-              mail: "sherpa101@equipoenaccion.net",
-              phone: "5512345101",
-              nickname: "SHERPA101"
-            };
-          } else {
-            const cleanDigits = user.replace(/\D/g, '');
+          if (isDemoParam) {
+            console.info('[DEMO] Modo Demostración Activo (?demo=1)');
             resultado = {
               custid: user,
-              customerName: 'Sherpa ' + user,
-              firstname: user,
-              mail: user + '@equipoenaccion.net',
-              phone: cleanDigits.length === 10 ? cleanDigits : ('5512345' + user.padStart(3, '0')),
-              nickname: 'SHERPA' + user
+              customerName: 'Usuario Demostración ' + user,
+              firstname: 'Demo',
+              mail: user + '@demo.equipoenaccion.net',
+              phone: '5512345678',
+              nickname: 'DEMO' + user
             };
+          } else {
+            if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = '<i class="fa-solid fa-right-to-bracket mr-2"></i> Iniciar Sesión'; }
+            if (errorBox) {
+              errorBox.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-red-600 dark:text-red-400 text-sm shrink-0"></i><span>Usuario o contraseña incorrectos.</span>';
+              errorBox.className = "w-full p-3.5 bg-red-50 dark:bg-red-950/80 border border-red-300 dark:border-red-800 rounded-2xl text-red-800 dark:text-red-200 text-xs font-bold text-center backdrop-blur-md mb-4 flex items-center justify-center gap-2";
+              errorBox.classList.remove('hidden');
+            }
+            return;
           }
         }
 
@@ -6052,7 +6040,7 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js?v=77').then(reg => {
+      navigator.serviceWorker.register('./sw.js?v=78').then(reg => {
         reg.update();
         console.log('[PWA v40] Service Worker registrado y actualizado.');
       }).catch(err => {
