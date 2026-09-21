@@ -5940,13 +5940,13 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
       <form onsubmit="ejecutarLoginSherpa(event)" class="space-y-4">
         <div>
           <label class="block text-xs font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-            Usuario / Teléfono de 10 dígitos
+            Usuario
           </label>
           <div class="relative">
             <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-ea-blue dark:text-blue-400">
               <i class="fa-solid fa-user text-sm"></i>
             </span>
-            <input type="text" id="login-user" required placeholder="Ej. 5512345678" 
+            <input type="text" id="login-user" required placeholder="Ingresa tu usuario" 
                    class="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800/90 text-slate-900 dark:text-white rounded-2xl text-sm font-bold border border-slate-300 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-ea-blue focus:border-ea-blue transition placeholder-slate-400 dark:placeholder-slate-500" style="min-height: 48px;">
           </div>
         </div>
@@ -6004,7 +6004,7 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js?v=71').then(reg => {
+      navigator.serviceWorker.register('./sw.js?v=72').then(reg => {
         reg.update();
         console.log('[PWA v40] Service Worker registrado y actualizado.');
       }).catch(err => {
