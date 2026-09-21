@@ -352,50 +352,62 @@
       <!-- Columna Principal: Grilla de Tarjetas de Prospectos (9 Cols) -->
       <div class="lg:col-span-9">
         
-        <!-- BARRA DE CONTROL DE CAMPAÑA ACTIVA DE DIFUSIÓN -->
-        <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 mb-4 flex flex-col md:flex-row items-center justify-between gap-4 shadow-clinical-sm">
-          <div class="flex items-center gap-3 w-full md:w-auto">
+        <!-- BARRA DE CONTROL DE CAMPAÑA ACTIVA DE DIFUSIÓN (GIRA DE PODER 2026) -->
+        <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 mb-4 flex flex-col xl:flex-row items-center justify-between gap-4 shadow-clinical-sm">
+          <div class="flex items-center gap-3 w-full xl:w-auto">
             <div class="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold shrink-0">
               <i class="fa-solid fa-bullhorn text-lg"></i>
             </div>
             <div>
-              <h3 class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-400">Campaña Activa de Difusión</h3>
+              <h3 class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-400">Motor de Prospección Canónico</h3>
               <p class="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-2" id="label-campana-activa">
-                Gira de Campo (21-24 Sep)
+                Gira de Poder 2026 (Flujo 2 Pasos)
               </p>
             </div>
           </div>
 
-          <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+          <div class="flex flex-wrap items-center gap-2.5 w-full xl:w-auto">
             <!-- Configuración del Nombre de Batalla del Sherpa -->
             <div class="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-2.5 py-1.5 shadow-clinical-sm">
-              <i class="fa-solid fa-user-ninja text-indigo-500 text-sm"></i>
-              <input type="text" id="input-sherpa-nombre" onchange="guardarNombreSherpa(this.value)" placeholder="Tu Nombre de Batalla..." class="bg-transparent border-none text-xs font-sans font-bold text-slate-800 dark:text-slate-200 focus:outline-none w-36" title="Ingresa tu Nombre de Batalla para personalizar las invitaciones" />
+              <i class="fa-solid fa-user-ninja text-indigo-500 text-xs"></i>
+              <input type="text" id="input-sherpa-nombre" onchange="guardarNombreSherpa(this.value)" placeholder="Tu Nombre de Batalla..." class="bg-transparent border-none text-xs font-sans font-bold text-slate-800 dark:text-slate-200 focus:outline-none w-32" title="Ingresa tu Nombre de Batalla para personalizar las invitaciones" />
             </div>
 
             <!-- Configuración del Teléfono Celular WhatsApp del Sherpa -->
             <div class="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-2.5 py-1.5 shadow-clinical-sm">
-              <i class="fa-brands fa-whatsapp text-emerald-500 text-sm"></i>
-              <input type="tel" id="input-sherpa-celular" onchange="guardarCelularSherpa(this.value)" placeholder="Tu Celular WhatsApp (10 dígitos)..." class="bg-transparent border-none text-xs font-mono font-bold text-slate-800 dark:text-slate-200 focus:outline-none w-44" title="Ingresa tu número celular personal de WhatsApp a 10 dígitos para recibir respuestas" />
+              <i class="fa-brands fa-whatsapp text-emerald-500 text-xs"></i>
+              <input type="tel" id="input-sherpa-celular" onchange="guardarCelularSherpa(this.value)" placeholder="Tu Celular WhatsApp (10 dígitos)..." class="bg-transparent border-none text-xs font-mono font-bold text-slate-800 dark:text-slate-200 focus:outline-none w-36" title="Ingresa tu número celular personal de WhatsApp a 10 dígitos para recibir respuestas" />
             </div>
 
-            <!-- Selector de Mensaje -->
-            <select id="select-campana-global" onchange="actualizarCampanaActiva(this.value)" class="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:border-ea-blue">
-              <option value="gira_terreno">1. Convocatoria Gira de Campo (21-24 Sep)</option>
-              <option value="diagnostico_metabolico">2. Diagnóstico Metabólico (Bio-Auditoría)</option>
+            <!-- Selector de Guion / Paso (Flujo 2 Pasos + Reactivaciones) -->
+            <select id="select-guion-paso" onchange="localStorage.setItem('sinergix_guion_paso_activo', this.value)" class="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:border-ea-blue shadow-clinical-sm">
+              <option value="paso1_apertura">Paso 1: Apertura y Presuasión (12:00 - 13:00)</option>
+              <option value="paso2_confirmacion">Paso 2: Confirmación y Compromiso de Mesa</option>
+              <option value="reactivacion_a">Reactivación A: Despresurización & Cupo</option>
+              <option value="reactivacion_b">Reactivación B: Causa & Familia</option>
+              <option value="reactivacion_c">Reactivación C: Ejecutiva 1 Línea</option>
             </select>
 
-            <!-- Selector de Sede Predeterminada -->
-            <select id="select-sede-global" onchange="actualizarSedeGlobal(this.value)" class="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:border-ea-blue">
-              <option value="Puebla (Lun 21 sep)">Puebla (Lun 21 sep)</option>
-              <option value="Izúcar de Matamoros (Mar 22 sep)">Izúcar de Matamoros (Mar 22 sep)</option>
-              <option value="Tecamachalco (Mié 23 sep)">Tecamachalco (Mié 23 sep)</option>
-              <option value="Huamantla (Jue 24 sep)">Huamantla (Jue 24 sep)</option>
+            <!-- Selector de Horario de Mesa -->
+            <select id="select-horario-mesa" onchange="localStorage.setItem('sinergix_horario_mesa_activo', this.value)" class="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:border-ea-blue shadow-clinical-sm">
+              <option value="3:30 PM">Mesa 3:30 PM</option>
+              <option value="4:00 PM">Mesa 4:00 PM</option>
+              <option value="4:30 PM">Mesa 4:30 PM</option>
+              <option value="5:00 PM">Mesa 5:00 PM</option>
+              <option value="5:30 PM">Mesa 5:30 PM</option>
             </select>
 
-            <!-- Botón para Previsualizar Plantilla -->
-            <button onclick="abrirModalPrevisualizacion()" class="touch-target bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-bold px-3 py-2 rounded-xl text-xs border border-slate-300 dark:border-slate-600 flex items-center gap-1.5 transition">
-              <i class="fa-solid fa-eye text-sm text-ea-blue"></i>
+            <!-- Selector de Sede de la Gira (Auto-Detección por Fecha) -->
+            <select id="select-sede-global" onchange="actualizarSedeGlobal(this.value)" class="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:border-ea-blue shadow-clinical-sm">
+              <option value="puebla">Puebla (Lun 21 sep)</option>
+              <option value="izucar">Izúcar de Matamoros (Mar 22 sep)</option>
+              <option value="tecamachalco">Tecamachalco (Mié 23 sep)</option>
+              <option value="huamantla">Huamantla (Jue 24 sep)</option>
+            </select>
+
+            <!-- Botón Previsualización -->
+            <button onclick="abrirModalPrevisualizacion()" class="touch-target bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-bold px-2.5 py-1.5 rounded-xl text-xs border border-slate-300 dark:border-slate-600 flex items-center gap-1.5 transition shadow-clinical-sm">
+              <i class="fa-solid fa-eye text-xs text-ea-blue"></i>
               <span>Vista Previa</span>
             </button>
           </div>
@@ -2064,10 +2076,16 @@ Tienes ${userLeads.length} prospecto(s) en tu cartera (${pendCount} pendiente(s)
         const matchTel = (l.telefono || '').includes(term);
         if (!(matchName || matchTel)) return false;
 
-        if (filtroEstadoActual === 'todos') return true;
-        if (filtroEstadoActual === 'enviados') return !l.is_cancelled && Boolean(l.mensaje_enviado);
-        if (filtroEstadoActual === 'no_enviados' || filtroEstadoActual === 'pendientes') return !l.is_cancelled && !l.mensaje_enviado;
-        if (filtroEstadoActual === 'respondieron') return !l.is_cancelled && Boolean(l.respondio);
+        if (filtroEstadoActual === 'todos') return !l.is_cancelled;
+        if (filtroEstadoActual === 'enviados') {
+          return !l.is_cancelled && (Boolean(l.mensaje_enviado) || ['Bio-Auditoría', 'Mensaje Enviado (Paso 1)', 'Reactivación Enviada', 'Mesa Reservada (Paso 2)', 'Datos Enviados', 'Plan Vendido', 'Sprint Activo'].includes(l.etapa_pipeline));
+        }
+        if (filtroEstadoActual === 'no_enviados' || filtroEstadoActual === 'pendientes') {
+          return !l.is_cancelled && (!l.mensaje_enviado && (l.etapa_pipeline === 'Lead' || !l.etapa_pipeline));
+        }
+        if (filtroEstadoActual === 'respondieron') {
+          return !l.is_cancelled && (Boolean(l.respondio) || l.etapa_pipeline === 'Mesa Reservada (Paso 2)');
+        }
         if (filtroEstadoActual === 'cancelados') return Boolean(l.is_cancelled);
         return true;
       });
@@ -2362,35 +2380,13 @@ Tienes ${userLeads.length} prospecto(s) en tu cartera (${pendCount} pendiente(s)
       return `${baseUrl}/captura.html?pnom=${pNom}&ptel=${pTel}&sede=${pSede}&snom=${sNom}&stel=${sTel}`;
     }
 
-    function obtenerEnlaceWhatsAppLead(lead, tipoGuion = 'encuesta') {
+    function obtenerEnlaceWhatsAppLead(lead, tipoGuion = 'paso1_apertura') {
       if (!lead) return '';
-      const sesion = obtenerSherpaSesion();
-      if (!sesion.valido) {
-        abrirModalConfigSherpa("Configura tu nombre y número de WhatsApp para que las confirmaciones lleguen a tu cuenta personal.");
-        return '';
-      }
+      const selGuion = document.getElementById('select-guion-paso')?.value || tipoGuion || 'paso1_apertura';
+      const selHorario = document.getElementById('select-horario-mesa')?.value || '3:30 PM';
+      const selSede = document.getElementById('select-sede-global')?.value || 'puebla';
 
-      let linkRef = '';
-      try {
-        linkRef = generarLinkCaptura(lead, sesion.nombre, sesion.celular);
-      } catch (err) {
-        console.warn("Error generando link de captura:", err);
-        abrirModalConfigSherpa("Configura tu nombre y número de WhatsApp para que las confirmaciones lleguen a tu cuenta personal.");
-        return '';
-      }
-
-      const primerNombre = (lead.nombre || '').trim().split(' ')[0] || 'Hola';
-
-      if (tipoGuion === 'recordatorio') {
-        const soyTexto = ` Soy ${sesion.nombre}.`;
-        return `Hola ${primerNombre}.${soyTexto}\n¿Pudiste responder la encuesta? 😃\nTe agradecería mucho! 🙏\n${linkRef}`;
-      }
-
-      const campanaKey = localStorage.getItem('sinergix_campana_activa') || 'gira_terreno';
-      const sedeFinal = lead.sede || lead.ciudad || localStorage.getItem('sinergix_sede_activa') || 'Puebla (Lunes 21 sep)';
-      const campana = CAMPANAS_SINERGIX[campanaKey] || CAMPANAS_SINERGIX.gira_terreno;
-
-      return campana.render(lead.nombre, sedeFinal, linkRef, sesion.nombre);
+      return renderGuionGira2026(lead, selGuion, selHorario, selSede);
     }
 
     function obtenerGuionMensaje(lead, tipoGuion = 'encuesta') {
@@ -5217,6 +5213,150 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
   }
 ];
 
+    
+    // ── MOTOR DE PROSPECCIÓN "GIRA DE PODER 2026" (Flujo 2 Pasos + Reactivación Táctica) ──
+    const SEDES_GIRA_2026 = {
+      puebla: {
+        key: 'puebla',
+        nombre: 'Puebla',
+        fechaCompleta: 'Lunes 21 de Septiembre',
+        labelOption: 'Puebla (Lun 21 sep)',
+        direccion: 'Centro de Experiencia Sinergix, Av. Juárez #2104, Col. La Paz, Puebla, Pue.'
+      },
+      izucar: {
+        key: 'izucar',
+        nombre: 'Izúcar de Matamoros',
+        fechaCompleta: 'Martes 22 de Septiembre',
+        labelOption: 'Izúcar de Matamoros (Mar 22 sep)',
+        direccion: 'Hotel & Centro de Convenciones Matamoros, Calle Hidalgo #12, Centro, Izúcar, Pue.'
+      },
+      tecamachalco: {
+        key: 'tecamachalco',
+        nombre: 'Tecamachalco',
+        fechaCompleta: 'Miércoles 23 de Septiembre',
+        labelOption: 'Tecamachalco (Mié 23 sep)',
+        direccion: 'Salón Empresarial Tecamachalco, Av. Guerrero #504, Centro, Tecamachalco, Pue.'
+      },
+      huamantla: {
+        key: 'huamantla',
+        nombre: 'Huamantla',
+        fechaCompleta: 'Jueves 24 de Septiembre',
+        labelOption: 'Huamantla (Jue 24 sep)',
+        direccion: 'Cámara de Comercio Huamantla, Calle Juárez Norte #201, Centro, Huamantla, Tlax.'
+      }
+    };
+
+    function obtenerFechaLocalMexico() {
+      try {
+        const formatter = new Intl.DateTimeFormat('en-CA', {
+          timeZone: 'America/Mexico_City',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        });
+        return formatter.format(new Date());
+      } catch (e) {
+        return new Date().toISOString().split('T')[0];
+      }
+    }
+
+    function obtenerSedeSegunFechaSistema() {
+      const fechaHoy = obtenerFechaLocalMexico();
+      if (fechaHoy === '2026-09-21') return 'puebla';
+      if (fechaHoy === '2026-09-22') return 'izucar';
+      if (fechaHoy === '2026-09-23') return 'tecamachalco';
+      if (fechaHoy === '2026-09-24') return 'huamantla';
+      return 'puebla';
+    }
+
+    function sanitizarTelefonoWhatsAppMX(phoneRaw) {
+      let digits = String(phoneRaw || '').replace(/\D/g, '');
+      if (digits.startsWith('521') && digits.length === 13) {
+        digits = '52' + digits.slice(3);
+      }
+      if (digits.length === 12 && digits.startsWith('52')) {
+        return digits;
+      }
+      if (digits.length === 10) {
+        digits = '52' + digits;
+      }
+      return digits;
+    }
+
+    function obtenerNombrePila(lead) {
+      let raw = (typeof lead === 'string' ? lead : (lead?.nombre || '')).trim();
+      if (!raw || /^(s\/n|sin nombre|contacto|lead|prospecto)$/i.test(raw)) {
+        return '';
+      }
+      raw = raw.replace(/^(dr\.|dra\.|ing\.|lic\.|prof\.|cp\.|mtro\.|mtra\.|doctora?|ingeniero?|licenciado?)\s+/i, '');
+      raw = raw.replace(/^ma\.\s+/i, 'María ');
+      raw = raw.replace(/^j\.\s+/i, 'José ');
+
+      const partes = raw.split(/\s+/).filter(Boolean);
+      if (partes.length === 0) return '';
+
+      const primerosDos = (partes[0] + ' ' + (partes[1] || '')).toLowerCase();
+      const compuestosValidos = ['maría elena', 'maria elena', 'juan carlos', 'josé luis', 'jose luis', 'ana maría', 'ana maria', 'luz maría', 'luz maria'];
+
+      if (compuestosValidos.includes(primerosDos)) {
+        return partes[0] + ' ' + partes[1];
+      }
+
+      return partes[0];
+    }
+
+    function formatearSaludoPila(lead, textoPlantilla) {
+      const nombrePila = obtenerNombrePila(lead);
+      if (!nombrePila) {
+        return textoPlantilla
+          .replace(/Hola\s*,\s*\{nombre\}\s*,?/gi, 'Hola,')
+          .replace(/Hola\s*\{nombre\}\s*,?/gi, 'Hola,')
+          .replace(/\{nombre\}/gi, '')
+          .replace(/\s+,\s*/g, ', ')
+          .replace(/\s+/g, ' ')
+          .trim();
+      }
+      return textoPlantilla.replace(/\{nombre\}/gi, nombrePila);
+    }
+
+    function renderGuionGira2026(lead, tipoGuion = 'paso1_apertura', horarioMesa = '3:30 PM', sedeKey = null) {
+      const sesion = obtenerSherpaSesion();
+      const sherpaNom = sesion.nombre || 'Sherpa';
+      const keySede = sedeKey || localStorage.getItem('sinergix_sede_activa') || obtenerSedeSegunFechaSistema();
+      const objSede = SEDES_GIRA_2026[keySede] || SEDES_GIRA_2026.puebla;
+
+      const soyTexto = sherpaNom ? ` Soy ${sherpaNom}.` : '';
+
+      let plantillaRaw = '';
+
+      if (tipoGuion === 'paso1_apertura') {
+        plantillaRaw = `Hola {nombre}, te escribo personalmente porque este ${objSede.fechaCompleta} tenemos la Jornada Especial de la Gira de Poder 2026 aquí en ${objSede.nombre}.\n\n` +
+          `Estamos abordando la causa raíz del desgaste biológico y celular frente a la industria del malestar, ayudando a las personas a descartar que el cansancio, la inflamación o la falta de energía sean "síntomas normales".\n\n` +
+          `Voy a estar coordinando las mesas de trabajo y diagnóstico. Tengo asignados solo 2 turnos para mi equipo cercano: a las 3:30 PM y a las 4:30 PM.\n\n` +
+          `¿Cuál de estos dos horarios te queda mejor para apartar tu lugar?`;
+      } else if (tipoGuion === 'paso2_confirmacion') {
+        plantillaRaw = `Excelente, {nombre}. Queda reservado tu espacio a las ${horarioMesa} en ${objSede.nombre}.\n\n` +
+          `📍 Dirección: ${objSede.direccion}\n\n` +
+          `Te pido llegar 5 minutos antes para iniciar puntualmente con tu valoración. Recuerda que si por alguna razón no puedes asistir, me avises con tiempo para liberar el turno a alguien en lista de espera.\n\n` +
+          `Nos vemos allá. ¡Un saludo!`;
+      } else if (tipoGuion === 'reactivacion_a') {
+        plantillaRaw = `Hola {nombre}, espero que estés muy bien.${soyTexto} Veo que andas con la agenda súper apretada hoy. No te preocupes en absoluto, entiendo perfecto.\n\n` +
+          `Te escribo rápido solo para saber si prefieres que libere tu lugar a las ${horarioMesa} para asignárselo a alguien en lista de espera de la gira, o si mantenemos tu espacio reservado.\n\n` +
+          `¡Dime con toda confianza!`;
+      } else if (tipoGuion === 'reactivacion_b') {
+        plantillaRaw = `Hola {nombre}, buenas tardes.${soyTexto} Te busco porque sé lo importante que es para ti el cuidado y rendimiento de tu familia.\n\n` +
+          `Seguimos coordinando la jornada de diagnóstico en ${objSede.nombre} y me gustaría asegurar que no te quedes fuera de esta sesión preventiva.\n\n` +
+          `¿Crees que logremos vernos hoy a las ${horarioMesa} o me avisas si agendamos un espacio especial?`;
+      } else if (tipoGuion === 'reactivacion_c') {
+        plantillaRaw = `Hola {nombre}, ¿confirmamos tu asistencia para las ${horarioMesa} en ${objSede.nombre}? Quedo al pendiente para enviarte el pase.`;
+      } else {
+        plantillaRaw = `Hola {nombre}, ${soyTexto} te escribo para la Jornada Especial de la Gira de Poder 2026 en ${objSede.nombre}. ¿Confirmamos tu lugar?`;
+      }
+
+      return formatearSaludoPila(lead, plantillaRaw);
+    }
+
+
     // ── CORTEX STORAGE ENGINE (StandAlone PWA Client-Side) ────────────
     const CortexStorageEngine = {
       dbName: 'SinergixCRMDB',
@@ -5439,13 +5579,18 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
           campanaSaved = 'gira_terreno';
           localStorage.setItem('sinergix_campana_activa', 'gira_terreno');
         }
-        const sedeSaved = localStorage.getItem('sinergix_sede_activa') || 'Puebla (Lun 21 sep)';
+        const sedeAutoDetected = obtenerSedeSegunFechaSistema();
+        const sedeSaved = localStorage.getItem('sinergix_sede_activa') || sedeAutoDetected;
+        localStorage.setItem('sinergix_sede_activa', sedeSaved);
         const selectCamp = document.getElementById('select-campana-global');
         const selectSede = document.getElementById('select-sede-global');
         const labelCamp = document.getElementById('label-campana-activa');
 
-        if (selectCamp) selectCamp.value = campanaSaved;
         if (selectSede) selectSede.value = sedeSaved;
+        const selGuion = document.getElementById('select-guion-paso');
+        const selHorario = document.getElementById('select-horario-mesa');
+        if (selGuion) selGuion.value = localStorage.getItem('sinergix_guion_paso_activo') || 'paso1_apertura';
+        if (selHorario) selHorario.value = localStorage.getItem('sinergix_horario_mesa_activo') || '3:30 PM';
         if (labelCamp) labelCamp.textContent = CAMPANAS_SINERGIX[campanaSaved]?.nombre || campanaSaved;
 
         const nomSaved = localStorage.getItem('sherpa_nombre') || '';
@@ -5749,7 +5894,7 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js?v=63').then(reg => {
+      navigator.serviceWorker.register('./sw.js?v=64').then(reg => {
         reg.update();
         console.log('[PWA v40] Service Worker registrado y actualizado.');
       }).catch(err => {
