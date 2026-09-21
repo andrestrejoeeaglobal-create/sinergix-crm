@@ -876,13 +876,7 @@
   </footer>
 
   <script>
-    let         // Cargar cartera aislada del usuario activo
-        const leadsUsuario = await CortexStorageEngine.getLeadsForSherpa(custIdReal);
-        todosLosLeads = Array.isArray(leadsUsuario) ? leadsUsuario : [];
-
-        if (typeof renderizarLista === 'function') renderizarLista();
-        if (typeof actualizarMetricas === 'function') actualizarMetricas();
-        if (typeof renderAccionesPrioritarias === 'function') renderAccionesPrioritarias();
+    let todosLosLeads = [];
     let filtroEstadoActual = 'todos';
     const API_TOKEN = localStorage.getItem('api_token') || '';
 
@@ -1077,7 +1071,7 @@
       }
     }
 
-        function cambiarPestana(nombrePestana) {
+        async function cambiarPestana(nombrePestana) {
       console.log('Ejecutando cambiarPestana:', nombrePestana);
       
       // Normalizar alias de pestañas
@@ -3009,7 +3003,11 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
         localStorage.setItem('sherpa_celular', '521' + (celClean || '5512345678'));
         localStorage.setItem('ea_session', 'ACTIVE');
 
-        todosLosLeads = [];
+        const leadsUsuario = await CortexStorageEngine.getLeadsForSherpa(custIdReal);
+        todosLosLeads = Array.isArray(leadsUsuario) ? leadsUsuario : [];
+        if (typeof renderizarLista === 'function') renderizarLista();
+        if (typeof actualizarMetricas === 'function') actualizarMetricas();
+        if (typeof renderAccionesPrioritarias === 'function') renderAccionesPrioritarias();
 
         actualizarEstadoSesionSherpa();
         actualizarHeaderSherpa(sherpaSesion);
@@ -5492,9 +5490,9 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
         }
 
         return userLeads;
-      }
+      },
 
-async saveLead(lead) {
+      async saveLead(lead) {
         if (!lead.id) lead.id = 'lead_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
         if (!lead._id) lead._id = lead.id;
         lead.actualizado_en = new Date().toISOString();
@@ -5969,7 +5967,7 @@ async saveLead(lead) {
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js?v=69').then(reg => {
+      navigator.serviceWorker.register('./sw.js?v=70').then(reg => {
         reg.update();
         console.log('[PWA v40] Service Worker registrado y actualizado.');
       }).catch(err => {
