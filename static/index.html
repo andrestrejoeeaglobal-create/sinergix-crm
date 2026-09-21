@@ -5452,21 +5452,28 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
         const targetUser = String(sherpaId || obtenerSherpaIdActivo() || '101');
         let all = await this.getAllLeads();
 
-        // Multi-Tenant Isolation: User 102 (Edgar Arturo) has 0 contacts. Purge any stray seeded leads.
-        if (targetUser === '102') {
-          const cleanAll = all.filter(l => String(l.sherpa_id || l.sherpa_user || '') !== '102' && !String(l.id || '').startsWith('lead_102_'));
+        // STRICT ISOLATION RULE:
+        // ONLY User 101 owns the 126 seed contacts.
+        // User 136 (Luis Fernando), User 102 (Edgar Arturo), and all other users start with 0 contacts.
+        if (targetUser !== '101') {
+          const userLeads = all.filter(l => String(l.sherpa_user || l.sherpa_id || l.sherpa_nombre || '') === targetUser);
+          const cleanAll = all.filter(l => {
+            const isStray101 = String(l.id || '').startsWith('lead_101_') && String(l.sherpa_id || l.sherpa_user || '') !== '101';
+            const isStrayUser = String(l.sherpa_id || l.sherpa_user || '') === targetUser && String(l.id || '').startsWith('lead_101_');
+            return !isStray101 && !isStrayUser;
+          });
           if (cleanAll.length !== all.length) {
             await this.saveAllLeads(cleanAll);
           }
-          return [];
+          return userLeads;
         }
 
         let userLeads = all.filter(l => {
           const owner = String(l.sherpa_user || l.sherpa_id || l.sherpa_nombre || 'demo');
-          return owner === targetUser || (targetUser === '136' && owner === '101');
+          return owner === '101';
         });
 
-        if (userLeads.length === 0 && (targetUser === '101' || targetUser === '136')) {
+        if (userLeads.length === 0) {
           const seeded = CARTERA_USER_101_SEED.map((l, idx) => ({
             ...l,
             id: `lead_101_${idx + 1}`,
@@ -5957,7 +5964,7 @@ async saveLead(lead) {
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js?v=67').then(reg => {
+      navigator.serviceWorker.register('./sw.js?v=68').then(reg => {
         reg.update();
         console.log('[PWA v40] Service Worker registrado y actualizado.');
       }).catch(err => {
