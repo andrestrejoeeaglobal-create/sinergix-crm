@@ -1,7 +1,9 @@
-"""Motor del Sprint 28 — máquina de estados de 28 días con plan adaptativo (ENMIENDAS 5 y 6).
+"""Motor del Sprint PH21 — máquina de estados de 28 días con plan adaptativo.
 
-Consume agregados de EcoSinergix.
-Al llegar al Día 28, marca el estado a 'Renovación pendiente' (dentro del ciclo de 90 días).
+Adaptado de sinergix-dev/sprint_ph21.py (versión probada).
+Modelo de reconstrucción: el avance real (día_efectivo) se calcula restando las
+reconstrucciones al día calendario. Si el Ascendan falla un día, el calendario
+se reconstruye alrededor del fallo — el plan se ajusta, no se rompe.
 """
 from dataclasses import dataclass
 
@@ -12,13 +14,13 @@ FASES = [
     (22, 28, "Cierre"),
 ]
 
-# Hitos base del Sprint 28 → plantilla que dispara
+# Hitos base del Sprint → plantilla que dispara
 HITOS = {
     7: "SPR_02",   # fin de Reset Metabólico (condicional a adherencia)
-    14: "SPR_03",  # evaluación intermedia con comparativa real de EcoSinergix
+    14: "SPR_03",  # evaluación intermedia con comparativa real
     21: "SPR_04",  # Ingeniería Tisular — apertura de diálogo
     25: "SPR_05",  # pre-recompra + Re-Auditoría (hito crítico)
-    28: "DIA_28",  # Re-Auditoría presencial + Renovación pendiente
+    28: "DIA_28",  # Re-Auditoría presencial + renovación
 }
 
 UMBRAL_ADHERENCIA_DIA7 = 60.0
@@ -33,7 +35,6 @@ class EstadoNoche:
     reconstruccion: bool
     adherencia_dia: float
     hitos_disparados: list
-    es_renovacion_pendiente: bool = False
 
 
 def fase_por_dia(dia_efectivo: int) -> str:
@@ -42,7 +43,7 @@ def fase_por_dia(dia_efectivo: int) -> str:
     for inicio, fin, nombre in FASES:
         if inicio <= dia_efectivo <= fin:
             return nombre
-    return "Cierre" if dia_efectivo >= 28 else FASES[0][2]
+    return "Cierre" if dia_efectivo > 28 else FASES[0][2]
 
 
 def dia_efectivo(dia_calendario: int, reconstrucciones: int) -> int:
@@ -54,7 +55,7 @@ def hitos_en(dia_efectivo: int) -> list[str]:
 
 
 def procesar_noche(dia_calendario: int, reconstrucciones: int, resumen: dict) -> EstadoNoche:
-    """Procesa una noche del Sprint 28 con datos REALES de EcoSinergix via BiometriaAPI.
+    """Procesa una noche del Sprint con datos REALES de BiometriaAPI.
 
     resumen: {registrado: bool, adherencia_dia: float, hrv, fc_reposo, sueno_horas}
     """
@@ -64,8 +65,6 @@ def procesar_noche(dia_calendario: int, reconstrucciones: int, resumen: dict) ->
     if hubo_reconstruccion:
         efectivo = dia_efectivo(dia_calendario, reconstrucciones + 1)
 
-    es_renovacion = (efectivo >= 28)
-
     return EstadoNoche(
         dia_calendario=dia_calendario,
         dia_efectivo=efectivo,
@@ -74,5 +73,4 @@ def procesar_noche(dia_calendario: int, reconstrucciones: int, resumen: dict) ->
         reconstruccion=hubo_reconstruccion,
         adherencia_dia=float(resumen.get("adherencia_dia", 0.0)) * 100,
         hitos_disparados=hitos_en(efectivo),
-        es_renovacion_pendiente=es_renovacion,
     )

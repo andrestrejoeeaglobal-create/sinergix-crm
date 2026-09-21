@@ -48,7 +48,7 @@ def test_webhook_procesa_una_sola_vez(api, lead_de_prueba):
         headers={"X-Sinergix-Signature": firma, "Content-Type": "application/json"},
     )
     assert r1.status_code == 200
-    assert r1.json()["accion"] in {"sprint_inicializado", "sprint_28_inicializado"}
+    assert r1.json()["accion"] == "sprint_inicializado"
 
     perfil = api.get(f"/api/leads/{lead_de_prueba['id']}").json()
     assert perfil["etapa_pipeline"] == "Sprint Activo"
@@ -132,12 +132,14 @@ def test_mensaje_saliente_sale_limpio(api, lead_de_prueba):
 
 def test_import_contactos_sin_optin(api):
     # 1) Registrar Sherpa directamente en DB (no requiere Google real para F0)
-    from app.database import get_db_client
-    from app.models import crear_sherpa_doc
-    db = get_db_client()
-    sherpa = crear_sherpa_doc("sub_test_1", "sherpa@test.mx", "Sherpa Test", api_token="token-test-123")
-    db.sherpas.insert_one(sherpa)
-
+    from app.db import SessionLocal
+    from app.models import Sherpa
+    db = SessionLocal()
+    sherpa = Sherpa(google_sub="sub_test_1", email="sherpa@test.mx",
+                    nombre="Sherpa Test", api_token="token-test-123")
+    db.add(sherpa)
+    db.commit()
+    db.close()
 
     # 2) Crear un lead existente por captura para probar el filtro global de duplicados
     r_pre = api.post("/api/leads/capture", json={
@@ -190,3 +192,36 @@ def test_nightly_avanza_sprint(api, lead_de_prueba):
 
     perfil = api.get(f"/api/leads/{lead_de_prueba['id']}").json()
     assert perfil["fase_actual"] in {"Reset", "Ignicion", "Ingenieria", "Cierre"}
+
+
+# ── Autenticación de Sherpas ─────────────────────────────────
+
+def test_login_sherpa_api_exito(api):
+    # Probar endpoint /api/login con payload username/password
+    r = api.post("/api/login", json={"username": "Test", "password": "Test"})
+    assert r.status_code == 200
+    data = r.json()
+    assert data["success"] is True
+    assert data["ok"] is True
+    assert data["custid"] == "102"
+    assert data["user"]["token"] == "47886D49-0E71-4DA5-84AD-FC3E4A103467"
+    assert "sherpa_nombre" in data
+
+
+def test_login_sherpa_api_auth_login_endpoint(api):
+    # Probar endpoint /api/auth/login con payload user/password
+    r = api.post("/api/auth/login", json={"user": "Test", "password": "Test"})
+    assert r.status_code == 200
+    data = r.json()
+    assert data["success"] is True
+    assert data["custid"] == "102"
+
+
+def test_login_sherpa_api_incorrecto(api):
+    # Probar contraseña incorrecta
+    r = api.post("/api/login", json={"username": "UsuarioInexistenteXYZ", "password": "BadPassword123"})
+    assert r.status_code in (401, 404)
+    detail = r.json()["detail"]
+    assert detail in ("Contraseña incorrecta", "Usuario no existente", "CONTRASENA INVALIDA")
+
+

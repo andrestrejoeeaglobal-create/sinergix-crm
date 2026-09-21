@@ -1,30 +1,35 @@
-"""Módulo de capa de datos desacoplado (ENMIENDA 2 — MongoDB en Servidor Propio).
+"""Conexión SQLAlchemy. Postgres en producción, SQLite para F0 local/tests."""
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, DeclarativeBase
 
-Redirige a app.database para operaciones en MongoDB (soporta mongomock en memoria para suite de tests).
-"""
-from .database import get_db, get_db_client, init_db_indexes, use_mock_db
+from .config import settings
+
+_connect_args = {}
+if settings.database_url.startswith("sqlite"):
+    _connect_args = {"check_same_thread": False}
+
+engine = create_engine(
+    settings.database_url,
+    connect_args=_connect_args,
+    pool_pre_ping=True,
+)
+
+SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
+
+
+class Base(DeclarativeBase):
+    pass
 
 
 def init_db() -> None:
-    """Inicializa conexión e índices de MongoDB."""
-    db = get_db_client()
-    init_db_indexes(db)
+    """Crea el esquema si no existe (dev/tests). Producción usa db/schema.sql."""
+    from . import models  # noqa: F401 — registra tablas
+    Base.metadata.create_all(engine)
 
 
-class _SessionLocalMock:
-    """Simulador de sesión para tests legacy que importan SessionLocal."""
-    def __init__(self):
-        self.db = get_db_client()
-
-    def add(self, obj):
-        pass
-
-    def commit(self):
-        pass
-
-    def close(self):
-        pass
-
-
-def SessionLocal():
-    return _SessionLocalMock()
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()

@@ -5283,6 +5283,25 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
       return digits;
     }
 
+        function formatearNombreNatural(str) {
+      if (!str) return '';
+      let clean = str.replace(/,/g, ' ').replace(/\s+/g, ' ').trim();
+      return clean.split(' ').map((word, idx) => {
+        if (!word) return '';
+        const lower = word.toLowerCase();
+        if (idx > 0 && ['de', 'del', 'la', 'los', 'las', 'y'].includes(lower)) {
+          return lower;
+        }
+        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+      }).join(' ');
+    }
+
+    function obtenerNombreSherpaFormateado(sesion) {
+      if (!sesion) return 'Sherpa';
+      let nombreRaw = sesion.firstname || sesion.primer_nombre || (sesion.nombre ? sesion.nombre.split(',')[0].trim() : '') || 'Sherpa';
+      return formatearNombreNatural(nombreRaw);
+    }
+
     function obtenerNombrePila(lead) {
       let raw = (typeof lead === 'string' ? lead : (lead?.nombre || '')).trim();
       if (!raw || /^(s\/n|sin nombre|contacto|lead|prospecto)$/i.test(raw)) {
@@ -5298,11 +5317,12 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
       const primerosDos = (partes[0] + ' ' + (partes[1] || '')).toLowerCase();
       const compuestosValidos = ['maría elena', 'maria elena', 'juan carlos', 'josé luis', 'jose luis', 'ana maría', 'ana maria', 'luz maría', 'luz maria'];
 
+      let resultado = partes[0];
       if (compuestosValidos.includes(primerosDos)) {
-        return partes[0] + ' ' + partes[1];
+        resultado = partes[0] + ' ' + partes[1];
       }
 
-      return partes[0];
+      return formatearNombreNatural(resultado);
     }
 
     function formatearSaludoPila(lead, textoPlantilla) {
@@ -5321,16 +5341,15 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
 
     function renderGuionGira2026(lead, tipoGuion = 'paso1_apertura', horarioMesa = '3:30 PM', sedeKey = null) {
       const sesion = obtenerSherpaSesion();
-      const sherpaNom = sesion.nombre || 'Sherpa';
+      const sherpaNombreNorm = obtenerNombreSherpaFormateado(sesion);
       const keySede = sedeKey || localStorage.getItem('sinergix_sede_activa') || obtenerSedeSegunFechaSistema();
       const objSede = SEDES_GIRA_2026[keySede] || SEDES_GIRA_2026.puebla;
-
-      const soyTexto = sherpaNom ? ` Soy ${sherpaNom}.` : '';
 
       let plantillaRaw = '';
 
       if (tipoGuion === 'paso1_apertura') {
-        plantillaRaw = `Hola {nombre}, te escribo personalmente porque este ${objSede.fechaCompleta} tenemos la Jornada Especial de la Gira de Poder 2026 aquí en ${objSede.nombre}.\n\n` +
+        plantillaRaw = `Hola, {nombre}, espero que estés muy bien. Te saluda ${sherpaNombreNorm}.\n\n` +
+          `Te escribo personalmente porque este ${objSede.fechaCompleta} tenemos la Jornada Especial de la Gira de Poder 2026 aquí en ${objSede.nombre}.\n\n` +
           `Estamos abordando la causa raíz del desgaste biológico y celular frente a la industria del malestar, ayudando a las personas a descartar que el cansancio, la inflamación o la falta de energía sean "síntomas normales".\n\n` +
           `Voy a estar coordinando las mesas de trabajo y diagnóstico. Tengo asignados solo 2 turnos para mi equipo cercano: a las 3:30 PM y a las 4:30 PM.\n\n` +
           `¿Cuál de estos dos horarios te queda mejor para apartar tu lugar?`;
@@ -5340,17 +5359,19 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
           `Te pido llegar 5 minutos antes para iniciar puntualmente con tu valoración. Recuerda que si por alguna razón no puedes asistir, me avises con tiempo para liberar el turno a alguien en lista de espera.\n\n` +
           `Nos vemos allá. ¡Un saludo!`;
       } else if (tipoGuion === 'reactivacion_a') {
-        plantillaRaw = `Hola {nombre}, espero que estés muy bien.${soyTexto} Veo que andas con la agenda súper apretada hoy. No te preocupes en absoluto, entiendo perfecto.\n\n` +
-          `Te escribo rápido solo para saber si prefieres que libere tu lugar a las ${horarioMesa} para asignárselo a alguien en lista de espera de la gira, o si mantenemos tu espacio reservado.\n\n` +
-          `¡Dime con toda confianza!`;
+        plantillaRaw = `Hola, {nombre}, espero que estés muy bien. Te saluda ${sherpaNombreNorm}.\n\n` +
+          `Imagino que andas con la agenda súper apretada hoy, ¡no te preocupes en absoluto, entiendo perfecto!\n\n` +
+          `Te escribo rápido solo para saber si prefieres que libere tu turno de las ${horarioMesa} para asignárselo a alguien en lista de espera de la gira, o si mantenemos tu espacio reservado.\n\n` +
+          `Dime con toda confianza. ¡Un saludo!`;
       } else if (tipoGuion === 'reactivacion_b') {
-        plantillaRaw = `Hola {nombre}, buenas tardes.${soyTexto} Te busco porque sé lo importante que es para ti el cuidado y rendimiento de tu familia.\n\n` +
+        plantillaRaw = `Hola, {nombre}, buenas tardes. Te saluda ${sherpaNombreNorm}.\n\n` +
+          `Te busco porque sé lo importante que es para ti el cuidado y rendimiento de tu familia.\n\n` +
           `Seguimos coordinando la jornada de diagnóstico en ${objSede.nombre} y me gustaría asegurar que no te quedes fuera de esta sesión preventiva.\n\n` +
           `¿Crees que logremos vernos hoy a las ${horarioMesa} o me avisas si agendamos un espacio especial?`;
       } else if (tipoGuion === 'reactivacion_c') {
-        plantillaRaw = `Hola {nombre}, ¿confirmamos tu asistencia para las ${horarioMesa} en ${objSede.nombre}? Quedo al pendiente para enviarte el pase.`;
+        plantillaRaw = `Hola, {nombre}, te saluda ${sherpaNombreNorm}. ¿Confirmamos tu asistencia para las ${horarioMesa} en ${objSede.nombre}? Quedo al pendiente para enviarte el pase.`;
       } else {
-        plantillaRaw = `Hola {nombre}, ${soyTexto} te escribo para la Jornada Especial de la Gira de Poder 2026 en ${objSede.nombre}. ¿Confirmamos tu lugar?`;
+        plantillaRaw = `Hola, {nombre}, te saluda ${sherpaNombreNorm}. Te escribo para la Jornada Especial de la Gira de Poder 2026 en ${objSede.nombre}. ¿Confirmamos tu lugar?`;
       }
 
       return formatearSaludoPila(lead, plantillaRaw);
@@ -5894,7 +5915,7 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js?v=64').then(reg => {
+      navigator.serviceWorker.register('./sw.js?v=65').then(reg => {
         reg.update();
         console.log('[PWA v40] Service Worker registrado y actualizado.');
       }).catch(err => {

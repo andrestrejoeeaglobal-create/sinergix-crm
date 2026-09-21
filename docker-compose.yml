@@ -1,39 +1,93 @@
-version: '3.8'
+version: "3.8"
+
+# Sinergix Negocio — Fase 0
+# Levanta Chatwoot + PostgreSQL + Redis para desarrollo local.
+# Cuando Jorge tenga el VPS: mismo archivo, mismo despliegue (ver README.md).
 
 services:
-  sinergix-api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: sinergix-api
+  postgres:
+    image: postgres:16-alpine
     restart: unless-stopped
+    environment:
+      POSTGRES_USER: crm
+      POSTGRES_PASSWORD: crm_dev_password
+      POSTGRES_DB: sinergix_crm
+      # Segunda base para Chatwoot en la misma instancia
+      POSTGRES_MULTIPLE_DATABASES: chatwoot
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U crm"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+  chatwoot:
+    image: chatwoot/chatwoot:latest
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      RAILS_ENV: production
+      SECRET_KEY_BASE: cambiar_por_un_secret_largo_aleatorio
+      FRONTEND_URL: http://localhost:3000
+      DATABASE_URL: postgresql://crm:crm_dev_password@postgres:5432/chatwoot
+      REDIS_URL: redis://redis:6379
+      NODE_ENV: production
+      INSTALLATION_ENV: docker
+    ports:
+      - "3000:3000"
+    command: docker/entrypoints/rails.sh
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:3000/api || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  chatwoot-worker:
+    image: chatwoot/chatwoot:latest
+    restart: unless-stopped
+    depends_on:
+      - chatwoot
+    environment:
+      RAILS_ENV: production
+      SECRET_KEY_BASE: cambiar_por_un_secret_largo_aleatorio
+      FRONTEND_URL: http://localhost:3000
+      DATABASE_URL: postgresql://crm:crm_dev_password@postgres:5432/chatwoot
+      REDIS_URL: redis://redis:6379
+      NODE_ENV: production
+      INSTALLATION_ENV: docker
+    command: bundle exec sidekiq
+
+  # API del CRM Sinergix (este proyecto)
+  crm-api:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg://crm:crm_dev_password@postgres:5432/sinergix_crm
+      PAYMENT_WEBHOOK_SECRET: dev-secret-cambiar-en-produccion
+      CHATWOOT_URL: http://chatwoot:3000
+      CHATWOOT_API_KEY: se_configura_tras_instalar_chatwoot
+      COTIZACION_URL: ""
+      BIOMETRIA_URL: ""
     ports:
       - "8000:8000"
-    environment:
-      - MONGODB_URI=mongodb://sinergix-db:27017
-      - MONGODB_DB_NAME=sinergix_crm
-      - ENVIRONMENT=production
-      - PORT=8000
-    depends_on:
-      - sinergix-db
-    networks:
-      - sinergix-net
-
-  sinergix-db:
-    image: mongo:7.0
-    container_name: sinergix-db
-    restart: unless-stopped
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongodb_data:/data/db
-    networks:
-      - sinergix-net
-
-networks:
-  sinergix-net:
-    driver: bridge
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
 
 volumes:
-  mongodb_data:
-    driver: local
+  pgdata:

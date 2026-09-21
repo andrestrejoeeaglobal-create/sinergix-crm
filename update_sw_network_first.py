@@ -1,17 +1,17 @@
-const CACHE_NAME = 'sinergix-crm-v65';
+import os
+
+sw_content = '''const CACHE_NAME = 'sinergix-crm-v38';
 const ASSETS_TO_CACHE = [
-  './',
-  './index.html',
-  './manifest.json'
+  'https://cdn.tailwindcss.com',
+  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
+  'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700;800&display=swap'
 ];
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE).catch((err) => {
-        console.warn('[SW v58] Cache addAll warning:', err);
-      });
+      return cache.addAll(ASSETS_TO_CACHE);
     })
   );
 });
@@ -22,7 +22,6 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         cacheNames.map((cache) => {
           if (cache !== CACHE_NAME) {
-            console.log('[SW v58] Purgando caché obsoleta:', cache);
             return caches.delete(cache);
           }
         })
@@ -39,7 +38,7 @@ self.addEventListener('fetch', (event) => {
   // Network-First Strategy for HTML documents & navigation requests
   if (event.request.mode === 'navigate' || url.includes('index.html') || url.endsWith('/sinergix-crm/') || url.endsWith('/')) {
     event.respondWith(
-      fetch(event.request, { cache: 'no-store' })
+      fetch(event.request)
         .then((response) => {
           if (response && response.status === 200) {
             const responseToCache = response.clone();
@@ -48,20 +47,13 @@ self.addEventListener('fetch', (event) => {
           return response;
         })
         .catch(() => {
-          return caches.match(event.request).then(res => res || caches.match('./index.html'));
+          return caches.match(event.request);
         })
     );
     return;
   }
 
-  // Handle external assets gracefully
-  if (!url.startsWith(self.location.origin)) {
-    event.respondWith(
-      fetch(event.request).catch(() => caches.match(event.request))
-    );
-    return;
-  }
-
+  // Cache-First for static CDN assets
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
@@ -76,9 +68,21 @@ self.addEventListener('fetch', (event) => {
           cache.put(event.request, responseToCache);
         });
         return response;
-      }).catch(() => {
-        return caches.match('./index.html');
       });
     })
   );
 });
+'''
+
+sw_paths = [
+    r"c:\Users\andre\OneDrive\Escritorio\Archivos de prueba\sinergix-crm\sw.js",
+    r"c:\Users\andre\OneDrive\Escritorio\sw.js"
+]
+
+for p in sw_paths:
+    os.makedirs(os.path.dirname(p), exist_ok=True)
+    with open(p, 'w', encoding='utf-8') as f:
+        f.write(sw_content)
+    print(f"Updated {p}")
+
+print("Network-First Service Worker script generated successfully!")
