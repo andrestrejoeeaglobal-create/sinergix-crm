@@ -2291,7 +2291,7 @@ Tienes ${userLeads.length} prospecto(s) en tu cartera (${pendCount} pendiente(s)
 
       if (sherpaSesion && sherpaSesion.nombre) {
         if (elNom) {
-          elNom.textContent = sherpaSesion.nombre;
+          elNom.textContent = formatearNombreNatural(sherpaSesion.nombre);
           elNom.className = 'text-emerald-600 dark:text-emerald-400 font-extrabold';
         }
         if (elTel) {
@@ -5285,7 +5285,23 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
 
         function formatearNombreNatural(str) {
       if (!str) return '';
-      let clean = str.replace(/,/g, ' ').replace(/\s+/g, ' ').trim();
+      let s = str.trim();
+      if (s.includes(',')) {
+        const parts = s.split(',').map(p => p.trim()).filter(Boolean);
+        const firstName = parts[0] || '';
+        const lastNamePart = parts[1] || '';
+        const lastNames = lastNamePart.split(/\s+/).filter(Boolean);
+        const firstLastName = lastNames[0] || '';
+
+        const fnWords = firstName.split(/\s+/).filter(Boolean);
+        if (fnWords.length === 1 && firstLastName) {
+          s = `${firstName} ${firstLastName}`;
+        } else {
+          s = firstName;
+        }
+      }
+
+      let clean = s.replace(/\s+/g, ' ').trim();
       return clean.split(' ').map((word, idx) => {
         if (!word) return '';
         const lower = word.toLowerCase();
@@ -5298,7 +5314,11 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
 
     function obtenerNombreSherpaFormateado(sesion) {
       if (!sesion) return 'Sherpa';
-      let nombreRaw = sesion.firstname || sesion.primer_nombre || (sesion.nombre ? sesion.nombre.split(',')[0].trim() : '') || 'Sherpa';
+      const customNombre = localStorage.getItem('sinergix_sherpa_nombre');
+      if (customNombre && customNombre.trim()) {
+        return formatearNombreNatural(customNombre);
+      }
+      let nombreRaw = sesion.firstname || sesion.primer_nombre || sesion.nombre || sesion.customerName || 'Sherpa';
       return formatearNombreNatural(nombreRaw);
     }
 
@@ -5348,7 +5368,7 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
       let plantillaRaw = '';
 
       if (tipoGuion === 'paso1_apertura') {
-        plantillaRaw = `Hola, {nombre}, espero que estés muy bien. Te saluda ${sherpaNombreNorm}.\n\n` +
+        plantillaRaw = `Hola, {nombre}, espero que estés muy bien. Soy ${sherpaNombreNorm}.\n\n` +
           `Te escribo personalmente porque este ${objSede.fechaCompleta} tenemos la Jornada Especial de la Gira de Poder 2026 aquí en ${objSede.nombre}.\n\n` +
           `Estamos abordando la causa raíz del desgaste biológico y celular frente a la industria del malestar, ayudando a las personas a descartar que el cansancio, la inflamación o la falta de energía sean "síntomas normales".\n\n` +
           `Voy a estar coordinando las mesas de trabajo y diagnóstico. Tengo asignados solo 2 turnos para mi equipo cercano: a las 3:30 PM y a las 4:30 PM.\n\n` +
@@ -5359,19 +5379,20 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
           `Te pido llegar 5 minutos antes para iniciar puntualmente con tu valoración. Recuerda que si por alguna razón no puedes asistir, me avises con tiempo para liberar el turno a alguien en lista de espera.\n\n` +
           `Nos vemos allá. ¡Un saludo!`;
       } else if (tipoGuion === 'reactivacion_a') {
-        plantillaRaw = `Hola, {nombre}, espero que estés muy bien. Te saluda ${sherpaNombreNorm}.\n\n` +
+        plantillaRaw = `Hola, {nombre}, espero que estés muy bien. Soy ${sherpaNombreNorm}.\n\n` +
           `Imagino que andas con la agenda súper apretada hoy, ¡no te preocupes en absoluto, entiendo perfecto!\n\n` +
           `Te escribo rápido solo para saber si prefieres que libere tu turno de las ${horarioMesa} para asignárselo a alguien en lista de espera de la gira, o si mantenemos tu espacio reservado.\n\n` +
           `Dime con toda confianza. ¡Un saludo!`;
       } else if (tipoGuion === 'reactivacion_b') {
-        plantillaRaw = `Hola, {nombre}, buenas tardes. Te saluda ${sherpaNombreNorm}.\n\n` +
-          `Te busco porque sé lo importante que es para ti el cuidado y rendimiento de tu familia.\n\n` +
-          `Seguimos coordinando la jornada de diagnóstico en ${objSede.nombre} y me gustaría asegurar que no te quedes fuera de esta sesión preventiva.\n\n` +
-          `¿Crees que logremos vernos hoy a las ${horarioMesa} o me avisas si agendamos un espacio especial?`;
+        plantillaRaw = `Hola, {nombre}, buenas tardes. Soy ${sherpaNombreNorm}.\n\n` +
+          `Te busco porque sé lo importante que es para ti el cuidado y el rendimiento de tu familia.\n\n` +
+          `Seguimos coordinando la jornada de diagnóstico aquí en ${objSede.nombre} y me gustaría asegurar que no te quedes fuera de esta sesión preventiva de salud celular.\n\n` +
+          `¿Crees que logremos vernos hoy a las ${horarioMesa} o prefieres que agendemos un espacio especial más adelante?`;
       } else if (tipoGuion === 'reactivacion_c') {
-        plantillaRaw = `Hola, {nombre}, te saluda ${sherpaNombreNorm}. ¿Confirmamos tu asistencia para las ${horarioMesa} en ${objSede.nombre}? Quedo al pendiente para enviarte el pase.`;
+        plantillaRaw = `Hola, {nombre}, buenas tardes. Soy ${sherpaNombreNorm}.\n\n` +
+          `¿Confirmamos tu asistencia para las ${horarioMesa} en ${objSede.nombre}? Quedo al pendiente para enviarte el pase.`;
       } else {
-        plantillaRaw = `Hola, {nombre}, te saluda ${sherpaNombreNorm}. Te escribo para la Jornada Especial de la Gira de Poder 2026 en ${objSede.nombre}. ¿Confirmamos tu lugar?`;
+        plantillaRaw = `Hola, {nombre}, soy ${sherpaNombreNorm}. Te escribo para la Jornada Especial de la Gira de Poder 2026 en ${objSede.nombre}. ¿Confirmamos tu lugar?`;
       }
 
       return formatearSaludoPila(lead, plantillaRaw);
@@ -5915,7 +5936,7 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js?v=65').then(reg => {
+      navigator.serviceWorker.register('./sw.js?v=66').then(reg => {
         reg.update();
         console.log('[PWA v40] Service Worker registrado y actualizado.');
       }).catch(err => {
