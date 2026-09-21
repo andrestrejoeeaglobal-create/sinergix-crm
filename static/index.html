@@ -90,6 +90,16 @@
       });
     }
   </script>
+  <!-- Synchronous Anti-FOUC Auth Guard: Block access if not authenticated -->
+  <script>
+    (function() {
+      const token = localStorage.getItem('sinergix_token');
+      const sherpaActivo = localStorage.getItem('sinergix_sherpa_activo');
+      if (!token || !sherpaActivo) {
+        document.write('<style>#main-crm-app, #sherpa-session-bar { display: none !important; } #modal-login { display: flex !important; }</style>');
+      }
+    })();
+  </script>
 </head>
 <body class="min-h-screen flex flex-col font-sans bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors duration-200">
 
@@ -193,7 +203,7 @@
   </div>
 
   <!-- MAIN CONTAINER WRAPPER FOR FLEX-GROW CONTENT -->
-  <main id="main-crm-app" class="flex-grow flex-1 w-full pb-8">
+  <main id="main-crm-app" class="flex-grow flex-1 w-full pb-8 hidden">
 
   <!-- VISTA 1: FEED CONVERSACIONAL (BRIEFING 8:00 AM) — 12 COLS GRID -->
   <div id="vista-briefing" class="block w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 fade-in min-h-[calc(100vh-160px)]">
@@ -2859,20 +2869,42 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
     }
 
     function actualizarEstadoSesionSherpa() {
-      const token = localStorage.getItem('sinergix_token') || localStorage.getItem('ea_session') || localStorage.getItem('sherpa_token');
+      const token = localStorage.getItem('sinergix_token');
+      const sherpaActivo = localStorage.getItem('sinergix_sherpa_activo');
       const modal = document.getElementById('modal-login');
       const mainApp = document.getElementById('main-crm-app');
       const sessionBar = document.getElementById('sherpa-session-bar');
 
-      if (!token) {
-        if (modal) modal.classList.remove('hidden');
-        if (mainApp) mainApp.classList.add('hidden');
-        if (sessionBar) sessionBar.classList.add('hidden');
-        initNetworkCanvas();
+      if (!token || !sherpaActivo) {
+        if (modal) {
+          modal.classList.remove('hidden');
+          modal.style.display = 'flex';
+        }
+        if (mainApp) {
+          mainApp.classList.add('hidden');
+          mainApp.style.display = 'none';
+        }
+        if (sessionBar) {
+          sessionBar.classList.add('hidden');
+          sessionBar.style.display = 'none';
+        }
+        todosLosLeads = [];
+        if (typeof initNetworkCanvas === 'function') initNetworkCanvas();
+        return false;
       } else {
-        if (modal) modal.classList.add('hidden');
-        if (mainApp) mainApp.classList.remove('hidden');
-        if (sessionBar) sessionBar.classList.remove('hidden');
+        if (modal) {
+          modal.classList.add('hidden');
+          modal.style.display = 'none';
+        }
+        if (mainApp) {
+          mainApp.classList.remove('hidden');
+          mainApp.style.display = '';
+        }
+        if (sessionBar) {
+          sessionBar.classList.remove('hidden');
+          sessionBar.style.display = '';
+        }
+        return true;
       }
     }
 
@@ -5635,6 +5667,11 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
     // Inicio Asíncrono con Bloqueo de Inicialización (DOMContentLoaded)
     document.addEventListener('DOMContentLoaded', async () => {
       try {
+        const isAuthenticated = actualizarEstadoSesionSherpa();
+        if (!isAuthenticated) {
+          todosLosLeads = [];
+          return;
+        }
         await CortexStorageEngine.init();
         if (navigator.storage && navigator.storage.persist) {
           await navigator.storage.persist();
@@ -5862,7 +5899,7 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
 
 
     <!-- Modal Iniciar Sesión (Gobernanza de Diseño Clínico T.I.L.O. & Equipo en Acción®) -->
-  <div id="modal-login" class="fixed inset-0 z-[100] bg-slate-900/90 dark:bg-slate-950/95 flex items-center justify-center p-4 overflow-y-auto hidden backdrop-blur-md">
+  <div id="modal-login" class="fixed inset-0 z-[100] bg-slate-900/90 dark:bg-slate-950/95 flex items-center justify-center p-4 overflow-y-auto  backdrop-blur-md">
     <!-- Canvas animado de constelaciones -->
     <canvas id="login-canvas" class="absolute inset-0 pointer-events-none z-0"></canvas>
 
@@ -5967,7 +6004,7 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js?v=70').then(reg => {
+      navigator.serviceWorker.register('./sw.js?v=71').then(reg => {
         reg.update();
         console.log('[PWA v40] Service Worker registrado y actualizado.');
       }).catch(err => {
