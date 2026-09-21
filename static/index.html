@@ -1113,8 +1113,12 @@
       if (target === 'briefing' && typeof cargarBriefingMatutino === 'function') {
         cargarBriefingMatutino();
       } else if (target === 'agenda') {
-        if (typeof renderizarLista === 'function') renderizarLista();
-        if (typeof cargarLeadsServidor === 'function') cargarLeadsServidor();
+        if (typeof cargarLeadsServidor === 'function') {
+          await cargarLeadsServidor();
+        } else {
+          if (typeof renderizarLista === 'function') renderizarLista();
+          if (typeof actualizarMetricas === 'function') actualizarMetricas();
+        }
       } else if (target === 'cartera' && typeof cargarSaludCartera === 'function') {
         cargarSaludCartera();
       } else if (target === 'simulador' && typeof cargarSimuladorFinanciero === 'function') {
@@ -1802,14 +1806,15 @@ Tienes ${userLeads.length} prospecto(s) en tu cartera (${pendCount} pendiente(s)
 
     async function cargarLeadsServidor() {
       try {
-        const res = await apiFetch('/api/leads');
-        if (res.ok) {
-          todosLosLeads = await res.json();
-          renderizarLista();
-          actualizarMetricas();
-        }
+        const activeUser = (typeof obtenerSherpaIdActivo === 'function') ? obtenerSherpaIdActivo() : '101';
+        const userLeads = (typeof CortexStorageEngine !== 'undefined' && CortexStorageEngine.getLeadsForSherpa)
+          ? await CortexStorageEngine.getLeadsForSherpa(activeUser)
+          : [];
+        todosLosLeads = Array.isArray(userLeads) ? userLeads : [];
+        if (typeof renderizarLista === 'function') renderizarLista();
+        if (typeof actualizarMetricas === 'function') actualizarMetricas();
       } catch (err) {
-        console.warn('Error al cargar leads:', err);
+        console.warn('Error al cargar leads por sherpa:', err);
       }
     }
 
@@ -5964,7 +5969,7 @@ async saveLead(lead) {
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js?v=68').then(reg => {
+      navigator.serviceWorker.register('./sw.js?v=69').then(reg => {
         reg.update();
         console.log('[PWA v40] Service Worker registrado y actualizado.');
       }).catch(err => {
