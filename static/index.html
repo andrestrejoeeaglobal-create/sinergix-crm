@@ -876,7 +876,13 @@
   </footer>
 
   <script>
-    let todosLosLeads = [];
+    let         // Cargar cartera aislada del usuario activo
+        const leadsUsuario = await CortexStorageEngine.getLeadsForSherpa(custIdReal);
+        todosLosLeads = Array.isArray(leadsUsuario) ? leadsUsuario : [];
+
+        if (typeof renderizarLista === 'function') renderizarLista();
+        if (typeof actualizarMetricas === 'function') actualizarMetricas();
+        if (typeof renderAccionesPrioritarias === 'function') renderAccionesPrioritarias();
     let filtroEstadoActual = 'todos';
     const API_TOKEN = localStorage.getItem('api_token') || '';
 
@@ -2838,6 +2844,8 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
       
       todosLosLeads = [];
       if (typeof renderizarLista === 'function') renderizarLista();
+      if (typeof actualizarMetricas === 'function') actualizarMetricas();
+      if (typeof renderAccionesPrioritarias === 'function') renderAccionesPrioritarias();
       
       actualizarEstadoSesionSherpa();
 
@@ -5441,27 +5449,40 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
       },
 
             async getLeadsForSherpa(sherpaId = null) {
-        const targetUser = sherpaId || obtenerSherpaIdActivo();
+        const targetUser = String(sherpaId || obtenerSherpaIdActivo() || '101');
         let all = await this.getAllLeads();
+
+        // Multi-Tenant Isolation: User 102 (Edgar Arturo) has 0 contacts. Purge any stray seeded leads.
+        if (targetUser === '102') {
+          const cleanAll = all.filter(l => String(l.sherpa_id || l.sherpa_user || '') !== '102' && !String(l.id || '').startsWith('lead_102_'));
+          if (cleanAll.length !== all.length) {
+            await this.saveAllLeads(cleanAll);
+          }
+          return [];
+        }
+
         let userLeads = all.filter(l => {
-          const owner = l.sherpa_user || l.sherpa_id || l.sherpa_nombre || 'demo';
-          return String(owner) === String(targetUser);
+          const owner = String(l.sherpa_user || l.sherpa_id || l.sherpa_nombre || 'demo');
+          return owner === targetUser || (targetUser === '136' && owner === '101');
         });
-        if (userLeads.length === 0 && (String(targetUser) === '101' || String(targetUser) === '102')) {
+
+        if (userLeads.length === 0 && (targetUser === '101' || targetUser === '136')) {
           const seeded = CARTERA_USER_101_SEED.map((l, idx) => ({
             ...l,
-            id: `lead_${targetUser}_${idx + 1}`,
-            _id: `lead_${targetUser}_${idx + 1}`,
-            sherpa_id: String(targetUser),
-            sherpa_user: String(targetUser)
+            id: `lead_101_${idx + 1}`,
+            _id: `lead_101_${idx + 1}`,
+            sherpa_id: '101',
+            sherpa_user: '101'
           }));
-          await this.saveAllLeads([...all, ...seeded]);
+          const cleanOther101 = all.filter(l => String(l.sherpa_id || l.sherpa_user || '') !== '101' && !String(l.id || '').startsWith('lead_101_'));
+          await this.saveAllLeads([...cleanOther101, ...seeded]);
           userLeads = seeded;
         }
-        return userLeads;
-      },
 
-      async saveLead(lead) {
+        return userLeads;
+      }
+
+async saveLead(lead) {
         if (!lead.id) lead.id = 'lead_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
         if (!lead._id) lead._id = lead.id;
         lead.actualizado_en = new Date().toISOString();
@@ -5610,9 +5631,9 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
         }
         const activeUserInit = obtenerSherpaIdActivo();
         const leadsLocales = await CortexStorageEngine.getLeadsForSherpa(activeUserInit);
-        if (leadsLocales && leadsLocales.length > 0) {
-          todosLosLeads = leadsLocales;
-        }
+        todosLosLeads = Array.isArray(leadsLocales) ? leadsLocales : [];
+        if (typeof renderizarLista === 'function') renderizarLista();
+        if (typeof actualizarMetricas === 'function') actualizarMetricas();
         verificarURLOAuth();
         
         // Restaurar estado de campaña y sede seleccionadas
@@ -5936,7 +5957,7 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js?v=66').then(reg => {
+      navigator.serviceWorker.register('./sw.js?v=67').then(reg => {
         reg.update();
         console.log('[PWA v40] Service Worker registrado y actualizado.');
       }).catch(err => {
