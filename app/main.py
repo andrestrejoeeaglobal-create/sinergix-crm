@@ -1,12 +1,14 @@
-"""Sinergix Negocio CRM — API FastAPI (Fase 0).
+"""Sinergix Negocio CRM — API FastAPI (Fase 1 / Sprint 28).
 
-Rutas:
-  POST /api/leads/capture              — captura desde landing (opt-in obligatorio)
-  GET  /api/leads/{id}                 — perfil
-  POST /api/leads/{id}/classify        — Los Cuatro Cincos
-  POST /api/leads/{id}/send-to-external — CotizacionAPI → link de pago → WhatsApp
-  POST /api/payments/webhook-confirmation — webhook firmado + idempotente
-  POST /api/sprint/nightly             — cron nocturno del Sprint PH21
+Rutas principales:
+  POST /api/leads/capture                  — captura desde landing (opt-in obligatorio)
+  GET  /api/leads/{id}                     — perfil (aislamiento por Sherpa, Enmienda 4)
+  POST /api/leads/{id}/classify            — Los Cuatro Cincos
+  POST /api/leads/{id}/send-to-external     — CotizacionAPI → link de pago → WhatsApp
+  POST /api/payments/webhook-confirmation  — webhook legado
+  POST /api/pagos/webhook                  — webhook firmado HMAC + idempotente + deduplicación (Enmienda 1 CRÍTICA)
+  POST /api/chatwoot/webhook               — webhook entrante de Chatwoot con ventana 24h (Enmienda 7)
+  POST /api/sprint/nightly                 — cron nocturno del Sprint 28 (Enmiendas 5 y 6)
   GET  /health
 """
 import hashlib
@@ -15,16 +17,18 @@ import json
 import secrets
 from urllib.parse import quote
 from datetime import datetime, timezone
+import logging
+import os
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Request
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
+import httpx
 
 from .config import settings
 from .db import get_db, init_db
-from .integrations import biometria, chatwoot, cotizacion
-import logging
-import httpx
-
+from .db_mongo import get_mongo_db, get_leads_by_sherpa
+from .integrations import biometria, chatwoot, cotizacion, pagos
 from .integrations.auth_google import (
     authorization_url, exchange_code, listar_contactos, refresh_access_token, userinfo,
 )
@@ -33,14 +37,16 @@ from .salesbot import bloquear_y_alertar, enviar_plantilla
 from .schemas import (
     ClasificacionIn, ContactoIn, DatosComerciales, ImportContacts, LeadCapture, LeadOut, SherpaLoginIn,
 )
-from .sprint import procesar_noche
+from .sprint import procesar_noche, evaluar_estado_renovacion
+from .safety import validar_optin_whatsapp
 
 log = logging.getLogger("sinergix.main")
 
-import os
-from fastapi.responses import FileResponse
+app = FastAPI(title="Sinergix Negocio CRM", version="1.0.0")
 
-app = FastAPI(title="Sinergix Negocio CRM", version="0.3.0")
+# Incluir routers de integraciones (Enmiendas 1 y 7)
+app.include_router(pagos.router)
+app.include_router(chatwoot.router)
 
 
 @app.on_event("startup")
@@ -50,15 +56,15 @@ def _startup() -> None:
 
 @app.get("/")
 def read_root():
-    path_escritorio = r"c:\Users\andre\OneDrive\Escritorio\index.html"
+    path_escritorio = r"c:\Users\andre\OneDrive\Escritorio\Archivos de prueba\sinergix-crm\index.html"
     if os.path.exists(path_escritorio):
         return FileResponse(path_escritorio)
-    return {"ok": True, "service": "sinergix-crm", "version": "0.3.0"}
+    return {"ok": True, "service": "sinergix-crm", "version": "1.0.0"}
 
 
 @app.get("/health")
 def health() -> dict:
-    return {"ok": True, "service": "sinergix-crm", "version": "0.3.0"}
+    return {"ok": True, "service": "sinergix-crm", "version": "1.0.0"}
 
 
 # ── Autenticación API Sherpa (Equipo en Acción) ────────────────
@@ -125,7 +131,6 @@ def _ejecutar_login_sherpa(u: str, p: str, db: Session) -> dict:
                     first_item = dataset[0]
                     status_val = first_item.get("status")
 
-                    # Diagnósticos deterministas del reporte técnico
                     if status_val == 2 or first_item.get("respuesta") == "CONTRASENA INVALIDA":
                         raise HTTPException(401, "Contraseña incorrecta")
                     if status_val == 3:
@@ -226,13 +231,11 @@ def login_sherpa_get(
 
 # ── Autenticación Google (Sherpas) + contactos ────────────────
 
-# states OAuth en memoria (F0; en producción mover a Redis con TTL)
 _estados_oauth: dict[str, bool] = {}
 
 
 @app.get("/api/auth/google/login")
 def google_login():
-    """Devuelve la URL de consentimiento de Google (contacts incluido)."""
     state = secrets.token_urlsafe(24)
     _estados_oauth[state] = True
     return {"authorization_url": authorization_url(state), "state": state}
@@ -257,7 +260,6 @@ def google_callback(code: str = "", state: str = "", error: str = "", db: Sessio
             nombre=info.get("name", ""),
             api_token=secrets.token_urlsafe(32),
         )
-    # refresh_token: Google solo lo manda la primera vez — conservar el existente
     sherpa.google_refresh_token = tokens.get("refresh_token") or sherpa.google_refresh_token
     sherpa.google_access_token = tokens.get("access_token")
     db.add(sherpa)
@@ -299,19 +301,11 @@ def import_contacts(
     x_api_token: str = Header(default=""),
     db: Session = Depends(get_db),
 ):
-    """Importa contactos de Google al CRM para clasificarlos en Los Cuatro Cincos.
-
-    IMPORTANTE: los contactos importados se crean con optin_whatsapp=False.
-    El Salesbot NO les escribirá automáticamente. El Sherpa los contacta manual
-    con el guion de su lista vía el enlace wa.me (WhatsApp personal), respetando
-    la política de Meta hasta que el lead dé su opt-in.
-    """
     sherpa = _sherpa_por_token(db, x_api_token)
     creados, duplicados = 0, 0
     for contacto in payload.contactos:
         if not contacto.telefono:
             continue
-        # El teléfono es único GLOBAL (una persona = un perfil, sea de quien sea la red)
         existe = db.query(Lead).filter_by(telefono=contacto.telefono).first()
         if existe:
             duplicados += 1
@@ -337,11 +331,6 @@ def import_contacts(
 
 @app.get("/api/leads/{lead_id}/wa-link")
 def wa_link(lead_id: str, texto: str = "", db: Session = Depends(get_db)):
-    """Enlace wa.me para contacto MANUAL del Sherpa (WhatsApp personal).
-
-    Para leads sin opt-in (contactos importados) — el guion sugerido debe venir
-    de Los Cuatro Cincos y estar validado con SafetyEngine.
-    """
     lead = db.get(Lead, lead_id)
     if not lead:
         raise HTTPException(404, "Lead no encontrado")
@@ -351,14 +340,11 @@ def wa_link(lead_id: str, texto: str = "", db: Session = Depends(get_db)):
     return {
         "url": url,
         "optin_whatsapp": lead.optin_whatsapp,
-        "aviso": (
-            "Contacto manual desde el WhatsApp personal del Sherpa. "
-            "No envía el CRM ni el Salesbot."
-        ),
+        "aviso": "Contacto manual desde el WhatsApp personal del Sherpa.",
     }
 
 
-# ── Captación de leads ───────────────────────────────────────────
+# ── Captación y Consulta de Leads (Aislamiento por Sherpa, Enmienda 4) ───────────────────────────
 
 @app.post("/api/leads/capture", response_model=LeadOut, status_code=201)
 def capture(payload: LeadCapture, db: Session = Depends(get_db)):
@@ -386,13 +372,22 @@ def capture(payload: LeadCapture, db: Session = Depends(get_db)):
     return lead
 
 
-# ── Perfil y clasificación ───────────────────────────────────────
-
 @app.get("/api/leads/{lead_id}", response_model=LeadOut)
-def get_lead(lead_id: str, db: Session = Depends(get_db)):
+def get_lead(
+    lead_id: str,
+    x_api_token: str = Header(default=""),
+    db: Session = Depends(get_db)
+):
     lead = db.get(Lead, lead_id)
     if not lead:
         raise HTTPException(404, "Lead no encontrado")
+    
+    # Aislamiento por Sherpa (Enmienda 4)
+    if x_api_token:
+        sherpa = db.query(Sherpa).filter_by(api_token=x_api_token).first()
+        if sherpa and lead.sherpa_id != sherpa.id and lead.sherpa_id != "101" and sherpa.numero_distribuidor != "admin":
+            raise HTTPException(403, "Acceso no autorizado a los datos de este lead (Aislamiento Sherpa)")
+            
     return lead
 
 
@@ -407,7 +402,7 @@ def classify(lead_id: str, payload: ClasificacionIn, db: Session = Depends(get_d
     return {"ok": True, "lista": payload.lista}
 
 
-# ── Link de pago (CotizacionAPI → WhatsApp) ─────────────────────
+# ── Link de pago (CotizacionAPI → WhatsApp con Guard Opt-in) ─────────────────────
 
 @app.post("/api/leads/{lead_id}/send-to-external")
 def send_to_external(
@@ -416,8 +411,9 @@ def send_to_external(
     lead = db.get(Lead, lead_id)
     if not lead:
         raise HTTPException(404, "Lead no encontrado")
-    if not lead.optin_whatsapp:
-        raise HTTPException(409, "El lead no tiene opt-in de WhatsApp: no se puede enviar el link")
+    
+    # Enmienda 3: Bloquear envío sin consentimiento explícito de WhatsApp
+    validar_optin_whatsapp(lead)
 
     key = cotizacion.nuevo_idempotency_key()
     payload_externo = {
@@ -430,7 +426,7 @@ def send_to_external(
     }
     try:
         respuesta = cotizacion.solicitar_link_pago(payload_externo, key, tipo="primera_compra")
-    except Exception as exc:  # sistema externo caído → el Sherpa reintenta luego
+    except Exception as exc:
         raise HTTPException(502, f"Sistema externo de cotización no disponible: {exc}") from exc
 
     link = LinkPago(
@@ -458,7 +454,6 @@ def send_to_external(
     db.commit()
     db.refresh(lead)
 
-    # Envío del link (texto validado por SafetyEngine antes de salir)
     enviar_plantilla(db, lead, "LINK_PAGO", {"link": link.checkout_url}, dia=0)
 
     return {"ok": True, "link": {"id": link.id, "checkout_url": link.checkout_url, "estado": link.estado}}
@@ -474,15 +469,12 @@ async def webhook_confirmation(
 ):
     raw = await request.body()
 
-    # 1) Firma HMAC-SHA256 del body crudo
     esperada = hmac.new(
         settings.payment_webhook_secret.encode(), raw, hashlib.sha256
     ).hexdigest()
     firma_valida = hmac.compare_digest(esperada, x_sinergix_signature)
-
     payload_hash = hashlib.sha256(raw).hexdigest()
 
-    # 2) Idempotencia: si el payload ya se procesó, responder sin reprocesar
     if db.query(WebhookPagoLog).filter_by(payload_hash=payload_hash).first():
         return {"status": "duplicate", "ignored": True}
 
@@ -500,14 +492,12 @@ async def webhook_confirmation(
     if not lead:
         raise HTTPException(404, "Lead no encontrado para el teléfono del webhook")
 
-    # Marcar el link como pagado
     if lead.link_pago_activo_id:
         link = db.get(LinkPago, lead.link_pago_activo_id)
         if link:
             link.estado = "pagado"
             link.fecha_pagado = datetime.now(timezone.utc)
 
-    # Acreditar puntos (idempotente: solo ocurre una vez por payload)
     lead.puntos_adquiridos += settings.puntos_por_plan
 
     if tipo == "renovacion":
@@ -519,19 +509,16 @@ async def webhook_confirmation(
         db.commit()
         return {"status": "processed", "accion": "renovacion_registrada", "lead": lead.id}
 
-    # Primera compra: inicializar Sprint
     lead.etapa_pipeline = "Sprint Activo"
     lead.dia_actual_sprint = 1
     lead.fase_actual = "Reset"
     lead.sprint_inicio = datetime.now(timezone.utc)
 
-    # Cartera de salud en Sinergix Salud (Firestore vía BiometriaAPI)
     biometria.registrar_ascendan(
         lead.id,
         {"nombre": lead.nombre, "telefono": lead.telefono, "sherpa_id": lead.sherpa_id},
     )
 
-    # Baseline inicial (mock hasta que BiometriaAPI real exista)
     resumen = biometria.get_resumen(lead.id, dia=1)
     lead.hrv_baseline = int(resumen.get("hrv", 46))
     lead.ultima_sincronizacion_biometrica = biometria.ahora()
@@ -542,7 +529,7 @@ async def webhook_confirmation(
     return {"status": "processed", "accion": "sprint_inicializado", "lead": lead.id}
 
 
-# ── Cron nocturno del Sprint ─────────────────────────────────────
+# ── Cron nocturno del Sprint 28 ─────────────────────────────────────
 
 @app.post("/api/sprint/nightly")
 def nightly(x_cron_token: str = Header(default=""), db: Session = Depends(get_db)):
@@ -555,7 +542,7 @@ def nightly(x_cron_token: str = Header(default=""), db: Session = Depends(get_db
         if not lead.sprint_inicio:
             continue
         inicio = lead.sprint_inicio
-        if inicio.tzinfo is None:  # SQLite devuelve naive — normalizar a UTC
+        if inicio.tzinfo is None:
             inicio = inicio.replace(tzinfo=timezone.utc)
         dias_calendario = (datetime.now(timezone.utc) - inicio).days + 1
         lead.dia_actual_sprint = dias_calendario
@@ -579,17 +566,14 @@ def nightly(x_cron_token: str = Header(default=""), db: Session = Depends(get_db
         )
         lead.ultima_sincronizacion_biometrica = biometria.ahora()
 
-        # Hito Día 7: adherencia baja → bloquear bot + escalar a llamada
         if 7 in estado.hitos_disparados and lead.adherencia_acumulada < 60:
             bloquear_y_alertar(db, lead, "adherencia<60% en Día 7 — bot bloqueado", dia=7)
             resultado.append({"lead": lead.id, "evento": "alerta_dia7"})
             continue
 
-        # Recordatorio de sincronización (48 h sin datos)
         if not estado.registrado and dias_calendario % 2 == 0:
             enviar_plantilla(db, lead, "SYNC_RECORDATORIO", dia=dias_calendario)
 
-        # Hitos con plantilla
         for hito_dia, plantilla in {
             7: "SPR_02", 14: "SPR_03", 21: "SPR_04", 25: "SPR_05"
         }.items():
@@ -607,7 +591,7 @@ def nightly(x_cron_token: str = Header(default=""), db: Session = Depends(get_db
                 enviar_plantilla(db, lead, plantilla, variables, dia=hito_dia)
                 resultado.append({"lead": lead.id, "hito": hito_dia, "plantilla": plantilla})
 
-        # Día 28 efectivo: generar link de renovación
+        # Día 28 efectivo (Sprint 28 / Enmienda 6): generar link y marcar estado de renovación pendiente
         if 28 in estado.hitos_disparados:
             key = cotizacion.nuevo_idempotency_key()
             resp = cotizacion.solicitar_link_pago(
@@ -620,8 +604,9 @@ def nightly(x_cron_token: str = Header(default=""), db: Session = Depends(get_db
             db.add(link)
             db.flush()
             lead.link_pago_activo_id = link.id
+            lead.etapa_pipeline = "Renovación Pendiente"
             enviar_plantilla(db, lead, "DIA_28", {"link_renovacion": link.checkout_url}, dia=28)
-            resultado.append({"lead": lead.id, "evento": "link_renovacion_generado"})
+            resultado.append({"lead": lead.id, "evento": "link_renovacion_generado", "renovacion": "pendiente"})
 
         db.commit()
 

@@ -1,13 +1,18 @@
-"""Configuración central del CRM Sinergix Negocio (Fase 0)."""
+"""Configuración central del CRM Sinergix Negocio (Fase 1 - Sprint 28)."""
 from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    # Base de datos: producción PostgreSQL; local/tests SQLite
+    # Base de datos: producción PostgreSQL / SQLite + MongoDB local (servidor propio)
     database_url: str = "sqlite:///./crm.db"
+    mongodb_url: str = "mongodb://localhost:27017"
+    mongodb_db_name: str = "sinergix_crm"
 
-    # Firma HMAC del webhook de pagos (el procesador firma el body crudo)
+    # Firma HMAC del webhook de pagos (el procesador firma el body crudo con X-Signature)
     payment_webhook_secret: str = "dev-secret-cambiar-en-produccion"
+
+    # Chatwoot Webhook Secret (Enmienda 7)
+    chatwoot_webhook_secret: str = "chatwoot-secret-dev"
 
     # Puntos por plan vendido (valor oficial lo definirá el sistema externo)
     puntos_por_plan: int = 100
@@ -25,7 +30,7 @@ class Settings(BaseSettings):
     cotizacion_url: str = ""
     cotizacion_token: str = ""
 
-    # BiometriaAPI (Cloud Functions Firebase) — vacío = mock
+    # BiometriaAPI (Cloud Functions) — vacío = mock
     biometria_url: str = ""
     biometria_token: str = ""
 

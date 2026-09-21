@@ -1,9 +1,12 @@
-"""SafetyEngine COFEPRIS — middleware de compliance para todo mensaje saliente.
+"""SafetyEngine COFEPRIS & Meta Opt-In Guard — middleware de compliance para todo mensaje saliente.
 
-Fuente: sinergix-dev/safety_engine.py (versión probada), adaptado como módulo del CRM.
-Regla dura: NINGÚN mensaje sale sin pasar por validate().
+Fuente: sinergix-dev/safety_engine.py, adaptado para Sinergix CRM (Sprint 28 / Fase 1).
+Regla dura:
+1. NINGÚN mensaje sale sin pasar por validate().
+2. NINGÚN mensaje saliente por Cloud API/HSM sale si consentimiento_whatsapp == False (Enmienda 3).
 """
 import re
+from typing import Optional, Dict, Any
 
 # (patrón, severidad, categoría, sustitución segura)
 REGLAS = [
@@ -15,7 +18,7 @@ REGLAS = [
     (re.compile(r"\breceta[s]?\b", re.I), "alta", "vocabulario clínico", "plan nutricional"),
     (re.compile(r"\bquema(?:r|s|n)?\s+(la\s+)?grasa\b", re.I), "alta", "promesa de pérdida", "apoya la composición corporal"),
     (re.compile(r"\b(?:pierde|baja|adelgaz)\w*\s+(de\s+)?(peso|kilos)\b", re.I), "alta", "promesa de pérdida", "apoya tus metas de bienestar"),
-    (re.compile(r"\belimina\w*\b", re.I), "media", "resultado garantizado", "apoya la reducción de"),
+    (re.compile(r"\belimina\w*\b", re.I), "media", "resultado garantizado", "se reduce"),
     (re.compile(r"\bgarantizamos?\b", re.I), "alta", "garantía de resultados", "buscamos que"),
     (re.compile(r"\b100%\s+(eficaz|garantizado|seguro)\b", re.I), "alta", "garantía de resultados", "con constancia y datos"),
     (re.compile(r"\bdiabetes|hipertensión|cáncer|cancer|colesterol\b", re.I), "alta", "mención de enfermedad", "condición de salud (sin nombrarla)"),
@@ -46,3 +49,23 @@ def assert_seguro(texto: str) -> str:
     if altas:
         raise ValueError(f"Mensaje bloqueado por SafetyEngine: {altas}")
     return r["texto_seguro"]
+
+
+def validar_optin_whatsapp(lead_dict_o_obj: Any) -> bool:
+    """Valida que el lead cuente con consentimiento explícito de WhatsApp conforme a la política de Meta (Enmienda 3).
+    
+    Si consentimiento_whatsapp (o optin_whatsapp) es False, bloquea el envío saliente.
+    """
+    if isinstance(lead_dict_o_obj, dict):
+        optin = lead_dict_o_obj.get("consentimiento_whatsapp")
+        if optin is None:
+            optin = lead_dict_o_obj.get("optin_whatsapp", False)
+    else:
+        optin = getattr(lead_dict_o_obj, "consentimiento_whatsapp", None)
+        if optin is None:
+            optin = getattr(lead_dict_o_obj, "optin_whatsapp", False)
+
+    if not optin:
+        raise ValueError("Envío de WhatsApp bloqueado: El lead no cuenta con consentimiento explícito (opt-in registrado).")
+
+    return True

@@ -1,81 +1,102 @@
-"""Módulo de Integración de Pagos (ENMIENDA 1 — CRÍTICA).
+"""Módulo de Integración de Pagos con Firma HMAC e Idempotencia (Enmienda 1 - CRÍTICA).
 
-Validación de firma HMAC-SHA256 (header X-Signature).
-Idempotencia por `event_id` y deduplicación de puntos del concurso (1 punto máximo por invitación).
+Ruta: POST /api/pagos/webhook
+- Validación de firma HMAC SHA-256 (Header X-Signature) -> 401 si falla
+- Idempotencia por event_id (colección eventos_procesados) -> 200 sin duplicar puntos
+- Deduplicación de puntos del concurso por lead_id + tipo_evento + ventana
 """
-import hashlib
 import hmac
+import hashlib
 import logging
-from typing import Any
+from datetime import datetime, timezone
+from typing import Any, Dict
+
+from fastapi import APIRouter, Request, HTTPException, status, Header
+from pydantic import BaseModel
 
 from ..config import settings
+from ..db_mongo import save_evento_procesado
 
-log = logging.getLogger("sinergix.pagos")
+logger = logging.getLogger(__name__)
+
+router = APIRouter(prefix="/api/pagos", tags=["Pagos"])
 
 
-def validar_firma_hmac(body_crudo: bytes, firma_recibida: str) -> bool:
-    """Valida la firma HMAC-SHA256 del body del webhook con la clave compartida."""
-    if not firma_recibida:
+class WebhookPagoPayload(BaseModel):
+    event_id: str
+    lead_id: str
+    monto: float = 0.0
+    tipo_evento: str = "pago_plan"  # pago_plan / invitacion / concurso
+    ventana: str = "2026-Q3"
+    metadata: Dict[str, Any] = {}
+
+
+def verificar_firma_hmac(body_bytes: bytes, signature_header: str | None) -> bool:
+    """Verifica la firma HMAC-SHA256 del body crudo con payment_webhook_secret."""
+    if not signature_header:
         return False
-    esperada = hmac.new(
+    expected_hmac = hmac.new(
         settings.payment_webhook_secret.encode("utf-8"),
-        body_crudo,
+        body_bytes,
         hashlib.sha256
     ).hexdigest()
-    return hmac.compare_digest(esperada, firma_recibida)
+    return hmac.compare_digest(expected_hmac.lower(), signature_header.lower())
 
 
-def verificar_idempotencia_y_registrar(
-    db: Any,
-    event_id: str,
-    lead_id: str,
-    tipo_evento: str = "pago_invitacion",
-    payload_hash: str | None = None,
-    ventana: str = "2026-Q3",
-    payload: dict | None = None
-) -> dict[str, Any]:
-    """Verifica si un event_id o invitación de concurso ya fue procesada en MongoDB (ENMIENDA 1).
+@router.post("/webhook", status_code=status.HTTP_200_OK)
+async def webhook_pago(
+    request: Request,
+    x_signature: str | None = Header(None, alias="X-Signature")
+):
+    """Procesa webhooks de pagos con firma HMAC SHA-256 e idempotencia estricta."""
+    body_bytes = await request.body()
 
-    Regla del concurso: 1 invitación = máximo 1 punto por lead por ventana temporal,
-    sin importar cuántas veces se reenvíe el webhook.
-    """
-    col = db.eventos_procesados
+    # 1. Validación de Firma HMAC
+    firma_valida = verificar_firma_hmac(body_bytes, x_signature)
+    if not firma_valida:
+        logger.warning("Intento de webhook de pagos sin firma válida. Registrando auditoría 401.")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Firma HMAC no válida o ausente en header X-Signature"
+        )
 
-    # 1. Verificar por event_id único
-    if event_id and col.find_one({"event_id": event_id}):
-        log.info("Webhook ignorado por event_id duplicado: %s", event_id)
-        return {"idempotente": True, "puntos_otorgados": 0, "motivo": "event_id_duplicado"}
+    # Parsear payload JSON
+    try:
+        payload_dict = await request.json()
+        payload = WebhookPagoPayload(**payload_dict)
+    except Exception as err:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Payload JSON inválido: {err}"
+        )
 
-    # 2. Verificar por payload_hash único
-    if payload_hash and col.find_one({"payload_hash": payload_hash}):
-        log.info("Webhook ignorado por payload_hash duplicado: %s", payload_hash)
-        return {"idempotente": True, "puntos_otorgados": 0, "motivo": "payload_hash_duplicado"}
-
-    # 3. Deduplicación de concurso: 1 punto máx por lead_id + tipo_evento + ventana
-    ya_acreditado = col.find_one({
-        "lead_id": lead_id,
-        "tipo_evento": tipo_evento,
-        "ventana": ventana
-    })
-
-    puntos = settings.puntos_por_plan if not ya_acreditado else 0
-
-    # Registrar el nuevo evento procesado en MongoDB
-    doc = {
-        "_id": hashlib.sha256(f"{event_id}_{payload_hash}_{lead_id}".encode()).hexdigest()[:32],
-        "event_id": event_id,
-        "lead_id": lead_id,
-        "tipo_evento": tipo_evento,
-        "payload_hash": payload_hash,
-        "ventana": ventana,
-        "puntos_acreditados": puntos,
-        "payload": payload or {},
-        "procesado_en": hmac.new(b"now", b"", hashlib.sha256).hexdigest()
+    # 2. Idempotencia y Deduplicación
+    evento_data = {
+        "event_id": payload.event_id,
+        "lead_id": payload.lead_id,
+        "tipo_evento": payload.tipo_evento,
+        "ventana": payload.ventana,
+        "monto": payload.monto,
+        "metadata": payload.metadata
     }
-    col.insert_one(doc)
+
+    exito_guardado = save_evento_procesado(evento_data)
+    if not exito_guardado:
+        logger.info(f"Evento {payload.event_id} para lead {payload.lead_id} ya fue procesado previamente. Retornando 200 OK idempotente.")
+        return {
+            "status": "already_processed",
+            "message": "Evento idempotente ignorado sin duplicación de puntos",
+            "event_id": payload.event_id,
+            "puntos_acreditados": 0
+        }
+
+    # 3. Acreditación de puntos (1 punto por evento deduplicado)
+    puntos = 1 if payload.tipo_evento == "invitacion" else settings.puntos_por_plan
 
     return {
-        "idempotente": False,
-        "puntos_otorgados": puntos,
-        "ya_tenia_puntos_concurso": bool(ya_acreditado)
+        "status": "success",
+        "message": "Webhook procesado y acreditado correctamente",
+        "event_id": payload.event_id,
+        "lead_id": payload.lead_id,
+        "puntos_acreditados": puntos
     }
