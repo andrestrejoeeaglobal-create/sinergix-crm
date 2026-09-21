@@ -2025,9 +2025,10 @@ Tienes ${userLeads.length} prospecto(s) en tu cartera (${pendCount} pendiente(s)
     function renderAccionesPrioritarias() {
       const list = document.getElementById('briefing-acciones-list');
       if (!list) return;
-      const leads = Array.isArray(todosLosLeads) ? todosLosLeads : [];
+      const activeUser = (typeof obtenerSherpaIdActivo === 'function') ? obtenerSherpaIdActivo() : '';
+      const leads = (Array.isArray(todosLosLeads) && activeUser === '101') ? todosLosLeads : [];
       
-      if (leads.length === 0) {
+      if (leads.length === 0 || activeUser !== '101') {
         list.innerHTML = `
           <div class="col-span-full p-6 text-center bg-slate-50 dark:bg-slate-900/40 rounded-3xl border border-slate-200 dark:border-slate-700 space-y-3">
             <div class="w-12 h-12 mx-auto rounded-2xl bg-indigo-100 dark:bg-indigo-950/60 flex items-center justify-center text-indigo-600 dark:text-indigo-400 text-xl font-bold shadow-clinical-sm">
@@ -2236,9 +2237,20 @@ Tienes ${userLeads.length} prospecto(s) en tu cartera (${pendCount} pendiente(s)
 
     
     function obtenerSherpaIdActivo() {
-      return localStorage.getItem('sinergix_active_user') || 
-             localStorage.getItem('sherpa_id_activo') || 
-             '';
+      let active = localStorage.getItem('sinergix_active_user') || 
+                   localStorage.getItem('sherpa_id_activo');
+      if (!active) {
+        try {
+          const raw = localStorage.getItem('sinergix_sherpa_activo');
+          if (raw) {
+            const obj = JSON.parse(raw);
+            if (obj && (obj.custid || obj.id || obj.usuario || obj.sherpa_id)) {
+              active = String(obj.custid || obj.id || obj.usuario || obj.sherpa_id);
+            }
+          }
+        } catch (e) {}
+      }
+      return active ? String(active).trim() : '';
     }
 
     function obtenerSherpaSesion() {
@@ -6031,7 +6043,7 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js?v=74').then(reg => {
+      navigator.serviceWorker.register('./sw.js?v=75').then(reg => {
         reg.update();
         console.log('[PWA v40] Service Worker registrado y actualizado.');
       }).catch(err => {
