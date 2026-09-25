@@ -68,62 +68,47 @@
     }
   </style>
 
-  <!-- Script Anti-FOUC síncrono para Modo Dual -->
+  <!-- Script Anti-FOUC síncrono para Modo Dual protegido con try/catch -->
   <script>
     (function() {
-      const savedTheme = localStorage.getItem('theme');
-      const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
-    })();
-  </script>
-  <!-- Control de Versión de Alacena y Migración Automática de Caché para Sinergix CRM -->
-  <script>
-    (function() {
-      const CURRENT_STORAGE_VERSION = 'v80.0';
-      const savedVersion = localStorage.getItem('sinergix_storage_version');
-      if (savedVersion !== CURRENT_STORAGE_VERSION) {
-        console.log('[Sinergix CRM] Migrando alacena/storage de', savedVersion || 'legacy', 'a', CURRENT_STORAGE_VERSION);
-        if ('caches' in window) {
-          caches.keys().then(names => {
-            names.forEach(name => {
-              if (name !== 'sinergix-crm-v80') {
-                caches.delete(name);
-              }
-            });
-          });
+      try {
+        const savedTheme = localStorage.getItem('theme');
+        const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
         }
-        if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.getRegistrations().then(registrations => {
-            registrations.forEach(reg => reg.update());
-          });
-        }
-        const legacyKeys = ['sinergix_leads_cache_legacy', 'sinergix_active_user_legacy', 'sinergix_draft_session'];
-        legacyKeys.forEach(key => localStorage.removeItem(key));
-        localStorage.setItem('sinergix_storage_version', CURRENT_STORAGE_VERSION);
+      } catch (e) {
+        console.warn('[Theme Init] Fallback visual seguro:', e);
       }
     })();
   </script>
   <link rel="manifest" href="./manifest.json">
+  <!-- Registro Canónico Único del Service Worker -->
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js', { scope: './' })
-          .then(reg => { console.log('[SW] Registrado en el ámbito:', reg.scope); reg.update(); })
+          .then(reg => {
+            console.log('[SW] Registrado canónicamente en:', reg.scope);
+            reg.update();
+          })
           .catch(err => console.warn('[SW] Fallo de registro:', err));
       });
     }
   </script>
-  <!-- Synchronous Anti-FOUC Auth Guard: Clean initial state -->
+  <!-- Synchronous Anti-FOUC Auth Guard protegido con try/catch -->
   <script>
     (function() {
-      const token = localStorage.getItem('sinergix_token');
-      const sherpaActivo = localStorage.getItem('sinergix_sherpa_activo');
-      if (!token || !sherpaActivo) {
-        // App elements start hidden by HTML class
+      try {
+        const token = localStorage.getItem('sinergix_token');
+        const sherpaActivo = localStorage.getItem('sinergix_sherpa_activo');
+        if (!token || !sherpaActivo) {
+          // App elements start hidden by HTML class
+        }
+      } catch (e) {
+        console.warn('[Auth Guard] Storage protegido:', e);
       }
     })();
   </script>
@@ -6063,19 +6048,6 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
   </div>
 
 
-
-<script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js?v=79').then(reg => {
-        reg.update();
-        console.log('[PWA v40] Service Worker registrado y actualizado.');
-      }).catch(err => {
-        console.warn('[PWA v40] Error al registrar Service Worker:', err);
-      });
-    });
-  }
-</script>
 
 </body>
 </html>

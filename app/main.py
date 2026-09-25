@@ -19,6 +19,7 @@ from urllib.parse import quote
 from datetime import datetime, timezone
 import logging
 import os
+from pathlib import Path
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from fastapi.responses import FileResponse
@@ -42,6 +43,8 @@ from .safety import validar_optin_whatsapp
 
 log = logging.getLogger("sinergix.main")
 
+BASE_DIR = Path(__file__).resolve().parent.parent
+
 app = FastAPI(title="Sinergix Negocio CRM", version="1.0.0")
 
 # Incluir routers de integraciones (Enmiendas 1 y 7)
@@ -56,9 +59,9 @@ def _startup() -> None:
 
 @app.get("/")
 def read_root():
-    path_escritorio = r"c:\Users\andre\OneDrive\Escritorio\Archivos de prueba\sinergix-crm\index.html"
-    if os.path.exists(path_escritorio):
-        return FileResponse(path_escritorio)
+    path_index = BASE_DIR / "index.html"
+    if path_index.exists():
+        return FileResponse(str(path_index))
     return {"ok": True, "service": "sinergix-crm", "version": "1.0.0"}
 
 
