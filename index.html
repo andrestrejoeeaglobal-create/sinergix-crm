@@ -80,6 +80,33 @@
       }
     })();
   </script>
+  <!-- Control de Versión de Alacena y Migración Automática de Caché para Sinergix CRM -->
+  <script>
+    (function() {
+      const CURRENT_STORAGE_VERSION = 'v80.0';
+      const savedVersion = localStorage.getItem('sinergix_storage_version');
+      if (savedVersion !== CURRENT_STORAGE_VERSION) {
+        console.log('[Sinergix CRM] Migrando alacena/storage de', savedVersion || 'legacy', 'a', CURRENT_STORAGE_VERSION);
+        if ('caches' in window) {
+          caches.keys().then(names => {
+            names.forEach(name => {
+              if (name !== 'sinergix-crm-v80') {
+                caches.delete(name);
+              }
+            });
+          });
+        }
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations().then(registrations => {
+            registrations.forEach(reg => reg.update());
+          });
+        }
+        const legacyKeys = ['sinergix_leads_cache_legacy', 'sinergix_active_user_legacy', 'sinergix_draft_session'];
+        legacyKeys.forEach(key => localStorage.removeItem(key));
+        localStorage.setItem('sinergix_storage_version', CURRENT_STORAGE_VERSION);
+      }
+    })();
+  </script>
   <link rel="manifest" href="./manifest.json">
   <script>
     if ('serviceWorker' in navigator) {
