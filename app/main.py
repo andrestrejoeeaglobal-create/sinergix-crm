@@ -28,7 +28,7 @@ import httpx
 
 from .config import settings
 from .db import get_db, init_db
-from .db_mongo import get_mongo_db, get_leads_by_sherpa
+from .db_mongo import get_mongo_db, get_leads_by_sherpa, normalizar_telefono
 from .integrations import biometria, chatwoot, cotizacion, pagos
 from .integrations.auth_google import (
     authorization_url, exchange_code, listar_contactos, refresh_access_token, userinfo,
@@ -36,7 +36,7 @@ from .integrations.auth_google import (
 from .models import ClasificacionCincos, EventoSprint, Lead, LinkPago, Sherpa, WebhookPagoLog
 from .salesbot import bloquear_y_alertar, enviar_plantilla
 from .schemas import (
-    ClasificacionIn, ContactoIn, DatosComerciales, ImportContacts, LeadCapture, LeadOut, SherpaLoginIn,
+    ClasificacionIn, ContactoIn, DatosComerciales, ImportContacts, LeadCapture, LeadOut, LeadUpdateIn, SherpaLoginIn,
 )
 from .sprint import procesar_noche, evaluar_estado_renovacion
 from .safety import validar_optin_whatsapp
@@ -277,11 +277,51 @@ def google_callback(code: str = "", state: str = "", error: str = "", db: Sessio
     }
 
 
-def _sherpa_por_token(db: Session, x_api_token: str) -> Sherpa:
-    sherpa = db.query(Sherpa).filter_by(api_token=x_api_token).first()
+def get_current_sherpa(
+    authorization: str = Header(default=""),
+    x_sherpa_token: str = Header(default=""),
+    x_api_token: str = Header(default=""),
+    db: Session = Depends(get_db),
+) -> Sherpa:
+    """Valida estrictamente el token de Sherpa en servidor (Etapa 2.1).
+    Acepta Authorization: Bearer <token>, X-Sherpa-Token o X-API-Token.
+    """
+    token = ""
+    if authorization:
+        parts = authorization.strip().split()
+        if len(parts) == 2 and parts[0].lower() == "bearer":
+            token = parts[1]
+        elif len(parts) == 1:
+            token = parts[0]
+    if not token and x_sherpa_token:
+        token = x_sherpa_token.strip()
+    if not token and x_api_token:
+        token = x_api_token.strip()
+
+    if not token:
+        raise HTTPException(401, "Token de autorización requerido (Authorization: Bearer <token>)")
+
+    sherpa = db.query(Sherpa).filter_by(api_token=token).first()
+    if not sherpa:
+        mongo_db = get_mongo_db()
+        if mongo_db is not None:
+            s_doc = mongo_db.sherpas.find_one({"api_token": token})
+            if s_doc:
+                sherpa = Sherpa(
+                    id=str(s_doc.get("_id", s_doc.get("id"))),
+                    google_sub=s_doc.get("google_sub", ""),
+                    email=s_doc.get("email", ""),
+                    nombre=s_doc.get("nombre", ""),
+                    api_token=s_doc.get("api_token", token),
+                    numero_distribuidor=s_doc.get("numero_distribuidor")
+                )
     if not sherpa:
         raise HTTPException(401, "Token de Sherpa inválido")
     return sherpa
+
+
+def _sherpa_por_token(db: Session, x_api_token: str) -> Sherpa:
+    return get_current_sherpa(x_api_token=x_api_token, db=db)
 
 
 @app.get("/api/auth/google/contacts")
@@ -301,15 +341,22 @@ def google_contacts(
 @app.post("/api/leads/import-contacts")
 def import_contacts(
     payload: ImportContacts,
+    authorization: str = Header(default=""),
+    x_sherpa_token: str = Header(default=""),
     x_api_token: str = Header(default=""),
     db: Session = Depends(get_db),
 ):
-    sherpa = _sherpa_por_token(db, x_api_token)
+    sherpa = get_current_sherpa(authorization=authorization, x_sherpa_token=x_sherpa_token, x_api_token=x_api_token, db=db)
     creados, duplicados = 0, 0
+    now_utc = datetime.now(timezone.utc)
     for contacto in payload.contactos:
         if not contacto.telefono:
             continue
-        existe = db.query(Lead).filter_by(telefono=contacto.telefono).first()
+        tel_norm = normalizar_telefono(contacto.telefono)
+        existe = db.query(Lead).filter(
+            (Lead.telefono == contacto.telefono) |
+            ((Lead.sherpa_id == sherpa.id) & (Lead.telefono_normalizado == tel_norm) & (Lead.telefono_normalizado != ""))
+        ).first()
         if existe:
             duplicados += 1
             continue
@@ -318,9 +365,12 @@ def import_contacts(
                 sherpa_id=sherpa.id,
                 nombre=contacto.nombre or contacto.telefono,
                 telefono=contacto.telefono,
+                telefono_normalizado=tel_norm,
                 email=contacto.email or "",
                 canal_captacion="importacion_contactos",
                 optin_whatsapp=False,
+                creado_en=now_utc,
+                actualizado_en=now_utc,
             )
         )
         creados += 1
@@ -347,18 +397,38 @@ def wa_link(lead_id: str, texto: str = "", db: Session = Depends(get_db)):
     }
 
 
-# ── Captación y Consulta de Leads (Aislamiento por Sherpa, Enmienda 4) ───────────────────────────
+# ── Captación, Consulta y Sincronización de Leads (Etapa 2 / Enmienda 4) ───────────────────────────
+
+@app.get("/api/leads", response_model=list[LeadOut])
+def list_leads(
+    current_sherpa: Sherpa = Depends(get_current_sherpa),
+    db: Session = Depends(get_db)
+):
+    """Consulta centralizada de leads del Sherpa autenticado con aislamiento estricto (Etapa 2.1)."""
+    leads = db.query(Lead).filter(
+        (Lead.sherpa_id == current_sherpa.id) | 
+        (Lead.sherpa_id == current_sherpa.numero_distribuidor) |
+        (Lead.sherpa_id == "101" if current_sherpa.numero_distribuidor == "101" else False)
+    ).all()
+    return leads
+
 
 @app.post("/api/leads/capture", response_model=LeadOut, status_code=201)
 def capture(payload: LeadCapture, db: Session = Depends(get_db)):
-    existente = db.query(Lead).filter_by(telefono=payload.telefono).first()
+    tel_norm = normalizar_telefono(payload.telefono)
+    existente = db.query(Lead).filter(
+        (Lead.telefono == payload.telefono) |
+        ((Lead.sherpa_id == payload.sherpa_id) & (Lead.telefono_normalizado == tel_norm) & (Lead.telefono_normalizado != ""))
+    ).first()
     if existente:
         raise HTTPException(409, "El teléfono ya está registrado en el CRM")
 
+    now_utc = datetime.now(timezone.utc)
     lead = Lead(
         sherpa_id=payload.sherpa_id,
         nombre=payload.nombre,
         telefono=payload.telefono,
+        telefono_normalizado=tel_norm,
         email=payload.email or "",
         canal_captacion=payload.canal_captacion,
         utm_source=payload.utm_source,
@@ -366,18 +436,41 @@ def capture(payload: LeadCapture, db: Session = Depends(get_db)):
         utm_campaign=payload.utm_campaign,
         landing_id=payload.landing_id,
         optin_whatsapp=payload.optin_whatsapp,
-        optin_fecha=datetime.now(timezone.utc) if payload.optin_whatsapp else None,
+        optin_fecha=now_utc if payload.optin_whatsapp else None,
         optin_origen="landing" if payload.canal_captacion == "landing" else payload.canal_captacion,
+        creado_en=now_utc,
+        actualizado_en=now_utc,
     )
     db.add(lead)
     db.commit()
     db.refresh(lead)
+
+    mongo_db = get_mongo_db()
+    if mongo_db is not None:
+        try:
+            mongo_db.leads.insert_one({
+                "id": lead.id,
+                "sherpa_id": lead.sherpa_id,
+                "nombre": lead.nombre,
+                "telefono": lead.telefono,
+                "telefono_normalizado": tel_norm,
+                "email": lead.email,
+                "optin_whatsapp": lead.optin_whatsapp,
+                "creado_en": now_utc.isoformat(),
+                "updated_at": now_utc.isoformat(),
+                "etapa_pipeline": "Lead"
+            })
+        except Exception as e:
+            log.warning("No se pudo insertar lead en MongoDB: %s", e)
+
     return lead
 
 
 @app.get("/api/leads/{lead_id}", response_model=LeadOut)
 def get_lead(
     lead_id: str,
+    authorization: str = Header(default=""),
+    x_sherpa_token: str = Header(default=""),
     x_api_token: str = Header(default=""),
     db: Session = Depends(get_db)
 ):
@@ -385,12 +478,71 @@ def get_lead(
     if not lead:
         raise HTTPException(404, "Lead no encontrado")
     
-    # Aislamiento por Sherpa (Enmienda 4)
-    if x_api_token:
-        sherpa = db.query(Sherpa).filter_by(api_token=x_api_token).first()
-        if sherpa and lead.sherpa_id != sherpa.id and lead.sherpa_id != "101" and sherpa.numero_distribuidor != "admin":
+    # Aislamiento por Sherpa (Enmienda 4 / Etapa 2.1)
+    token = ""
+    if authorization:
+        parts = authorization.strip().split()
+        token = parts[1] if len(parts) == 2 and parts[0].lower() == "bearer" else parts[0]
+    token = token or x_sherpa_token.strip() or x_api_token.strip()
+
+    if token:
+        sherpa = db.query(Sherpa).filter_by(api_token=token).first()
+        if sherpa and lead.sherpa_id != sherpa.id and lead.sherpa_id != sherpa.numero_distribuidor and lead.sherpa_id != "101" and sherpa.numero_distribuidor != "admin":
             raise HTTPException(403, "Acceso no autorizado a los datos de este lead (Aislamiento Sherpa)")
             
+    return lead
+
+
+@app.patch("/api/leads/{lead_id}", response_model=LeadOut)
+def update_lead(
+    lead_id: str,
+    payload: LeadUpdateIn,
+    current_sherpa: Sherpa = Depends(get_current_sherpa),
+    db: Session = Depends(get_db)
+):
+    """Actualiza un lead bajo estrategia Last-Write-Wins (LWW) con updated_at (Etapa 2.3)."""
+    lead = db.get(Lead, lead_id)
+    if not lead:
+        raise HTTPException(404, "Lead no encontrado")
+    
+    # Aislamiento por Sherpa
+    if lead.sherpa_id != current_sherpa.id and lead.sherpa_id != current_sherpa.numero_distribuidor and current_sherpa.numero_distribuidor != "admin":
+        raise HTTPException(403, "Acceso no autorizado a este lead")
+
+    now_utc = datetime.now(timezone.utc)
+
+    # Resolución de Conflictos Last-Write-Wins (LWW)
+    if payload.client_updated_at is not None and lead.actualizado_en is not None:
+        client_ts = payload.client_updated_at if payload.client_updated_at.tzinfo else payload.client_updated_at.replace(tzinfo=timezone.utc)
+        server_ts = lead.actualizado_en if lead.actualizado_en.tzinfo else lead.actualizado_en.replace(tzinfo=timezone.utc)
+        if client_ts < server_ts:
+            raise HTTPException(409, f"Conflicto de sincronización: el registro en el servidor fue actualizado previamente ({server_ts.isoformat()})")
+
+    update_data = payload.model_dump(exclude_unset=True, exclude={"client_updated_at"})
+    for field, val in update_data.items():
+        if field == "telefono" and val:
+            setattr(lead, "telefono_normalizado", normalizar_telefono(val))
+        if hasattr(lead, field):
+            setattr(lead, field, val)
+
+    lead.actualizado_en = now_utc
+    db.commit()
+    db.refresh(lead)
+
+    mongo_db = get_mongo_db()
+    if mongo_db is not None:
+        try:
+            mongo_db.leads.update_one(
+                {"id": lead.id},
+                {"$set": {
+                    **update_data,
+                    "telefono_normalizado": getattr(lead, "telefono_normalizado", ""),
+                    "updated_at": now_utc.isoformat()
+                }}
+            )
+        except Exception as e:
+            log.warning("No se pudo actualizar lead en MongoDB: %s", e)
+
     return lead
 
 

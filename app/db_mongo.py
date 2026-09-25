@@ -49,13 +49,27 @@ def get_mongo_db():
         return None
 
 
+def normalizar_telefono(telefono: str) -> str:
+    """Extrae solo dígitos y devuelve los últimos 10 caracteres nacionales."""
+    if not telefono:
+        return ""
+    import re
+    digitos = re.sub(r"\D", "", str(telefono))
+    return digitos[-10:] if len(digitos) >= 10 else digitos
+
+
 def init_mongo_indexes(db):
-    """Inicializa los índices requeridos en MongoDB (Enmienda 1 y 2)."""
+    """Inicializa los índices requeridos en MongoDB (Etapa 2.2 / Enmiendas 1 y 2)."""
     if db is None:
         return
     try:
-        # Leads
-        db.leads.create_index("telefono", unique=True)
+        # Leads — Índice compuesto canónico por Sherpa y Teléfono Normalizado
+        db.leads.create_index(
+            [("sherpa_id", 1), ("telefono_normalizado", 1)],
+            unique=True,
+            name="idx_sherpa_tel_norm"
+        )
+        db.leads.create_index("telefono", unique=True, sparse=True)
         db.leads.create_index("sherpa_id")
         
         # Sherpas
@@ -69,7 +83,7 @@ def init_mongo_indexes(db):
             unique=True,
             name="idx_dedup_concurso"
         )
-        logger.info("Índices de MongoDB asegurados correctamente.")
+        logger.info("Índices de MongoDB asegurados correctamente (incluyendo idx_sherpa_tel_norm).")
     except Exception as err:
         logger.warning(f"Advertencia al crear índices en MongoDB: {err}")
 

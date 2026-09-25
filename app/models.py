@@ -48,6 +48,7 @@ class Lead(Base, TimestampMixin):
     apellido1: Mapped[str] = mapped_column(String(80), default="")
     apellido2: Mapped[str] = mapped_column(String(80), default="")
     telefono: Mapped[str] = mapped_column(String(20), unique=True, index=True)
+    telefono_normalizado: Mapped[str] = mapped_column(String(10), default="", index=True)
     email: Mapped[str] = mapped_column(String(160), default="")
 
     # Consentimiento WhatsApp (política Meta)

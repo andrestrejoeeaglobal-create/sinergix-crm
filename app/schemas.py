@@ -72,10 +72,25 @@ class ClasificacionIn(BaseModel):
         return v
 
 
+class LeadUpdateIn(BaseModel):
+    nombre: str | None = None
+    apellido1: str | None = None
+    apellido2: str | None = None
+    telefono: str | None = None
+    email: str | None = None
+    etapa_pipeline: str | None = None
+    fase_actual: str | None = None
+    adherencia_acumulada: float | None = None
+    puntos_adquiridos: int | None = None
+    optin_whatsapp: bool | None = None
+    client_updated_at: datetime | None = None
+
+
 class LeadOut(BaseModel):
     id: str
     nombre: str
     telefono: str
+    telefono_normalizado: str | None = None
     etapa_pipeline: str
     optin_whatsapp: bool
     dia_actual_sprint: int
@@ -84,6 +99,8 @@ class LeadOut(BaseModel):
     puntos_adquiridos: int
     ciclos_renovados: int
     link_pago_activo_id: str | None
+    actualizado_en: datetime | None = None
+    updated_at: datetime | None = None
 
 
 class LinkOut(BaseModel):

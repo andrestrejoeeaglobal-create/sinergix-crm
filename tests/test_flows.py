@@ -255,3 +255,91 @@ def test_login_sherpa_api_incorrecto(api):
     assert r.status_code in (401, 404)
     detail = r.json()["detail"]
     assert detail in ("Contraseña incorrecta", "Usuario no existente", "CONTRASENA INVALIDA")
+
+
+# ── Etapa 2: Seguridad, Token Bearer, Deduplicación y Last-Write-Wins ──────
+
+def test_get_current_sherpa_con_bearer_token(api):
+    r_log = api.post("/api/login", json={"username": "Test", "password": "Test"})
+    assert r_log.status_code == 200
+    token = r_log.json()["token"]
+
+    # 1. Llamada a endpoint protegido con Authorization: Bearer <token>
+    r_auth = api.get("/api/leads", headers={"Authorization": f"Bearer {token}"})
+    assert r_auth.status_code == 200
+    assert isinstance(r_auth.json(), list)
+
+    # 2. Llamada con token inválido debe ser 401
+    r_bad = api.get("/api/leads", headers={"Authorization": "Bearer token-invalido-xyz"})
+    assert r_bad.status_code == 401
+
+    # 3. Llamada sin cabecera de autenticación debe ser 401
+    r_none = api.get("/api/leads")
+    assert r_none.status_code == 401
+
+
+def test_leads_deduplicacion_telefono_normalizado(api):
+    """Etapa 2.2: Dos formatos distintos del mismo teléfono deben ser reconocidos como duplicados."""
+    r1 = api.post("/api/leads/capture", json={
+        "sherpa_id": "sherpa_dedup_test",
+        "nombre": "Carlos Tel Normalizado",
+        "telefono": "+5215588887777",
+        "optin_whatsapp": True,
+    })
+    assert r1.status_code == 201
+
+    r2 = api.post("/api/leads/capture", json={
+        "sherpa_id": "sherpa_dedup_test",
+        "nombre": "Carlos Dup Formato",
+        "telefono": "55 8888 7777",
+        "optin_whatsapp": True,
+    })
+    assert r2.status_code == 409
+
+
+def test_leads_last_write_wins_actualizacion(api):
+    """Etapa 2.3: Actualización con Last-Write-Wins usando updated_at."""
+    r_log = api.post("/api/login", json={"username": "Test", "password": "Test"})
+    token = r_log.json()["token"]
+    sherpa_id = r_log.json()["custid"]
+
+    r_lead = api.post("/api/leads/capture", json={
+        "sherpa_id": sherpa_id,
+        "nombre": "Lead LWW Test",
+        "telefono": "+5215577776666",
+        "optin_whatsapp": True,
+    })
+    assert r_lead.status_code == 201
+    lead_id = r_lead.json()["id"]
+
+    r_patch1 = api.patch(
+        f"/api/leads/{lead_id}",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"nombre": "Lead LWW Actualizado", "etapa_pipeline": "Calificado"}
+    )
+    assert r_patch1.status_code == 200
+    data1 = r_patch1.json()
+    assert data1["nombre"] == "Lead LWW Actualizado"
+    assert data1["etapa_pipeline"] == "Calificado"
+
+    stale_timestamp = "2020-01-01T00:00:00Z"
+    r_conflict = api.patch(
+        f"/api/leads/{lead_id}",
+        headers={"Authorization": f"Bearer {token}"},
+        json={
+            "nombre": "Intento de pisar datos viejos",
+            "client_updated_at": stale_timestamp
+        }
+    )
+    assert r_conflict.status_code == 409
+
+
+def test_list_leads_aislamiento_sherpa(api):
+    """Etapa 2.1: /api/leads solo lista prospectos correspondientes al Sherpa autenticado."""
+    r_log = api.post("/api/login", json={"username": "Test", "password": "Test"})
+    token = r_log.json()["token"]
+
+    r_leads = api.get("/api/leads", headers={"Authorization": f"Bearer {token}"})
+    assert r_leads.status_code == 200
+    leads = r_leads.json()
+    assert isinstance(leads, list)
