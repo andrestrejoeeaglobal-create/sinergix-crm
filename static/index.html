@@ -918,13 +918,37 @@
     }
 
     async function apiFetch(url, options = {}) {
-      if (url.startsWith('/api/')) {
-        return mockStandAloneApiResponse(url, options);
-      }
       const headers = options.headers || {};
-      headers['X-API-Token'] = API_TOKEN;
+
+      // Inyección automática de token del Sherpa (Bearer, X-Sherpa-Token, X-API-Token)
+      try {
+        const token = localStorage.getItem('sinergix_token') || localStorage.getItem('api_token') || '';
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+          headers['X-Sherpa-Token'] = token;
+          headers['X-API-Token'] = token;
+        }
+      } catch (e) {}
+
       if (options.body && typeof options.body === 'string' && !headers['Content-Type']) {
         headers['Content-Type'] = 'application/json';
+      }
+
+      // Si el navegador tiene conexión de red, intentamos el servidor central primero
+      if (navigator.onLine) {
+        try {
+          const resp = await fetch(url, { ...options, headers });
+          if (resp && (resp.ok || resp.status === 409 || resp.status === 401 || resp.status === 403 || resp.status === 404)) {
+            return resp;
+          }
+        } catch (netErr) {
+          // Servidor local o remoto no alcanzable: cae a fallback local
+        }
+      }
+
+      // Fallback a mockStandAloneApiResponse (offline o modo standalone)
+      if (url.startsWith('/api/')) {
+        return mockStandAloneApiResponse(url, options);
       }
       return fetch(url, { ...options, headers });
     }
@@ -1823,17 +1847,146 @@ Tienes ${userLeads.length} prospecto(s) en tu cartera (${pendCount} pendiente(s)
     async function cargarLeadsServidor() {
       try {
         const activeUser = (typeof obtenerSherpaIdActivo === 'function') ? obtenerSherpaIdActivo() : '';
-        if (!activeUser) { todosLosLeads = []; if (typeof renderizarLista === 'function') renderizarLista(); return; }
+        if (!activeUser) { 
+          todosLosLeads = []; 
+          if (typeof renderizarLista === 'function') renderizarLista(); 
+          return; 
+        }
+
+        // 1. Carga táctil instantánea desde IndexedDB (<50ms)
         const userLeads = (typeof CortexStorageEngine !== 'undefined' && CortexStorageEngine.getLeadsForSherpa)
           ? await CortexStorageEngine.getLeadsForSherpa(activeUser)
           : [];
         todosLosLeads = Array.isArray(userLeads) ? userLeads : [];
         if (typeof renderizarLista === 'function') renderizarLista();
         if (typeof actualizarMetricas === 'function') actualizarMetricas();
+
+        // 2. Hidratación centralizada si hay conexión (Etapa 3.a)
+        if (navigator.onLine) {
+          try {
+            const res = await apiFetch('/api/leads');
+            if (res && res.ok) {
+              const serverLeads = await res.json();
+              if (Array.isArray(serverLeads) && serverLeads.length > 0) {
+                let actualizados = 0;
+                for (const sLead of serverLeads) {
+                  const sId = String(sLead.id || sLead._id);
+                  const sTel = String(sLead.telefono || '').replace(/\D/g, '').slice(-10);
+
+                  const idx = todosLosLeads.findIndex(l => 
+                    String(l.id || l._id) === sId || 
+                    String(l.telefono || '').replace(/\D/g, '').slice(-10) === sTel
+                  );
+
+                  if (idx === -1) {
+                    todosLosLeads.push(sLead);
+                    if (typeof CortexStorageEngine !== 'undefined' && CortexStorageEngine.saveLead) {
+                      await CortexStorageEngine.saveLead(sLead);
+                    }
+                    actualizados++;
+                  } else {
+                    const localLead = todosLosLeads[idx];
+                    if (localLead.sync_pending) continue;
+
+                    const sTime = new Date(sLead.updated_at || sLead.actualizado_en || 0).getTime();
+                    const lTime = new Date(localLead.updated_at || localLead.actualizado_en || 0).getTime();
+                    if (sTime > lTime) {
+                      todosLosLeads[idx] = { ...localLead, ...sLead };
+                      if (typeof CortexStorageEngine !== 'undefined' && CortexStorageEngine.saveLead) {
+                        await CortexStorageEngine.saveLead(todosLosLeads[idx]);
+                      }
+                      actualizados++;
+                    }
+                  }
+                }
+                if (actualizados > 0) {
+                  console.log(`[Sync] Hidratados ${actualizados} leads desde backend central.`);
+                  if (typeof renderizarLista === 'function') renderizarLista();
+                  if (typeof actualizarMetricas === 'function') actualizarMetricas();
+                }
+              }
+            }
+          } catch (syncErr) {
+            console.log('[Sync] Hidratación remota diferida (offline/fallback):', syncErr);
+          }
+        }
       } catch (err) {
         console.warn('Error al cargar leads por sherpa:', err);
       }
     }
+
+    let _sincronizandoCola = false;
+
+    async function sincronizarColaPendientes() {
+      if (!navigator.onLine || _sincronizandoCola) return;
+      _sincronizandoCola = true;
+
+      try {
+        const activeUser = (typeof obtenerSherpaIdActivo === 'function') ? obtenerSherpaIdActivo() : '';
+        if (!activeUser || typeof CortexStorageEngine === 'undefined') return;
+
+        const allLeads = await CortexStorageEngine.getLeadsForSherpa(activeUser);
+        const pendientes = allLeads.filter(l => l.sync_pending);
+
+        if (pendientes.length === 0) return;
+        console.log(`[Cola Offline] Despachando ${pendientes.length} leads pendientes...`);
+
+        for (const lead of pendientes) {
+          try {
+            let res;
+            if (lead.is_new_local) {
+              res = await apiFetch('/api/leads/capture', {
+                method: 'POST',
+                body: JSON.stringify({
+                  sherpa_id: lead.sherpa_id || activeUser,
+                  nombre: lead.nombre,
+                  telefono: lead.telefono,
+                  canal_captacion: lead.canal_captacion || 'local_sync',
+                  optin_whatsapp: lead.optin_whatsapp !== false
+                })
+              });
+            } else {
+              res = await apiFetch(`/api/leads/${lead.id || lead._id}`, {
+                method: 'PATCH',
+                body: JSON.stringify({
+                  nombre: lead.nombre,
+                  telefono: lead.telefono,
+                  etapa_pipeline: lead.etapa_pipeline,
+                  client_updated_at: lead.updated_at || lead.actualizado_en
+                })
+              });
+            }
+
+            if (res && (res.ok || res.status === 409)) {
+              lead.sync_pending = false;
+              delete lead.is_new_local;
+              await CortexStorageEngine.saveLead(lead);
+            }
+          } catch (e) {
+            console.warn('[Cola Offline] Error sincronizando lead individual:', e);
+          }
+        }
+      } catch (err) {
+        console.warn('[Cola Offline] Error en vaciado de cola:', err);
+      } finally {
+        _sincronizandoCola = false;
+      }
+    }
+
+    window.addEventListener('online', () => {
+      console.log('[Red] Conexión en línea reanudada. Sincronizando cola...');
+      sincronizarColaPendientes();
+      cargarLeadsServidor();
+    });
+
+    let _ultimoFocoSync = 0;
+    window.addEventListener('focus', () => {
+      const ahora = Date.now();
+      if (ahora - _ultimoFocoSync > 30000 && navigator.onLine) {
+        _ultimoFocoSync = ahora;
+        cargarLeadsServidor();
+      }
+    });
 
     const PHONES_MENSAJE_ENVIADO = [
   "9531098251",
@@ -2709,8 +2862,9 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
       lead.nombre = nuevoNombre;
       lead.telefono = nuevoTel.startsWith('+') ? nuevoTel : ('+52' + nuevoTel.replace(/\D/g, ''));
       if (nuevaSede) lead.sede = nuevaSede;
-      if (nuevaEtapa) lead.etapa_pipeline = nuevaEtapa;
       lead.actualizado_en = new Date().toISOString();
+      lead.updated_at = lead.actualizado_en;
+      lead.sync_pending = true;
 
       if (typeof CortexStorageEngine !== 'undefined' && CortexStorageEngine.saveLead) {
         await CortexStorageEngine.saveLead(lead);
@@ -2722,9 +2876,17 @@ const APERTURA_DEFAULT = "Hola, ¿cómo estás? Te escribo para contarte algo qu
           nombre: lead.nombre,
           telefono: lead.telefono,
           sede: lead.sede,
-          etapa_pipeline: lead.etapa_pipeline
+          etapa_pipeline: lead.etapa_pipeline,
+          client_updated_at: lead.actualizado_en
         })
-      }).catch(err => console.warn('PATCH optional backend sync:', err));
+      }).then(res => {
+        if (res && (res.ok || res.status === 409)) {
+          lead.sync_pending = false;
+          if (typeof CortexStorageEngine !== 'undefined' && CortexStorageEngine.saveLead) {
+            CortexStorageEngine.saveLead(lead);
+          }
+        }
+      }).catch(err => console.warn('PATCH guardado en cola offline:', err));
 
       cerrarModalEditarLead();
       renderizarLista();
